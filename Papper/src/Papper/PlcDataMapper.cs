@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 
 namespace Papper
 {
@@ -13,7 +14,7 @@ namespace Papper
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
     public class PlcDataMapper
     {
-        public delegate bool ReadOperation(string selector, int offset, int length, byte[] data, int targetOffset = 0);
+        public delegate byte[] ReadOperation(string selector, int offset, int length);
         public delegate bool WriteOperation(string selector, int offset, int length, byte[] data);
         public delegate bool WriteBitsOperation(string selector, int offset, byte[] data, byte mask = 0);
 
@@ -22,17 +23,36 @@ namespace Papper
         private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
         private readonly IDictionary<string, MappingEntry> _mappings = new Dictionary<string, MappingEntry>();
 
+
+        private class Execution
+        {
+            public PlcRawData PlcRawData { get; private set; }
+            public IEnumerable<Partiton> Partitions { get; private set; }
+            public Dictionary<string, PlcObjectBinding> Bindings { get; private set; }
+            public int ValidationTimeMs { get; private set; }
+
+            public Execution(PlcRawData plcRawData, Dictionary<string, PlcObjectBinding> bindings, int validationTimeMS)
+            {
+                ValidationTimeMs = validationTimeMS;
+                PlcRawData = plcRawData;
+                Bindings = bindings;
+                Partitions = plcRawData.GetPartitonsByOffset(bindings.Values.Select(x => new Tuple<int, int>(x.Offset, x.Size)));
+            }
+        }
+
         private class MappingEntry
         {
-            private readonly HashSet<PlcRawData> _data = new HashSet<PlcRawData>();
-            private readonly IDictionary<string, PlcObjectBinding> _binding = new Dictionary<string, PlcObjectBinding>();
+            private readonly IDictionary<string, PlcObjectBinding> _bindings = new Dictionary<string, PlcObjectBinding>();
+            private readonly ReaderWriterLockSlim _bindingLock = new ReaderWriterLockSlim();
 
             public int ReadDataBlockSize { get; private set; }
+            public int ValidationTimeMs { get; set; }
             public MappingAttribute Mapping { get; private set; }
             public Type Type { get; private set; }
             public PlcObject PlcObject { get; private set; }
             public Dictionary<string, Tuple<int, PlcObject>> Variables { get; private set; }
-            public MappingEntry(MappingAttribute mapping, Type type, PlcMetaDataTree tree, int readDataBlockSize)
+
+            public MappingEntry(MappingAttribute mapping, Type type, PlcMetaDataTree tree, int readDataBlockSize, int validationTimeInMs)
             {
                 if (mapping == null)
                     throw new ArgumentNullException("mapping");
@@ -43,23 +63,73 @@ namespace Papper
 
                 Mapping = mapping;
                 ReadDataBlockSize = readDataBlockSize;
+                ValidationTimeMs = validationTimeInMs;
                 Variables = new Dictionary<string, Tuple<int, PlcObject>>();
                 PlcObject = PlcObjectResolver.GetMapping(mapping.Name, tree, type);
             }
 
-            public IEnumerable<KeyValuePair<string,PlcObjectBinding>> GetOperations(string[] vars)
+            ~MappingEntry()
             {
-                if(PlcObjectResolver.AddPlcObjects(PlcObject, Variables, vars))
+                _bindingLock.Dispose();
+            }
+
+            public IEnumerable<Execution> GetOperations(string[] vars)
+            {
+                UpdateInternalState(vars);
+                return CreateExecutions(vars);
+            }
+
+            private void UpdateInternalState(string[] vars)
+            {
+                if (PlcObjectResolver.AddPlcObjects(PlcObject, Variables, vars))
                 {
                     foreach (var rawDataBlock in PlcObjectResolver.CreateRawReadOperations(PlcObject.Selector, Variables, ReadDataBlockSize))
                     {
-                        rawDataBlock.Data = new byte[CalcRawDataSize(rawDataBlock.Size > 0 ? rawDataBlock.Size : 1)];
-                        _data.Add(rawDataBlock);
-                        foreach (var reference in rawDataBlock.References)
-                            _binding.Add(reference.Key, new PlcObjectBinding(rawDataBlock, reference.Value.Item2, reference.Value.Item1, Mapping.ObservationRate));
+                        if (rawDataBlock.References.Any())
+                        {
+                            lock (rawDataBlock)
+                                rawDataBlock.Data = new byte[CalcRawDataSize(rawDataBlock.Size > 0 ? rawDataBlock.Size : 1)];
+
+                            _bindingLock.EnterWriteLock();
+                            try
+                            {
+                                foreach (var reference in rawDataBlock.References)
+                                    _bindings.Add(reference.Key, new PlcObjectBinding(rawDataBlock, reference.Value.Item2, reference.Value.Item1, Mapping.ObservationRate));
+                            }
+                            finally
+                            {
+                                _bindingLock.ExitWriteLock();
+                            }
+                        }
                     }
                 }
-                return _binding.Where(binding => vars.Contains(binding.Key));
+            }
+
+            private IEnumerable<Execution> CreateExecutions(string[] vars)
+            {
+                var result = new Dictionary<PlcRawData, Dictionary<string, PlcObjectBinding>>();
+                IEnumerable<KeyValuePair<string, PlcObjectBinding>> bindingSnapshot = null;
+                _bindingLock.EnterReadLock();
+                try
+                {
+                    bindingSnapshot = _bindings.Where(binding => vars.Contains(binding.Key));
+                }
+                finally
+                {
+                    _bindingLock.ExitReadLock();
+                }
+
+                foreach (var binding in bindingSnapshot)
+                {
+                    Dictionary<string, PlcObjectBinding> entry;
+                    if (!result.TryGetValue(binding.Value.RawData, out entry))
+                    {
+                        entry = new Dictionary<string, PlcObjectBinding>();
+                        result.Add(binding.Value.RawData, entry);
+                    }
+                    entry.Add(binding.Key, binding.Value);
+                }
+                return result.Select(res => new Execution(res.Key, res.Value, ValidationTimeMs));
             }
 
             private int CalcRawDataSize(int size)
@@ -76,7 +146,6 @@ namespace Papper
         public event ReadOperation OnRead;
         public event WriteOperation OnWrite;
         public event WriteBitsOperation OnWriteBits;
-
 
         public PlcDataMapper(int pduSize = PduSizeDefault)
         {
@@ -97,7 +166,7 @@ namespace Papper
                 MappingEntry existingMapping;
                 if (_mappings.TryGetValue(mapping.Name, out existingMapping))
                     return existingMapping.Mapping == mapping && existingMapping.Type == type;
-                _mappings.Add(mapping.Name, new MappingEntry(mapping, type, _tree, ReadDataBlockSize));
+                _mappings.Add(mapping.Name, new MappingEntry(mapping, type, _tree, ReadDataBlockSize, mapping.ObservationRate));
             }
             return true;
         }
@@ -108,13 +177,13 @@ namespace Papper
             var result = new Dictionary<string, object>();
             if(_mappings.TryGetValue(mapping, out entry))
             {
-                foreach (var bindingData in entry.GetOperations(vars))
+                foreach (var execution in entry.GetOperations(vars))
                 {
-                    lock (bindingData.Value.RawData)
+                    if (ExecuteRead(execution))
                     {
-                        if (TryRead(bindingData.Value))
-                            result.Add(bindingData.Key, bindingData.Value.ConvertFromRaw());
-                    }
+                        foreach (var item in execution.Bindings)
+                            result.Add(item.Key, item.Value.ConvertFromRaw());
+                    } 
                 }
             }
             return result;
@@ -126,17 +195,15 @@ namespace Papper
             var error = false;
             if (_mappings.TryGetValue(mapping, out entry))
             {
-                var operations = entry.GetOperations(values.Keys.ToArray());
-                foreach (var kvp in values)
+                foreach (var execution in entry.GetOperations(values.Keys.ToArray()))
                 {
-                    var binding = operations.FirstOrDefault(b => b.Key == kvp.Key);
-                    if (binding.Key != null)
+                    foreach (var binding in execution.Bindings)
                     {
                         if (!binding.Value.MetaData.IsReadOnly)
                         {
                             lock (binding.Value.RawData)
                             {
-                                binding.Value.ConvertToRaw(kvp.Value);
+                                binding.Value.ConvertToRaw(values[binding.Key]);
                                 if (!Write(binding.Value))
                                     error = true;
                             }
@@ -148,43 +215,42 @@ namespace Papper
         }
 
         #region external communication
-        private bool TryRead(PlcObjectBinding binding)
+        private bool ExecuteRead(Execution exec)
         {
-            var partiton = binding.RawData.GetPartitonsByOffset(binding.Offset, binding.Size);
-            if (partiton != null)
+            if (exec.Partitions != null)
             {
-                if (partiton.Min(x => x.LastUpdate).AddMilliseconds(binding.ValidationTimeInMs) < DateTime.Now)
-                    return ReadPartitions(binding, partiton);
+                if (exec.Partitions.Min(x => x.LastUpdate).AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now)
+                    return ReadPartitions(exec.PlcRawData, exec.Partitions);
             }
-            else if (binding.LastUpdate.AddMilliseconds(binding.ValidationTimeInMs) < DateTime.Now)
-                return Read(binding);
+            else if (exec.PlcRawData.LastUpdate.AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now)
+                return Read(exec.PlcRawData);
             return false;
         }
 
-        private bool Read(PlcObjectBinding binding)
+        private bool Read(PlcRawData rawData)
         {
-            lock (binding.RawData)
+            lock (rawData)
             {
-                var size = binding.RawData.Size > 0 ? binding.RawData.Size : 1;
-                if (OnRead(binding.RawData.Selector, binding.RawData.Offset, size, binding.RawData.Data))
+                var size = rawData.Size > 0 ? rawData.Size : 1;
+                if (Read(rawData.Selector, rawData.Offset, size, rawData.Data))
                 {
-                    binding.RawData.LastUpdate = DateTime.Now;
+                    rawData.LastUpdate = DateTime.Now;
                     return true;
                 }
                 return false;
             }
         }
 
-        private bool ReadPartitions(PlcObjectBinding binding, IList<Partiton> partitons)
+        private bool ReadPartitions(PlcRawData rawData, IEnumerable<Partiton> partitons)
         {
-            lock (binding.RawData)
+            lock (rawData)
             {
                 var startPartition = partitons.First();
-                var offset = binding.RawData.Offset + startPartition.Offset;
+                var offset = rawData.Offset + startPartition.Offset;
                 var readSize = partitons.Sum(x => x.Size);
                 var targetOffset = startPartition.Offset;
 
-                if (OnRead(binding.RawData.Selector, offset, readSize, binding.RawData.Data, targetOffset))
+                if (Read(rawData.Selector, offset, readSize, rawData.Data, targetOffset))
                 {
                     foreach (var partiton in partitons)
                         partiton.LastUpdate = DateTime.Now;
@@ -192,6 +258,23 @@ namespace Papper
                 }
                 return false;
             }
+        }
+
+        private bool Read(string selector, int offset, int length, byte[] data, int targetOffset = 0)
+        {
+            try
+            {
+                byte[] red = OnRead(selector,  offset, length);
+                if (red != null)
+                    red.CopyTo(data, targetOffset);
+                else
+                    return false;
+            }
+            catch(Exception)
+            {
+                return false;
+            }
+            return true;
         }
 
         private bool Write(PlcObjectBinding binding)
@@ -203,15 +286,17 @@ namespace Papper
                 {
                     var offset = rawData.Offset + binding.Offset;
                     var size = binding.Size;
-                    var data = rawData.Data.Skip(binding.Offset).Take(binding.Size).ToArray();
+                    var data = rawData.Data.SubArray(binding.Offset, size);
                     return OnWrite(rawData.Selector, offset, size, data);
                 }
 
                 var startOffset = ((rawData.Offset + binding.Offset) * 8);
-                var bitData = rawData.Data.Skip(binding.Offset).Take(1).ToArray();
+                var bitData = rawData.Data.SubArray(binding.Offset,1);
                 return OnWriteBits(rawData.Selector, startOffset, bitData, Converter.SetBit(0, binding.MetaData.Offset.Bits, true));
             }
         }
+
+
         #endregion
 
     }

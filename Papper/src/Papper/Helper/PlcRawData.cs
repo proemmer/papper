@@ -59,9 +59,24 @@ namespace Papper.Helper
             }
         }
 
+        public IList<Partiton> GetPartitonsByOffset(IEnumerable<Tuple<int,int>> offsets)
+        {
+            var partitions = new List<Partiton>();
+            foreach (var item in offsets)
+            {
+                var part = GetPartitonsByOffset(item.Item1, item.Item2);
+                foreach (var p in part)
+                {
+                    if (!partitions.Contains(p))
+                        partitions.Add(p);
+                }
+            }
+            return partitions;
+        }
+
+
         public IList<Partiton> GetPartitonsByOffset(int offset, int size)
         {
-            
             if (Data.Length > _readDataBlockSize && size != Data.Length)
             {
                 var partitions = new List<Partiton>();
