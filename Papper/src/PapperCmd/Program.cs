@@ -2,8 +2,6 @@
 using Papper.Attributes;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace PapperCmd
 {
@@ -132,6 +130,7 @@ namespace PapperCmd
 
             papper.AddMapping(typeof(DB_InaxSafety));
 
+            PerformReadFull(papper);
             PerformRead(papper);
             PerformWrite(papper);
             PerformRead(papper);
@@ -139,16 +138,29 @@ namespace PapperCmd
             PerformRead(papper);
         }
 
+        private static void PerformReadFull(PlcDataMapper papper)
+        {
+            Console.WriteLine();
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            var result = papper.Read("DB_InaxSafety",
+                                     "SafeMotion");
+            foreach (var item in result)
+            {
+                Console.WriteLine($"Red:{item.Key} = {item.Value}");
+            }
+            Console.ResetColor();
+        }
 
         private static void PerformRead(PlcDataMapper papper)
         {
             Console.WriteLine();
-            Console.ForegroundColor = ConsoleColor.Green;
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
             var result = papper.Read("DB_InaxSafety", 
                                      "SafeMotion.Header.NumberOfActiveSlots", 
-                                     "SafeMotion.Header.Generated", 
-                                     "SafeMotion.Slots[250].SlotId",
-                                     "SafeMotion.Slots[150].Handshake.MotionSelected");
+                                     "SafeMotion.Header.Generated",
+                                     "SafeMotion.Slots[42].SlotId",
+                                     "SafeMotion.Slots[42].HmiId",
+                                     "SafeMotion.Slots[42].Commands.TakeoverPermitted");
             foreach (var item in result)
             {
                 Console.WriteLine($"Red:{item.Key} = {item.Value}");
@@ -163,6 +175,9 @@ namespace PapperCmd
             var writeData = new Dictionary<string, object> {
                     { "SafeMotion.Header.NumberOfActiveSlots", 2 },
                     { "SafeMotion.Header.Generated", DateTime.Now},
+                    { "SafeMotion.Slots[42].SlotId", 3},
+                    { "SafeMotion.Slots[42].HmiId", 4},
+                    { "SafeMotion.Slots[42].Commands.TakeoverPermitted", !_toggle ? true : false },
                     { "SafeMotion.Slots[250].SlotId", 1},
                     { "SafeMotion.Slots[150].Handshake.MotionSelected", !_toggle ? true : false}
                 };
@@ -207,7 +222,6 @@ namespace PapperCmd
             Console.WriteLine($"OnRead: selector:{selector}; offset:{offset}; length:{length}");
             return SubArray(GetPlcEntry(selector, offset + length).Data,offset, length);
         }
-
 
         private static bool Papper_OnWriteBits(string selector, int offset, byte[] data, byte mask = 0)
         {

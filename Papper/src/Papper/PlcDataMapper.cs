@@ -4,6 +4,7 @@ using Papper.Helper;
 using Papper.Types;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -42,7 +43,7 @@ namespace Papper
 
         private class MappingEntry
         {
-            private readonly IDictionary<string, PlcObjectBinding> _bindings = new Dictionary<string, PlcObjectBinding>();
+            private IDictionary<string, PlcObjectBinding> _bindings;
             private readonly ReaderWriterLockSlim _bindingLock = new ReaderWriterLockSlim();
 
             public int ReadDataBlockSize { get; private set; }
@@ -87,14 +88,22 @@ namespace Papper
                     {
                         if (rawDataBlock.References.Any())
                         {
-                            lock (rawDataBlock)
-                                rawDataBlock.Data = new byte[CalcRawDataSize(rawDataBlock.Size > 0 ? rawDataBlock.Size : 1)];
+                            if (rawDataBlock.Data == null || rawDataBlock.Size > rawDataBlock.Data.Length)
+                            {
+                                var current = rawDataBlock.Data != null ? rawDataBlock.Data.Length : 0;
+                                Debug.WriteLine($"{rawDataBlock.Data != null}, needed size:{rawDataBlock.Size}, current size:{current}");
+                                lock (rawDataBlock)
+                                    rawDataBlock.Data = new byte[CalcRawDataSize(rawDataBlock.Size > 0 ? rawDataBlock.Size : 1)];
+                            }
+
+                            var bindings = new Dictionary<string, PlcObjectBinding>();
+                            foreach (var reference in rawDataBlock.References)
+                                bindings.Add(reference.Key, new PlcObjectBinding(rawDataBlock, reference.Value.Item2, reference.Value.Item1, Mapping.ObservationRate));
 
                             _bindingLock.EnterWriteLock();
                             try
                             {
-                                foreach (var reference in rawDataBlock.References)
-                                    _bindings.Add(reference.Key, new PlcObjectBinding(rawDataBlock, reference.Value.Item2, reference.Value.Item1, Mapping.ObservationRate));
+                                _bindings = bindings;
                             }
                             finally
                             {
@@ -245,18 +254,35 @@ namespace Papper
         {
             lock (rawData)
             {
-                var startPartition = partitons.First();
-                var offset = rawData.Offset + startPartition.Offset;
-                var readSize = partitons.Sum(x => x.Size);
-                var targetOffset = startPartition.Offset;
+                //var startPartition = partitons.First();
+                //var offset = rawData.Offset + startPartition.Offset;
+                //var readSize = partitons.Sum(x => x.Size);
+                //var targetOffset = startPartition.Offset;
 
-                if (Read(rawData.Selector, offset, readSize, rawData.Data, targetOffset))
+                //if (Read(rawData.Selector, offset, readSize, rawData.Data, targetOffset))
+                //{
+                //    foreach (var partiton in partitons)
+                //        partiton.LastUpdate = DateTime.Now;
+                //    return true;
+                //}
+                try
                 {
-                    foreach (var partiton in partitons)
-                        partiton.LastUpdate = DateTime.Now;
+                    foreach (var partition in partitons)
+                    {
+                        var offset = rawData.Offset + partition.Offset;
+                        if (Read(rawData.Selector, offset, partition.Size, rawData.Data, partition.Offset))
+                        {
+                            foreach (var partiton in partitons)
+                                partiton.LastUpdate = DateTime.Now;
+                        }
+                    }
                     return true;
                 }
-                return false;
+                catch(Exception)
+                {
+
+                }
+                return true;
             }
         }
 
