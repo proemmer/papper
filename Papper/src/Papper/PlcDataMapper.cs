@@ -24,7 +24,9 @@ namespace Papper
         private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
         private readonly IDictionary<string, MappingEntry> _mappings = new Dictionary<string, MappingEntry>();
 
-
+        /// <summary>
+        /// 
+        /// </summary>
         private class Execution
         {
             public PlcRawData PlcRawData { get; private set; }
@@ -162,16 +164,22 @@ namespace Papper
             PlcMetaDataTreePath.CreateAbsolutePath(PlcObjectResolver.RootNodeName);
         }
 
+        /// <summary>
+        /// Add a type with an MappingAttribute to register this type as an mapping for read and write operations
+        /// </summary>
+        /// <param name="type">Has to be a type with at least one an MappingAttribute</param>
+        /// <returns></returns>
         public bool AddMapping(Type type)
         {
             if (type == null)
-                throw new ArgumentException("type");
+                throw new ArgumentNullException("type");
 
-            foreach (var mapping in type.GetTypeInfo().GetCustomAttributes<MappingAttribute>())
+            var mappingAttributes = type.GetTypeInfo().GetCustomAttributes<MappingAttribute>().ToList();
+            if (!mappingAttributes.Any())
+                throw new ArgumentException("The given type has no MappingAttribute", "type");
+
+            foreach (var mapping in mappingAttributes)
             {
-                if (string.IsNullOrWhiteSpace(mapping.Name))
-                    return false;
-
                 MappingEntry existingMapping;
                 if (_mappings.TryGetValue(mapping.Name, out existingMapping))
                     return existingMapping.Mapping == mapping && existingMapping.Type == type;
@@ -182,6 +190,9 @@ namespace Papper
 
         public Dictionary<string, object> Read(string mapping, params string[] vars)
         {
+            if (string.IsNullOrWhiteSpace(mapping))
+                throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
+
             MappingEntry entry;
             var result = new Dictionary<string, object>();
             if(_mappings.TryGetValue(mapping, out entry))
@@ -200,6 +211,9 @@ namespace Papper
 
         public bool Write(string mapping, Dictionary<string,object> values)
         {
+            if (string.IsNullOrWhiteSpace(mapping))
+                throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
+
             MappingEntry entry;
             var error = false;
             if (_mappings.TryGetValue(mapping, out entry))
@@ -217,6 +231,8 @@ namespace Papper
                                     error = true;
                             }
                         }
+                        else
+                            throw new UnauthorizedAccessException($"You could not write the variable {binding.Key} because you have only read access to it!");
                     }
                 }
             }
@@ -254,33 +270,51 @@ namespace Papper
         {
             lock (rawData)
             {
-                //var startPartition = partitons.First();
-                //var offset = rawData.Offset + startPartition.Offset;
-                //var readSize = partitons.Sum(x => x.Size);
-                //var targetOffset = startPartition.Offset;
-
-                //if (Read(rawData.Selector, offset, readSize, rawData.Data, targetOffset))
-                //{
-                //    foreach (var partiton in partitons)
-                //        partiton.LastUpdate = DateTime.Now;
-                //    return true;
-                //}
                 try
                 {
-                    foreach (var partition in partitons)
+                    var startPartition = partitons.First();
+                    var offset = rawData.Offset + startPartition.Offset;
+                    var readSize = partitons.Sum(x => x.Size);
+
+                    Partiton prev = null;
+                    var blocks = new List<Tuple<int, int>>();
+                    foreach (var part in partitons)
                     {
-                        var offset = rawData.Offset + partition.Offset;
-                        if (Read(rawData.Selector, offset, partition.Size, rawData.Data, partition.Offset))
+                        if (prev != null)
+                        {
+                            var pos = prev.Offset + prev.Size;
+                            if (pos == part.Offset)
+                            {
+                                prev = part;
+                            }
+                            else
+                            {
+                                blocks.Add(new Tuple<int, int>(offset, pos));
+                                prev = null;
+                            }
+                        }
+                        else
+                        {
+                            offset = rawData.Offset + part.Offset; // offset of block
+                            prev = part;
+                        }
+                    }
+                    if (prev != null)
+                        blocks.Add(new Tuple<int, int>(offset, prev.Offset + prev.Size));
+
+                    var targetOffset = startPartition.Offset;
+                    foreach (var item in blocks)
+                    {
+                        if (Read(rawData.Selector, item.Item1, item.Item2, rawData.Data, targetOffset))
                         {
                             foreach (var partiton in partitons)
                                 partiton.LastUpdate = DateTime.Now;
                         }
                     }
-                    return true;
                 }
-                catch(Exception)
+                catch (Exception)
                 {
-
+                    return false;
                 }
                 return true;
             }

@@ -5,16 +5,20 @@ namespace Papper.Attributes
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class MappingAttribute :  Attribute
     {
-        public MappingAttribute()
-        {
-            Name = string.Empty;
-            Selector = string.Empty;
-            Offset = 0;
-            ObservationRate = 0;
-        }
+        //public MappingAttribute()
+        //{
+        //    Name = string.Empty;
+        //    Selector = string.Empty;
+        //    Offset = 0;
+        //    ObservationRate = 0;
+        //}
 
         public MappingAttribute(string name, string selector, int offset = 0, int observationRate = 0)
         {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("The given argument could not be null or whitespace.", "name");
+            if (string.IsNullOrWhiteSpace(selector))
+                throw new ArgumentException("The given argument could not be null or whitespace.", "selector");
             Name = name;
             Selector = selector;
             Offset = offset;
