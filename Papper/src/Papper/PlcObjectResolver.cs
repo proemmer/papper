@@ -176,7 +176,7 @@ namespace Papper
         /// <param name="obj">TreeNode</param>
         /// <param name="path">Path to node</param>
         /// <returns>List of leafs</returns>
-        private static IEnumerable<string> GetLeafs(ITreeNode obj, ICollection<string> path)
+        public static IEnumerable<string> GetLeafs(ITreeNode obj, ICollection<string> path)
         {
             var list = new List<string>();
             if (obj != null)

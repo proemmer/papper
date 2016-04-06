@@ -74,7 +74,7 @@ namespace Papper
         public PlcDataMapper(int pduSize = PduSizeDefault)
         {
             ReadDataBlockSize = pduSize - ReadDataHeaderLength;
-            if (ReadDataBlockSize > 0)
+            if (ReadDataBlockSize <= 0)
                 throw new ArgumentException($"PDU size have to be greater then {ReadDataHeaderLength}", "pduSize");
             PlcMetaDataTreePath.CreateAbsolutePath(PlcObjectResolver.RootNodeName);
         }
@@ -85,6 +85,25 @@ namespace Papper
                 _onRead -= _onRead;
             if(_onWrite != null)
                 _onWrite -= _onWrite;
+        }
+
+        /// <summary>
+        /// Return a list of all registred Mappings
+        /// </summary>
+        public IEnumerable<string> Mappings { get { return _mappings.Keys; } }
+
+        /// <summary>
+        /// Return all variable names of an mapping
+        /// </summary>
+        /// <param name="mapping"></param>
+        /// <returns></returns>
+        public IEnumerable<string> GetVariablesOf(string mapping)
+        {
+            MappingEntry entry;
+            var result = new List<string>();
+            if (_mappings.TryGetValue(mapping, out entry))
+                return PlcObjectResolver.GetLeafs(entry.PlcObject, result);
+            throw new KeyNotFoundException($"The mapping {mapping} does not exist.");
         }
 
         /// <summary>
