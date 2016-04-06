@@ -74,6 +74,8 @@ namespace Papper
         public PlcDataMapper(int pduSize = PduSizeDefault)
         {
             ReadDataBlockSize = pduSize - ReadDataHeaderLength;
+            if (ReadDataBlockSize > 0)
+                throw new ArgumentException($"PDU size have to be greater then {ReadDataHeaderLength}", "pduSize");
             PlcMetaDataTreePath.CreateAbsolutePath(PlcObjectResolver.RootNodeName);
         }
 
