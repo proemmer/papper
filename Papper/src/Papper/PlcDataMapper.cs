@@ -1,13 +1,11 @@
 ﻿using Papper.Attributes;
 using Papper.Common;
 using Papper.Helper;
-using Papper.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 
 namespace Papper
 {
@@ -15,153 +13,76 @@ namespace Papper
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
     public class PlcDataMapper
     {
+        #region Delegates
+        /// <summary>
+        /// This delegate is used to invoke the read operations
+        /// </summary>
+        /// <param name="selector">Selector from the MappingAttribute</param>
+        /// <param name="offset">Offset in byte to the first byte to read</param>
+        /// <param name="length">Number of bytes to read.</param>
+        /// <returns></returns>
         public delegate byte[] ReadOperation(string selector, int offset, int length);
-        public delegate bool WriteOperation(string selector, int offset, int length, byte[] data);
-        public delegate bool WriteBitsOperation(string selector, int offset, byte[] data, byte mask = 0);
 
+        /// <summary>
+        /// his delegate is used to invoke the write operations.
+        /// </summary>
+        /// <param name="selector">Selector from the MappingAttribute</param>
+        /// <param name="offset">Offset in byte to the first byte to write</param>
+        /// <param name="data"></param>
+        /// <param name="mask">bit mask, all bits with true will be written </param>
+        /// <returns></returns>
+        public delegate bool WriteOperation(string selector, int offset, byte[] data, byte bitMask = 0);
+
+        #endregion
+
+        #region Fields
         private const int PduSizeDefault = 480;
         private const int ReadDataHeaderLength = 18;
         private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
         private readonly IDictionary<string, MappingEntry> _mappings = new Dictionary<string, MappingEntry>();
+        private event ReadOperation _onRead;
+        private event WriteOperation _onWrite;
+        #endregion
 
-        /// <summary>
-        /// 
-        /// </summary>
-        private class Execution
-        {
-            public PlcRawData PlcRawData { get; private set; }
-            public IEnumerable<Partiton> Partitions { get; private set; }
-            public Dictionary<string, PlcObjectBinding> Bindings { get; private set; }
-            public int ValidationTimeMs { get; private set; }
-
-            public Execution(PlcRawData plcRawData, Dictionary<string, PlcObjectBinding> bindings, int validationTimeMS)
-            {
-                ValidationTimeMs = validationTimeMS;
-                PlcRawData = plcRawData;
-                Bindings = bindings;
-                Partitions = plcRawData.GetPartitonsByOffset(bindings.Values.Select(x => new Tuple<int, int>(x.Offset, x.Size)));
-            }
-        }
-
-        private class MappingEntry
-        {
-            private IDictionary<string, PlcObjectBinding> _bindings;
-            private readonly ReaderWriterLockSlim _bindingLock = new ReaderWriterLockSlim();
-
-            public int ReadDataBlockSize { get; private set; }
-            public int ValidationTimeMs { get; set; }
-            public MappingAttribute Mapping { get; private set; }
-            public Type Type { get; private set; }
-            public PlcObject PlcObject { get; private set; }
-            public Dictionary<string, Tuple<int, PlcObject>> Variables { get; private set; }
-
-            public MappingEntry(MappingAttribute mapping, Type type, PlcMetaDataTree tree, int readDataBlockSize, int validationTimeInMs)
-            {
-                if (mapping == null)
-                    throw new ArgumentNullException("mapping");
-                if (type == null)
-                    throw new ArgumentNullException("type");
-                if (tree == null)
-                    throw new ArgumentNullException("tree");
-
-                Mapping = mapping;
-                ReadDataBlockSize = readDataBlockSize;
-                ValidationTimeMs = validationTimeInMs;
-                Variables = new Dictionary<string, Tuple<int, PlcObject>>();
-                PlcObject = PlcObjectResolver.GetMapping(mapping.Name, tree, type);
-            }
-
-            ~MappingEntry()
-            {
-                _bindingLock.Dispose();
-            }
-
-            public IEnumerable<Execution> GetOperations(string[] vars)
-            {
-                UpdateInternalState(vars);
-                return CreateExecutions(vars);
-            }
-
-            private void UpdateInternalState(string[] vars)
-            {
-                if (PlcObjectResolver.AddPlcObjects(PlcObject, Variables, vars))
-                {
-                    foreach (var rawDataBlock in PlcObjectResolver.CreateRawReadOperations(PlcObject.Selector, Variables, ReadDataBlockSize))
-                    {
-                        if (rawDataBlock.References.Any())
-                        {
-                            if (rawDataBlock.Data == null || rawDataBlock.Size > rawDataBlock.Data.Length)
-                            {
-                                var current = rawDataBlock.Data != null ? rawDataBlock.Data.Length : 0;
-                                Debug.WriteLine($"{rawDataBlock.Data != null}, needed size:{rawDataBlock.Size}, current size:{current}");
-                                lock (rawDataBlock)
-                                    rawDataBlock.Data = new byte[CalcRawDataSize(rawDataBlock.Size > 0 ? rawDataBlock.Size : 1)];
-                            }
-
-                            var bindings = new Dictionary<string, PlcObjectBinding>();
-                            foreach (var reference in rawDataBlock.References)
-                                bindings.Add(reference.Key, new PlcObjectBinding(rawDataBlock, reference.Value.Item2, reference.Value.Item1, Mapping.ObservationRate));
-
-                            _bindingLock.EnterWriteLock();
-                            try
-                            {
-                                _bindings = bindings;
-                            }
-                            finally
-                            {
-                                _bindingLock.ExitWriteLock();
-                            }
-                        }
-                    }
-                }
-            }
-
-            private IEnumerable<Execution> CreateExecutions(string[] vars)
-            {
-                var result = new Dictionary<PlcRawData, Dictionary<string, PlcObjectBinding>>();
-                IEnumerable<KeyValuePair<string, PlcObjectBinding>> bindingSnapshot = null;
-                _bindingLock.EnterReadLock();
-                try
-                {
-                    bindingSnapshot = _bindings.Where(binding => vars.Contains(binding.Key));
-                }
-                finally
-                {
-                    _bindingLock.ExitReadLock();
-                }
-
-                foreach (var binding in bindingSnapshot)
-                {
-                    Dictionary<string, PlcObjectBinding> entry;
-                    if (!result.TryGetValue(binding.Value.RawData, out entry))
-                    {
-                        entry = new Dictionary<string, PlcObjectBinding>();
-                        result.Add(binding.Value.RawData, entry);
-                    }
-                    entry.Add(binding.Key, binding.Value);
-                }
-                return result.Select(res => new Execution(res.Key, res.Value, ValidationTimeMs));
-            }
-
-            private int CalcRawDataSize(int size)
-            {
-                size = size > 0 ? size : 2;
-                if (size % 2 != 0)
-                    size++;
-                return size;
-            }
-        }
-
+        #region Properties
         public int ReadDataBlockSize { get; private set; }
+        public event ReadOperation OnRead
+        {
+            add
+            {
+                _onRead += value;
+            }
+            remove
+            {
+                _onRead -= value;
+            }
+        }
 
-        public event ReadOperation OnRead;
-        public event WriteOperation OnWrite;
-        public event WriteBitsOperation OnWriteBits;
+        public event WriteOperation OnWrite
+        {
+            add
+            {
+                _onWrite += value;
+            }
+            remove
+            {
+                _onWrite -= value;
+            }
+        }
+        #endregion
 
         public PlcDataMapper(int pduSize = PduSizeDefault)
         {
             ReadDataBlockSize = pduSize - ReadDataHeaderLength;
             PlcMetaDataTreePath.CreateAbsolutePath(PlcObjectResolver.RootNodeName);
+        }
+
+        ~PlcDataMapper()
+        {
+            if(_onRead != null)
+                _onRead -= _onRead;
+            if(_onWrite != null)
+                _onWrite -= _onWrite;
         }
 
         /// <summary>
@@ -188,6 +109,12 @@ namespace Papper
             return true;
         }
 
+        /// <summary>
+        /// Read variables from an given mapping
+        /// </summary>
+        /// <param name="mapping">mapping name specified in the MappingAttribute</param>
+        /// <param name="vars"></param>
+        /// <returns>return a dictionary with all variables and the red value</returns>
         public Dictionary<string, object> Read(string mapping, params string[] vars)
         {
             if (string.IsNullOrWhiteSpace(mapping))
@@ -209,13 +136,19 @@ namespace Papper
             return result;
         }
 
+        /// <summary>
+        /// Write values to variables of an given mapping
+        /// </summary>
+        /// <param name="mapping">mapping name specified in the MappingAttribute</param>
+        /// <param name="values">variable names and values to write</param>
+        /// <returns>return true if all operations are succeeded</returns>
         public bool Write(string mapping, Dictionary<string,object> values)
         {
             if (string.IsNullOrWhiteSpace(mapping))
                 throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
 
             MappingEntry entry;
-            var error = false;
+            var result = true;
             if (_mappings.TryGetValue(mapping, out entry))
             {
                 foreach (var execution in entry.GetOperations(values.Keys.ToArray()))
@@ -228,7 +161,10 @@ namespace Papper
                             {
                                 binding.Value.ConvertToRaw(values[binding.Key]);
                                 if (!Write(binding.Value))
-                                    error = true;
+                                {
+                                    Debug.WriteLine($"Error writing {binding.Key}");
+                                    result = false;
+                                }
                             }
                         }
                         else
@@ -236,10 +172,11 @@ namespace Papper
                     }
                 }
             }
-            return error;
+            return result;
         }
 
-        #region external communication
+        #region internal read write operations
+
         private bool ExecuteRead(Execution exec)
         {
             if (exec.Partitions != null)
@@ -283,15 +220,13 @@ namespace Papper
                         if (prev != null)
                         {
                             var pos = prev.Offset + prev.Size;
-                            if (pos == part.Offset)
-                            {
-                                prev = part;
-                            }
-                            else
+                            if (pos != part.Offset)
                             {
                                 blocks.Add(new Tuple<int, int>(offset, pos));
                                 prev = null;
                             }
+                            else
+                                prev = part;
                         }
                         else
                         {
@@ -322,9 +257,12 @@ namespace Papper
 
         private bool Read(string selector, int offset, int length, byte[] data, int targetOffset = 0)
         {
+            if (_onRead == null)
+                throw new NullReferenceException("The event handler for the read method is not registered.");
+
             try
             {
-                byte[] red = OnRead(selector,  offset, length);
+                byte[] red = _onRead(selector,  offset, length);
                 if (red != null)
                     red.CopyTo(data, targetOffset);
                 else
@@ -339,23 +277,24 @@ namespace Papper
 
         private bool Write(PlcObjectBinding binding)
         {
+            if (_onWrite == null)
+                throw new NullReferenceException("The event handler for the write method is not registered.");
+
             lock (binding.RawData)
             {
                 var rawData = binding.RawData;
+                var offset = rawData.Offset + binding.Offset;
                 if (binding.Size != 0)
                 {
-                    var offset = rawData.Offset + binding.Offset;
                     var size = binding.Size;
                     var data = rawData.Data.SubArray(binding.Offset, size);
-                    return OnWrite(rawData.Selector, offset, size, data);
+                    return _onWrite(rawData.Selector, offset, data);
                 }
 
-                var startOffset = ((rawData.Offset + binding.Offset) * 8);
                 var bitData = rawData.Data.SubArray(binding.Offset,1);
-                return OnWriteBits(rawData.Selector, startOffset, bitData, Converter.SetBit(0, binding.MetaData.Offset.Bits, true));
+                return _onWrite(rawData.Selector, offset, bitData, Converter.SetBit(0, binding.MetaData.Offset.Bits, true));
             }
         }
-
 
         #endregion
 

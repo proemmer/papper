@@ -484,22 +484,11 @@ namespace Papper
             cur.Offset.Bits = bitOffset;
         }
 
-        /// <summary>
-        /// Converts an connection string to dictionary entries. The splitter is ;
-        /// </summary>
-        private static Dictionary<string, string> ConvertConnectionStringToDict(string connectionString)
-        {
-            return connectionString.Split(';')
-                .Select(part => part.Split('='))
-                .Where(values => values.Length > 1)
-                .ToDictionary(values => values[0].Trim(), values => values[1].Trim());
-        }
-
 
         [Conditional("DEBUG")]
         private static void DebugOutPut(string format, params object[] attributes)
         {
-            //Console.WriteLine(format, attributes);
+            Debug.WriteLine(format, attributes);
         }
     }
 }

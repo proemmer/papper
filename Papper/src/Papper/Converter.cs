@@ -4,9 +4,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Papper.Helper
+namespace Papper
 {
-    internal static class Converter
+    public static class Converter
     {
         private const string HexDigits = "0123456789ABCDEF";
 

@@ -126,7 +126,6 @@ namespace PapperCmd
             var papper = new PlcDataMapper(960);
             papper.OnRead += Papper_OnRead;
             papper.OnWrite += Papper_OnWrite;
-            papper.OnWriteBits += Papper_OnWriteBits;
 
             papper.AddMapping(typeof(DB_InaxSafety));
 
@@ -203,12 +202,35 @@ namespace PapperCmd
             return plcblock;
         }
 
-        private static bool Papper_OnWrite(string selector, int offset, int length, byte[] data)
+        private static bool Papper_OnWrite(string selector, int offset, byte[] data, byte bitMask = 0)
         {
             try
             {
-                Console.WriteLine($"OnWrite: selector:{selector}; offset:{offset}; length:{length}");
-                Array.Copy(data, 0, GetPlcEntry(selector, offset + length).Data, offset, length);
+                var length = data.Length;
+                if (bitMask == 0)
+                {
+                    Console.WriteLine($"OnWrite: selector:{selector}; offset:{offset}; length:{length}");
+                    Array.Copy(data, 0, GetPlcEntry(selector, offset + length).Data, offset, length);
+                }
+                else
+                {
+                    foreach (var item in data)
+                    {
+                        var bm = bitMask;
+                        for (var i = 0; i < 8; i++)
+                        {
+                            var bit = bm.GetBit(i);
+                            if (bit)
+                            {
+                                var b = GetPlcEntry(selector, offset + 1).Data[offset];
+                                GetPlcEntry(selector, offset + 1).Data[offset] = b.SetBit(i, item.GetBit( i));
+                                bm = bm.SetBit(i, false);
+                                if (bm == 0)
+                                    break;
+                            }
+                        }
+                    }
+                }
                 return true;
             }
             catch(Exception)
@@ -220,69 +242,8 @@ namespace PapperCmd
         private static byte[] Papper_OnRead(string selector, int offset, int length)
         {
             Console.WriteLine($"OnRead: selector:{selector}; offset:{offset}; length:{length}");
-            return SubArray(GetPlcEntry(selector, offset + length).Data,offset, length);
+            return GetPlcEntry(selector, offset + length).Data.SubArray(offset, length);
         }
 
-        private static bool Papper_OnWriteBits(string selector, int offset, byte[] data, byte mask = 0)
-        {
-            try
-            {
-                Console.WriteLine($"OnWriteBits: selector:{selector}; offset:{offset}; mask:{mask}");
-                var baseOffset = (offset / 8);
-                var bitLikeBaseOffset = (baseOffset * 8);
-                var bitOffset = offset - bitLikeBaseOffset;
-                for (var i = 0; i < 8; i++)
-                {
-                    if (mask == 0 || GetBit(mask, i))
-                    {
-                        if (mask != 0)
-                        {
-                            bitOffset = i;
-                            offset = bitLikeBaseOffset + i;
-                        }
-
-                        var b = GetPlcEntry(selector, baseOffset + 1).Data[baseOffset];
-                        GetPlcEntry(selector, baseOffset + 1).Data[baseOffset] = SetBit(b, bitOffset, GetBit(data[0], bitOffset));
-                        mask = SetBit(mask, i, false);
-                    }
-                    if (mask == 0)
-                        break;
-                }
-
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
-
-        public static T[] SubArray<T>(T[] data, int skip, int length = -1, bool realloc = false)
-        {
-            var dataLength = data.Length;
-            if (length == -1)
-                length = dataLength - skip;
-            if (skip == 0 && length == dataLength && !realloc) //No manipulation and no copying
-                return data;
-            var result = new T[length];
-            Array.Copy(data, skip, result, 0, length);
-            return result;
-        }
-
-        public static byte SetBit(byte data, int bit, bool value)
-        {
-            if (value)
-                return (Byte)(data | (1U << bit));
-            return (Byte)(data & (~(1U << bit)));
-        }
-
-        public static bool GetBit(byte data, int bit)
-        {
-            // Shift the bit to the first location
-            data = (Byte)(data >> bit);
-
-            // Isolate the value
-            return (data & 1) == 1;
-        }
     }
 }
