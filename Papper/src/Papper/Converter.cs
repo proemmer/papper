@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -466,6 +467,12 @@ namespace Papper
             return (T)value;
         }
 
+        /// <summary>
+        /// converts the given byte array to an DateTime, if the value is not in range, DateTime.MinValue will be returned
+        /// </summary>
+        /// <param name="data">minimum 8 byte - offset</param>
+        /// <param name="offset">offset to first byte</param>
+        /// <returns>DateTime</returns>
         public static DateTime ToDateTime(this byte[] data, int offset = 0)
         {
             var str = string.Format("{2}/{1}/{0} {3}:{4}:{5}.{6}{7}",
@@ -477,8 +484,10 @@ namespace Papper
                 data.ToHexString("", offset + 5, 1),
                 data.ToHexString("", offset + 6, 1),
                 data.ToHexString("", offset + 7, 1));
-
-            return DateTime.Parse(str);
+            DateTime parsedDate;
+            if (DateTime.TryParseExact(str, "dd/MM/yy HH:mm:ss.ffff", null, DateTimeStyles.None, out parsedDate))
+                return parsedDate;
+            return DateTime.MinValue;
         }
 
         /// <summary>
