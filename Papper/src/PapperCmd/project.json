@@ -11,7 +11,7 @@
   },
 
   "dependencies": {
-    "Papper": "1.0.0-*",
+    "Papper": "1.0.1-beta",
     "System.Console": "4.0.0-beta-23516"
   },
 

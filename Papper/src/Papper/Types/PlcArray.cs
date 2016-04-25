@@ -6,6 +6,8 @@ using System.Linq;
 using Papper.Helper;
 using Papper.Interfaces;
 using Papper.Common;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Papper.Types
 {
@@ -123,20 +125,33 @@ namespace Papper.Types
 
             if (list != null)
             {
-                var enumerator = list.GetEnumerator();
-                for (var i = 0; i < ArrayLength; i++)
+                if (ArrayType is PlcByte)
                 {
-                    if (enumerator.MoveNext())
+                    var byteArray = value as byte[];
+                    byteArray.CopyTo(plcObjectBinding.RawData.Data, plcObjectBinding.Offset);
+                }
+                else if (ArrayType is PlcChar)
+                {
+                    var charArray = value as char[];
+                    Encoding.ASCII.GetBytes(charArray).CopyTo(plcObjectBinding.RawData.Data, plcObjectBinding.Offset);
+                }
+                else
+                {
+                    var enumerator = list.GetEnumerator();
+                    for (var i = 0; i < ArrayLength; i++)
                     {
-                        var child = Childs.OfType<PlcObject>().Skip(i).FirstOrDefault();
-                        if (child == null)
-                            throw new Exception("Array error");
-                        var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + (child.Size.Bytes * i), plcObjectBinding.ValidationTimeInMs);
-                        ArrayType.ConvertToRaw(enumerator.Current, binding);
-                    }
-                    else
-                    {
-                        break;
+                        if (enumerator.MoveNext())
+                        {
+                            var child = Childs.OfType<PlcObject>().Skip(i).FirstOrDefault();
+                            if (child == null)
+                                throw new Exception("Array error");
+                            var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + (child.Size.Bytes * i), plcObjectBinding.ValidationTimeInMs);
+                            ArrayType.ConvertToRaw(enumerator.Current, binding);
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -235,20 +250,33 @@ namespace Papper.Types
 
         private object InternalConvert<T>(PlcObjectBinding plcObjectBinding, T type)
         {
-            var list = new List<T>();
-
+            
             if (plcObjectBinding.Data != null && plcObjectBinding.Data.Any())
             {
-                for (var i = 0; i < ArrayLength; i++)
+
+                if (type is byte)
                 {
-                    var child = Childs.OfType<PlcObject>().Skip(i).FirstOrDefault();
-                    if (child == null)
-                        throw new Exception("Array error");
-                    var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes  + (child.Size.Bytes * i), plcObjectBinding.ValidationTimeInMs);
-                    list.Add((T)ArrayType.ConvertFromRaw(binding));
+                    return plcObjectBinding.RawData.Data.SubArray(plcObjectBinding.Offset, ArrayLength);
+                }
+                else if(type is char)
+                {
+                    return Encoding.ASCII.GetChars(plcObjectBinding.RawData.Data.SubArray(plcObjectBinding.Offset, ArrayLength));
+                }
+                else
+                {
+                    var list = new T[ArrayLength];
+                    for (var i = 0; i < ArrayLength; i++)
+                    {
+                        var child = Childs.OfType<PlcObject>().Skip(i).FirstOrDefault();
+                        if (child == null)
+                            throw new Exception("Array error");
+                        var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + (child.Size.Bytes * i), plcObjectBinding.ValidationTimeInMs);
+                        list[i] = ((T)ArrayType.ConvertFromRaw(binding));
+                    }
+                    return list;
                 }
             }
-            return list.ToArray<T>();
+            return new T[ArrayLength]; ;
         }
 
         private PlcObject GetIndex(int idx)

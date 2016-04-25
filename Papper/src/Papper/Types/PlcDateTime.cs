@@ -56,7 +56,8 @@ namespace Papper.Types
             //wochentag = (bt1 & 0x0f); 
             try
             {
-                return new DateTime(jahr, monat, tag, stunde, minute, sekunde, mili);
+                var result =  new DateTime(jahr, monat, tag, stunde, minute, sekunde, mili, DateTimeKind.Local);
+                return result;
             }
             catch (Exception)
             {

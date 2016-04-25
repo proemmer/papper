@@ -88,7 +88,7 @@ namespace Papper
         }
 
         /// <summary>
-        /// Return a list of all registred Mappings
+        /// Return a list of all registered Mappings
         /// </summary>
         public IEnumerable<string> Mappings { get { return _mappings.Keys; } }
 
@@ -196,6 +196,35 @@ namespace Papper
             return result;
         }
 
+        /// <summary>
+        /// Return address data of the given variable
+        /// </summary>
+        /// <param name="mapping">name of the mapping</param>
+        /// <param name="variable">name of the variable</param>
+        /// <returns></returns>
+        public Tuple<string, PlcSize, PlcSize> GetAddressOf(string mapping, string variable)
+        {
+            if (string.IsNullOrWhiteSpace(mapping))
+                throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
+            if (string.IsNullOrWhiteSpace(variable))
+                throw new ArgumentException("The given argument could not be null or whitespace.", "variable");
+
+            MappingEntry entry;
+            var result = new Dictionary<string, object>();
+            if (_mappings.TryGetValue(mapping, out entry))
+            {
+                var varibleEntry = entry.Variables.FirstOrDefault(b => b.Key == variable);
+                if(varibleEntry.Key != null)
+                {
+                    return new Tuple<string, PlcSize, PlcSize>(
+                        varibleEntry.Value.Item2.Selector,
+                        varibleEntry.Value.Item2.Offset,
+                        varibleEntry.Value.Item2.Size
+                        );
+                }
+            }
+            throw new KeyNotFoundException($"There is variable <{variable}> for mapping <{mapping}>");
+        }
         #region internal read write operations
 
         private bool ExecuteRead(Execution exec)

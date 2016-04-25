@@ -1,9 +1,9 @@
-﻿namespace Papper.Helper
+﻿namespace Papper
 {
-    internal class PlcSize
+    public class PlcSize
     {
-        public int Bytes { get; set; }
-        public int Bits{ get; set; }
+        public int Bytes { get; internal set; }
+        public int Bits{ get; internal set; }
         public static PlcSize operator +(PlcSize a, PlcSize b)
         {
             var bits = a.Bits + b.Bits;

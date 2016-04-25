@@ -72,7 +72,7 @@ namespace Papper
                         _bindingLock.EnterWriteLock();
                         try
                         {
-                            _bindings = bindings;
+                            _bindings = _bindings != null ? _bindings.Union(bindings).ToDictionary(k => k.Key, v => v.Value) : bindings;
                         }
                         finally
                         {
@@ -90,7 +90,7 @@ namespace Papper
             _bindingLock.EnterReadLock();
             try
             {
-                bindingSnapshot = _bindings.Where(binding => vars.Contains(binding.Key));
+                bindingSnapshot = _bindings.Where(binding => vars.Contains(binding.Key)).ToList();
             }
             finally
             {
