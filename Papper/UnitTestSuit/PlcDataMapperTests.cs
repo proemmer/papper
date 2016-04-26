@@ -1,8 +1,10 @@
 ﻿using Papper;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Reflection;
 using UnitTestSuit.Mappings;
 using UnitTestSuit.Util;
 using Xunit;
@@ -116,6 +118,27 @@ namespace UnitTestSuit
         }
 
         [Fact]
+        public void ArrayElementsAccessTest()
+        {
+            var mapping = "ARRAY_TEST_MAPPING";
+            var accessDict = new Dictionary<string, object> {
+                    { "ByteElements[10]", (byte)0x05},
+                    { "ByteElements[5]", (byte)0x06},
+                    { "ByteElements[1]", (byte)0x07},
+                    { "CharElements[10]", 'a'},
+                    { "CharElements[5]", 'b'},
+                    { "CharElements[1]", 'c'},
+                    { "IntElements[10]", 10},
+                    { "IntElements[5]", 20},
+                    { "IntElements[1]", 30},
+                };
+
+            Test(mapping, accessDict.Take(3).ToDictionary(kvp => kvp.Key, kvp => kvp.Value), default(byte));
+            Test(mapping, accessDict.Skip(3).Take(3).ToDictionary(kvp => kvp.Key, kvp => kvp.Value), default(char));
+            Test(mapping, accessDict.Skip(6).Take(3).ToDictionary(kvp => kvp.Key, kvp => kvp.Value), default(int));
+        }
+
+        [Fact]
         public void BigByteArrayAccessTest()
         {
             var mapping = "ARRAY_TEST_MAPPING";
@@ -148,6 +171,39 @@ namespace UnitTestSuit
             Test(mapping, accessDict, Enumerable.Repeat<int>((int)0, 5000).ToArray());
         }
 
+        [Fact]
+        public void TestStructuralAccess()
+        {
+            var mapping = "DB_InaxSafety";
+            var header = new UDT_SafeMotionHeader
+            {
+                Generated = Normalize(DateTime.Now),
+                NumberOfActiveSlots = 2,
+                Commands = new UDT_SafeMotionHeader_Commands
+                {
+                    AllSlotsLocked = true,
+                    UpdateAllowed = true
+                },
+                States = new UDT_SafeMotionHeader_States
+                {
+                    ChecksumInvalid = true,
+                    UpdateRequested = true
+                }
+            };
+
+            var accessDict = new Dictionary<string, object> {
+                    { "SafeMotion.Header", header},
+                };
+
+            var result = _papper.Read(mapping, accessDict.Keys.ToArray());
+            Assert.Equal(accessDict.Count, result.Count);
+            Assert.True(_papper.Write(mapping, accessDict));
+            var result2 = _papper.Read(mapping, accessDict.Keys.ToArray());
+            Assert.Equal(accessDict.Count, result2.Count);
+            Assert.False(AreDataEqual(result, result2));
+            Assert.True(AreDataEqual(ToExpando(header), result2.Values.FirstOrDefault()));
+        }
+
 
         #region Helper
 
@@ -171,7 +227,7 @@ namespace UnitTestSuit
         }
 
         /// <summary>
-        /// This method remove the nanoseconds from the datetime, because plc's could not handle that
+        /// This method remove the nanoseconds from the date time, because plc's could not handle that
         /// </summary>
         /// <param name="dt"></param>
         /// <returns></returns>
@@ -222,6 +278,91 @@ namespace UnitTestSuit
             {
                 return false;
             }
+        }
+
+        private static ExpandoObject ToExpando<T>(T instance)
+        {
+            var obj = new ExpandoObject();
+            foreach (var item in instance.GetType().GetTypeInfo().DeclaredProperties)
+            {
+                if(!item.PropertyType.Namespace.StartsWith("System"))
+                {
+                    AddProperty(obj, item.Name, ToExpando(item.GetValue(instance)));
+                }
+                else
+                {
+                    AddProperty(obj, item.Name, item.GetValue(instance));
+                }
+            }
+            return obj;
+        }
+
+        private static void AddProperty(dynamic parent, string name, object value)
+        {
+            var list = (parent as List<dynamic>);
+            if (list != null)
+            {
+                list.Add(value);
+            }
+            else
+            {
+                var dictionary = parent as IDictionary<string, object>;
+                if (dictionary != null)
+                    dictionary[name] = value;
+            }
+        }
+
+        private static bool AreDataEqual(object obj1, object obj2)
+        {
+            var t1 = obj1.GetType();
+            var t2 = obj2.GetType();
+
+            if (t1 == t2) { return t1 != typeof(ExpandoObject) ? ElementEqual(obj1, obj2) : DynamicObjectCompare(obj1, obj2); }
+            try { return ElementEqual(obj1, Convert.ChangeType(obj2, t1)); } catch { }
+            return false;
+        }
+
+        private static bool ElementEqual(object obj1, object obj2)
+        {
+            var list1 = obj1 as IEnumerable;
+            var list2 = obj2 as IEnumerable;
+
+            if (list1 != null && list2 != null)
+            {
+                var enumerator1 = list1.GetEnumerator();
+                var enumerator2 = list2.GetEnumerator();
+                while (true)
+                {
+                    var e1 = enumerator1.MoveNext();
+                    var e2 = enumerator2.MoveNext();
+                    if (e1 && e2)
+                    {
+                        if (!AreDataEqual(enumerator1.Current, enumerator2.Current))
+                            return false;
+                    }
+                    else
+                        return e1 == e2; //Length not the same?
+                }
+            }
+            return obj1.Equals(obj2);
+        }
+
+        private static bool DynamicObjectCompare(object obj1, object obj2)
+        {
+            var dictionary1 = obj1 as IDictionary<string, object>;
+            var dictionary2 = obj2 as IDictionary<string, object>;
+
+            if (dictionary1 != null && dictionary2 != null)
+            {
+                foreach (var o1 in dictionary1)
+                {
+                    object o2;
+                    if (!dictionary2.TryGetValue(o1.Key, out o2) || !AreDataEqual(o1.Value, o2))
+                        return false;
+
+                }
+            }
+            return true;
         }
 
         #endregion

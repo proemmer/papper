@@ -53,6 +53,7 @@ namespace Papper
         {
             if (PlcObjectResolver.AddPlcObjects(PlcObject, Variables, vars))
             {
+                var bindings = new Dictionary<string, PlcObjectBinding>();
                 foreach (var rawDataBlock in PlcObjectResolver.CreateRawReadOperations(PlcObject.Selector, Variables, ReadDataBlockSize))
                 {
                     if (rawDataBlock.References.Any())
@@ -65,19 +66,26 @@ namespace Papper
                                 rawDataBlock.Data = new byte[CalcRawDataSize(rawDataBlock.Size > 0 ? rawDataBlock.Size : 1)];
                         }
 
-                        var bindings = new Dictionary<string, PlcObjectBinding>();
                         foreach (var reference in rawDataBlock.References)
                             bindings.Add(reference.Key, new PlcObjectBinding(rawDataBlock, reference.Value.Item2, reference.Value.Item1, Mapping.ObservationRate));
+                    }
+                }
 
-                        _bindingLock.EnterWriteLock();
-                        try
-                        {
-                            _bindings = _bindings != null ? _bindings.Union(bindings).ToDictionary(k => k.Key, v => v.Value) : bindings;
-                        }
-                        finally
-                        {
-                            _bindingLock.ExitWriteLock();
-                        }
+                if (bindings.Any())
+                {
+                    _bindingLock.EnterWriteLock();
+                    try
+                    {
+                        //extend bindings with the new created ones
+                        _bindings = _bindings != null
+                                        ? _bindings.Union(bindings
+                                            .Where(kvp => !_bindings.ContainsKey(kvp.Key))
+                                            ).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+                                        : bindings;
+                    }
+                    finally
+                    {
+                        _bindingLock.ExitWriteLock();
                     }
                 }
             }

@@ -119,12 +119,13 @@ namespace Papper.Types
             var list = value as IEnumerable;
             var convert = list as string;
 
-            //handle byte array for Json
+            //handle byte array for Json --- TODO:  not so beautiful here
             if (convert != null && (ArrayType is PlcByte || ArrayType.ElemenType == typeof(byte)))
                 list = Convert.FromBase64String(convert);
 
             if (list != null)
             {
+                //Special handling for byte and char, because of performance (specially with big data)
                 if (ArrayType is PlcByte)
                 {
                     var byteArray = value as byte[];
@@ -155,6 +156,44 @@ namespace Papper.Types
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// This method converts the given binding data to the correct representation data type
+        /// </summary>
+        /// <typeparam name="T">Target type</typeparam>
+        /// <param name="plcObjectBinding"></param>
+        /// <param name="type">instance of target type</param>
+        /// <returns></returns>
+        private object InternalConvert<T>(PlcObjectBinding plcObjectBinding, T type)
+        {
+            
+            if (plcObjectBinding.Data != null && plcObjectBinding.Data.Any())
+            {
+                //special handling of byte and char, because of performance (specially with big data)
+                if (type is byte)
+                {
+                    return plcObjectBinding.RawData.Data.SubArray(plcObjectBinding.Offset, ArrayLength);
+                }
+                else if(type is char)
+                {
+                    return Encoding.ASCII.GetChars(plcObjectBinding.RawData.Data.SubArray(plcObjectBinding.Offset, ArrayLength));
+                }
+                else
+                {
+                    var list = new T[ArrayLength];
+                    for (var i = 0; i < ArrayLength; i++)
+                    {
+                        var child = Childs.OfType<PlcObject>().Skip(i).FirstOrDefault();
+                        if (child == null)
+                            throw new Exception("Array error");
+                        var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + (child.Size.Bytes * i), plcObjectBinding.ValidationTimeInMs);
+                        list[i] = ((T)ArrayType.ConvertFromRaw(binding));
+                    }
+                    return list;
+                }
+            }
+            return new T[ArrayLength]; ;
         }
 
 
@@ -246,37 +285,6 @@ namespace Papper.Types
                 Size.Bytes = Size.Bits / 8;
                 Size.Bits = Size.Bits - Size.Bytes * 8;
             }
-        }
-
-        private object InternalConvert<T>(PlcObjectBinding plcObjectBinding, T type)
-        {
-            
-            if (plcObjectBinding.Data != null && plcObjectBinding.Data.Any())
-            {
-
-                if (type is byte)
-                {
-                    return plcObjectBinding.RawData.Data.SubArray(plcObjectBinding.Offset, ArrayLength);
-                }
-                else if(type is char)
-                {
-                    return Encoding.ASCII.GetChars(plcObjectBinding.RawData.Data.SubArray(plcObjectBinding.Offset, ArrayLength));
-                }
-                else
-                {
-                    var list = new T[ArrayLength];
-                    for (var i = 0; i < ArrayLength; i++)
-                    {
-                        var child = Childs.OfType<PlcObject>().Skip(i).FirstOrDefault();
-                        if (child == null)
-                            throw new Exception("Array error");
-                        var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + (child.Size.Bytes * i), plcObjectBinding.ValidationTimeInMs);
-                        list[i] = ((T)ArrayType.ConvertFromRaw(binding));
-                    }
-                    return list;
-                }
-            }
-            return new T[ArrayLength]; ;
         }
 
         private PlcObject GetIndex(int idx)

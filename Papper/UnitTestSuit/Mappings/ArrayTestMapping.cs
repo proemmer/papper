@@ -17,5 +17,14 @@ namespace UnitTestSuit.Mappings
 
         [ArrayBounds(1, 5000, 0)]
         public Int32[] BigIntArray { get; set; }
+
+        [ArrayBounds(1, 10, 0)]
+        public byte[] ByteElements { get; set; }
+
+        [ArrayBounds(1, 10, 0)]
+        public char[] CharElements { get; set; }
+
+        [ArrayBounds(1, 10, 0)]
+        public Int32[] IntElements { get; set; }
     }
 }
