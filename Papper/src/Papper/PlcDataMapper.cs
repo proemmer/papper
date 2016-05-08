@@ -46,6 +46,7 @@ namespace Papper
 
         #region Properties
         public int ReadDataBlockSize { get; private set; }
+        public int PduSize { get; private set; }
         public event ReadOperation OnRead
         {
             add
@@ -73,6 +74,7 @@ namespace Papper
 
         public PlcDataMapper(int pduSize = PduSizeDefault)
         {
+            PduSize = pduSize;
             ReadDataBlockSize = pduSize - ReadDataHeaderLength;
             if (ReadDataBlockSize <= 0)
                 throw new ArgumentException($"PDU size have to be greater then {ReadDataHeaderLength}", "pduSize");
@@ -202,7 +204,7 @@ namespace Papper
         /// <param name="mapping">name of the mapping</param>
         /// <param name="variable">name of the variable</param>
         /// <returns></returns>
-        public Tuple<string, PlcSize, PlcSize> GetAddressOf(string mapping, string variable)
+        public PlcItemAddress GetAddressOf(string mapping, string variable)
         {
             if (string.IsNullOrWhiteSpace(mapping))
                 throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
@@ -216,8 +218,9 @@ namespace Papper
                 var varibleEntry = entry.Variables.FirstOrDefault(b => b.Key == variable);
                 if(varibleEntry.Key != null)
                 {
-                    return new Tuple<string, PlcSize, PlcSize>(
+                    return new PlcItemAddress(
                         varibleEntry.Value.Item2.Selector,
+                        varibleEntry.Value.Item2.ElemenType,
                         varibleEntry.Value.Item2.Offset,
                         varibleEntry.Value.Item2.Size
                         );
