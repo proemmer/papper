@@ -131,7 +131,7 @@ namespace Papper.Types
                     var byteArray = value as byte[];
                     byteArray.CopyTo(plcObjectBinding.RawData.Data, plcObjectBinding.Offset);
                 }
-                else if (ArrayType is PlcChar)
+                else if (ArrayType is PlcChar && value is char[])
                 {
                     var charArray = value as char[];
                     Encoding.ASCII.GetBytes(charArray).CopyTo(plcObjectBinding.RawData.Data, plcObjectBinding.Offset);
