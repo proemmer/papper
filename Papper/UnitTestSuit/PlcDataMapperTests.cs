@@ -22,14 +22,14 @@ namespace UnitTestSuit
             _papper.OnRead += Papper_OnRead;
             _papper.OnWrite += Papper_OnWrite;
 
-            _papper.AddMapping(typeof(DB_InaxSafety));
+            _papper.AddMapping(typeof(DB_Safety));
             _papper.AddMapping(typeof(ArrayTestMapping));
         }
 
         [Fact]
         public void BitAccessTest()
         {
-            var mapping = "DB_InaxSafety";
+            var mapping = "DB_Safety";
             var accessDict = new Dictionary<string, object> {
                     { "SafeMotion.Slots[0].Commands.TakeoverPermitted", true },
                     { "SafeMotion.Slots[0].Commands.TakeoverRefused", true},
@@ -55,7 +55,7 @@ namespace UnitTestSuit
         [Fact]
         public void Int16AccessTest()
         {
-            var mapping = "DB_InaxSafety";
+            var mapping = "DB_Safety";
             var accessDict = new Dictionary<string, object> {
                     { "SafeMotion.Header.NumberOfActiveSlots",(Int16) 1 },
                     { "SafeMotion.Slots[0].AggregateDBNummer", (Int16)2},
@@ -75,7 +75,7 @@ namespace UnitTestSuit
         [Fact]
         public void UInt16AccessTest()
         {
-            var mapping = "DB_InaxSafety";
+            var mapping = "DB_Safety";
             var accessDict = new Dictionary<string, object> {
                     { "SafeMotion.Slots[0].UnitChecksum", (UInt16)2},
                     { "SafeMotion.Slots[100].UnitChecksum", (UInt16)5},
@@ -90,7 +90,7 @@ namespace UnitTestSuit
         [Fact]
         public void UInt32AccessTest()
         {
-            var mapping = "DB_InaxSafety";
+            var mapping = "DB_Safety";
             var accessDict = new Dictionary<string, object> {
                     { "SafeMotion.Slots[0].HmiId", (UInt32)3},
                     { "SafeMotion.Slots[0].AccessRightReqFromHmiId", (UInt32)4},
@@ -106,7 +106,7 @@ namespace UnitTestSuit
         [Fact]
         public void DateAccessTest()
         {
-            var mapping = "DB_InaxSafety";
+            var mapping = "DB_Safety";
             var accessDict = new Dictionary<string, object> {
                     { "SafeMotion.Header.Generated", Normalize(DateTime.Now)},
                     { "SafeMotion.Slots[0].UnitTimestamp", Normalize(DateTime.Now)},
@@ -174,7 +174,7 @@ namespace UnitTestSuit
         [Fact]
         public void TestStructuralAccess()
         {
-            var mapping = "DB_InaxSafety";
+            var mapping = "DB_Safety";
             var header = new UDT_SafeMotionHeader
             {
                 Generated = Normalize(DateTime.Now),

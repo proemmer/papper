@@ -3,14 +3,12 @@ using System;
 
 namespace UnitTestSuit.Mappings
 {
-    #region InaxSafety
+    #region Safety
     public class UDT_SafeMotionHeader_States
     {
         public bool ChecksumInvalid { get; set; }
         public bool UpdateRequested { get; set; }
     }
-
-
 
     public class UDT_SafeMotionHeader_Commands
     {
@@ -18,15 +16,11 @@ namespace UnitTestSuit.Mappings
         public bool AllSlotsLocked { get; set; }
     }
 
-
-
     public class UDT_SafeMotionSlot_Commands
     {
         public bool TakeoverPermitted { get; set; }
         public bool TakeoverRefused { get; set; }
     }
-
-
 
     public class UDT_SafeMotionSlot_Handshake
     {
@@ -36,8 +30,6 @@ namespace UnitTestSuit.Mappings
         public Int16 HandshakeTime { get; set; }
     }
 
-
-
     public class UDT_SafeMotionSlot_Motion
     {
         public bool ManualEnable1 { get; set; }
@@ -45,8 +37,6 @@ namespace UnitTestSuit.Mappings
         public bool ManualOperation1 { get; set; }
         public bool ManualOperation2 { get; set; }
     }
-
-
 
     public class UDT_SafeMotionHeader
     {
@@ -56,7 +46,6 @@ namespace UnitTestSuit.Mappings
         public UDT_SafeMotionHeader_Commands Commands { get; set; }
 
     }
-
 
     public class UDT_SafeMotionSlot
     {
@@ -74,7 +63,6 @@ namespace UnitTestSuit.Mappings
 
     }
 
-
     public class UDT_SafeMotion
     {
         public UDT_SafeMotionHeader Header { get; set; }
@@ -84,8 +72,8 @@ namespace UnitTestSuit.Mappings
 
     }
 
-    [Mapping("DB_InaxSafety", "DB15", 0)]
-    public class DB_InaxSafety
+    [Mapping("DB_Safety", "DB15", 0)]
+    public class DB_Safety
     {
         public UDT_SafeMotion SafeMotion { get; set; }
 
