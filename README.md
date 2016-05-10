@@ -1,5 +1,5 @@
 # Papper
-Plc Data Mapper is a library to map C# classes to plc blocks to use this blocks like classes.
+Plc Data Mapper is a library to map C# classes to plc blocks to get symbolic access to the plc.
 
 NuGet
 =====
