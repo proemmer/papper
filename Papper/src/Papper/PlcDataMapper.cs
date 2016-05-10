@@ -215,14 +215,14 @@ namespace Papper
             var result = new Dictionary<string, object>();
             if (_mappings.TryGetValue(mapping, out entry))
             {
-                var varibleEntry = entry.Variables.FirstOrDefault(b => b.Key == variable);
-                if(varibleEntry.Key != null)
+                Tuple<int, Types.PlcObject> varibleEntry;
+                if (entry.Variables.TryGetValue(variable, out varibleEntry))
                 {
                     return new PlcItemAddress(
-                        varibleEntry.Value.Item2.Selector,
-                        varibleEntry.Value.Item2.ElemenType,
-                        varibleEntry.Value.Item2.Offset,
-                        varibleEntry.Value.Item2.Size
+                        varibleEntry.Item2.Selector,
+                        varibleEntry.Item2.ElemenType,
+                        varibleEntry.Item2.Offset,
+                        varibleEntry.Item2.Size
                         );
                 }
             }

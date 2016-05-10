@@ -11,6 +11,7 @@ namespace Papper.Common
         public const string Separator = ".";
         private static readonly string[] SplitSeparator = { Separator };
         private readonly List<string> _nodes = new List<string>();
+        private int[] _arrayIndizes;
 
         static public PlcMetaDataTreePath CreateAbsolutePath(params string[] nodeNames)
         {
@@ -98,11 +99,7 @@ namespace Papper.Common
             get
             {
                 var node = _nodes.FirstOrDefault();
-                if (node != null)
-                {
-                    return node.Replace(']', '[').Split(new string[] { "[" }, StringSplitOptions.RemoveEmptyEntries).First();
-                }
-                return string.Empty;
+                return node != null ? node.Split(new[] { "[", "]" }, StringSplitOptions.RemoveEmptyEntries).First() : string.Empty;
             }
         }
 
@@ -110,17 +107,18 @@ namespace Papper.Common
         {
             get
             {
+                if (_arrayIndizes != null)
+                    return _arrayIndizes;
+
                 var node = _nodes.FirstOrDefault();
                 if (node != null)
                 {
-                    var v = node.Replace(']', '[').Split(new string[] { "[" }, StringSplitOptions.RemoveEmptyEntries);
-
-                    if (!node.StartsWith("["))
-                        return v.Skip(1).ToArray().Select(int.Parse).ToArray();
-                    return v.ToArray().Select(int.Parse).ToArray();
-                    
+                    var v = node.Split(new[] { "[", "]" }, StringSplitOptions.RemoveEmptyEntries);
+                    _arrayIndizes = !node.StartsWith("[") ? v.Skip(1).Select(Int32.Parse).ToArray() : v.Select(Int32.Parse).ToArray();
                 }
-                return new int[0];
+                else
+                    _arrayIndizes = new int[0];
+                return _arrayIndizes;
             }
         }
 
