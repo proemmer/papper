@@ -103,7 +103,7 @@ namespace UnitTestSuit.Mappings
 </code></pre>
 
 
-Hear is a small sample for the usage of papper:
+The following code snipet is a small sample for the usage of papper:
 <pre><code>
 var _papper = new PlcDataMapper(960);
 
@@ -119,4 +119,18 @@ result.Value = 100;
 
 _papper.Write(mapping, result);
 
+</code></pre>
+
+
+The interface to the used S7 library have to handle the following calls
+<pre><code>
+private static byte[] Papper_OnRead(string selector, int offset, int length)
+{
+    //call s7 library to read data
+}
+
+private static bool Papper_OnWrite(string selector, int offset, byte[] data, byte bitMask = 0)
+{
+    //call s7 library to write data
+}
 </code></pre>
