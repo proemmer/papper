@@ -120,7 +120,7 @@ namespace Papper.Types
 
             //handle byte array for Json --- TODO:  not so beautiful here
             if (convert != null && (ArrayType is PlcByte || ArrayType.ElemenType == typeof(byte)))
-                list = Convert.FromBase64String(convert);
+                value = list = Convert.FromBase64String(convert);
 
             if (list != null)
             {
