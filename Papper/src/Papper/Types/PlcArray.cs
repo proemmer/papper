@@ -7,7 +7,6 @@ using Papper.Helper;
 using Papper.Interfaces;
 using Papper.Common;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Papper.Types
 {
@@ -121,17 +120,17 @@ namespace Papper.Types
 
             //handle byte array for Json --- TODO:  not so beautiful here
             if (convert != null && (ArrayType is PlcByte || ArrayType.ElemenType == typeof(byte)))
-                list = Convert.FromBase64String(convert);
+                value = list = Convert.FromBase64String(convert);
 
             if (list != null)
             {
                 //Special handling for byte and char, because of performance (specially with big data)
-                if (ArrayType is PlcByte)
+                if (ArrayType is PlcByte &&  value is byte[])
                 {
                     var byteArray = value as byte[];
                     byteArray.CopyTo(plcObjectBinding.RawData.Data, plcObjectBinding.Offset);
                 }
-                else if (ArrayType is PlcChar)
+                else if (ArrayType is PlcChar && value is char[])
                 {
                     var charArray = value as char[];
                     Encoding.ASCII.GetBytes(charArray).CopyTo(plcObjectBinding.RawData.Data, plcObjectBinding.Offset);
@@ -261,8 +260,7 @@ namespace Papper.Types
             {
                 var nodes = new List<string>();
                 var first = path.Nodes.First();
-                first = first.Substring(first.IndexOf(']')+1);
-                nodes.Add(first);
+                nodes.Add(first.Substring(first.IndexOf(']') + 1));
                 nodes.AddRange(path.Nodes.Skip(1));
                 return new PlcMetaDataTreePath(nodes.Aggregate((a, b) => a + PlcMetaDataTreePath.Separator + b));
             }

@@ -2,8 +2,8 @@
   "version": "1.0.2-beta",
   "description": "Papper Class Library",
   "authors": [ "Benjamin Proemmer" ],
-  "tags": [ "" ],
-  "projectUrl": "",
+  "tags": [ "plc S7" ],
+  "projectUrl": "http://proemmer.github.io/papper",
   "licenseUrl": "",
   "frameworks": {
     "dnxcore50": {

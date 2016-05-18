@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace PapperCmd
 {
-    #region InaxSafety
+    #region Safety
     public class UDT_SafeMotionHeader_States
     {
         public bool ChecksumInvalid { get; set; }
@@ -86,8 +86,8 @@ namespace PapperCmd
 
     }
 
-    [Mapping("DB_InaxSafety", "DB15", 0)]
-    public class DB_InaxSafety
+    [Mapping("DB_Safety", "DB15", 0)]
+    public class DB_Safety
     {
         public UDT_SafeMotion SafeMotion { get; set; }
 
@@ -127,7 +127,7 @@ namespace PapperCmd
             papper.OnRead += Papper_OnRead;
             papper.OnWrite += Papper_OnWrite;
 
-            papper.AddMapping(typeof(DB_InaxSafety));
+            papper.AddMapping(typeof(DB_Safety));
 
             PerformReadFull(papper);
             PerformRead(papper);
@@ -141,7 +141,7 @@ namespace PapperCmd
         {
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.DarkGreen;
-            var result = papper.Read("DB_InaxSafety",
+            var result = papper.Read("DB_Safety",
                                      "SafeMotion");
             foreach (var item in result)
             {
@@ -154,7 +154,7 @@ namespace PapperCmd
         {
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.DarkGreen;
-            var result = papper.Read("DB_InaxSafety", 
+            var result = papper.Read("DB_Safety", 
                                      "SafeMotion.Header.NumberOfActiveSlots", 
                                      "SafeMotion.Header.Generated",
                                      "SafeMotion.Slots[42].SlotId",
@@ -185,7 +185,7 @@ namespace PapperCmd
             {
                 Console.WriteLine($"Write:{item.Key} = {item.Value}");
             }
-            var result = papper.Write("DB_InaxSafety", writeData);
+            var result = papper.Write("DB_Safety", writeData);
             Console.ResetColor();
         }
 
