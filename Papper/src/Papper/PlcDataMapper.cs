@@ -39,7 +39,7 @@ namespace Papper
         private const int PduSizeDefault = 480;
         private const int ReadDataHeaderLength = 18;
         private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
-        private readonly IDictionary<string, MappingEntry> _mappings = new Dictionary<string, MappingEntry>();
+        private readonly IDictionary<string, IEntry> _mappings = new Dictionary<string, IEntry>();
         private event ReadOperation _onRead;
         private event WriteOperation _onWrite;
         #endregion
@@ -101,7 +101,7 @@ namespace Papper
         /// <returns></returns>
         public IEnumerable<string> GetVariablesOf(string mapping)
         {
-            MappingEntry entry;
+            IEntry entry;
             var result = new List<string>();
             if (_mappings.TryGetValue(mapping, out entry))
                 return PlcObjectResolver.GetLeafs(entry.PlcObject, result);
@@ -124,9 +124,12 @@ namespace Papper
 
             foreach (var mapping in mappingAttributes)
             {
-                MappingEntry existingMapping;
+                IEntry existingMapping;
                 if (_mappings.TryGetValue(mapping.Name, out existingMapping))
-                    return existingMapping.Mapping == mapping && existingMapping.Type == type;
+                {
+                    var mappingEntry = existingMapping as MappingEntry;
+                    return mappingEntry.Mapping == mapping && mappingEntry.Type == type;
+                }
                 _mappings.Add(mapping.Name, new MappingEntry(mapping, type, _tree, ReadDataBlockSize, mapping.ObservationRate));
             }
             return true;
@@ -143,7 +146,7 @@ namespace Papper
             if (string.IsNullOrWhiteSpace(mapping))
                 throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
 
-            MappingEntry entry;
+            IEntry entry;
             var result = new Dictionary<string, object>();
             if(_mappings.TryGetValue(mapping, out entry))
             {
@@ -160,6 +163,37 @@ namespace Papper
         }
 
         /// <summary>
+        /// Read variables from an given mapping
+        /// </summary>
+        /// <param name="mapping">mapping name specified in the MappingAttribute</param>
+        /// <param name="vars"></param>
+        /// <returns>return a dictionary with all variables and the red value</returns>
+        public Dictionary<string, object> ReadAbs(string from, params string[] vars)
+        {
+            IEntry entry;
+            var result = new Dictionary<string, object>();
+            var key = $"$ABSSYMBOLS$_{from}";
+            if (!_mappings.TryGetValue(key, out entry))
+            {
+                entry = new RawEntry(from, _tree, ReadDataBlockSize, 0);
+                _mappings.Add(key, entry);
+            }
+
+            if(entry != null)
+            { 
+                foreach (var execution in entry.GetOperations(vars))
+                {
+                    if (ExecuteRead(execution))
+                    {
+                        foreach (var item in execution.Bindings)
+                            result.Add(item.Key, item.Value.ConvertFromRaw());
+                    }
+                }
+            }
+            return result;
+        }
+
+        /// <summary>
         /// Write values to variables of an given mapping
         /// </summary>
         /// <param name="mapping">mapping name specified in the MappingAttribute</param>
@@ -170,7 +204,7 @@ namespace Papper
             if (string.IsNullOrWhiteSpace(mapping))
                 throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
 
-            MappingEntry entry;
+            IEntry entry;
             var result = true;
             if (_mappings.TryGetValue(mapping, out entry))
             {
@@ -211,7 +245,7 @@ namespace Papper
             if (string.IsNullOrWhiteSpace(variable))
                 throw new ArgumentException("The given argument could not be null or whitespace.", "variable");
 
-            MappingEntry entry;
+            IEntry entry;
             var result = new Dictionary<string, object>();
             if (_mappings.TryGetValue(mapping, out entry))
             {

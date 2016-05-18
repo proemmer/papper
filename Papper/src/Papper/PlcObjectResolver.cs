@@ -43,8 +43,9 @@ namespace Papper
         /// <param name="plcObj"></param>
         /// <param name="plcObjects"></param>
         /// <param name="values"></param>
-        private static void AddRawPlcObjects(ITreeNode plcObj, ref Dictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values)
+        internal static bool AddRawPlcObjects(ITreeNode plcObj, Dictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values)
         {
+            var updated = false;
             foreach (var value in values)
             {
                 PlcObject plcObject = null;
@@ -136,10 +137,15 @@ namespace Papper
                         }
                     }
                     plcObject.Offset.Bytes = Int32.Parse(parts.First());
-                    plcObjects.Add(value, new Tuple<int, PlcObject>(0, plcObject));
+                    if (!plcObjects.ContainsKey(value))
+                    {
+                        plcObjects.Add(value, new Tuple<int, PlcObject>(0, plcObject));
+                        updated = true;
+                    }
 
                 }
             }
+            return updated;
         }
 
         /// <summary>
