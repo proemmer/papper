@@ -2,10 +2,12 @@
 using Papper.Common;
 using Papper.Helper;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 
 namespace Papper
 {
@@ -39,7 +41,8 @@ namespace Papper
         private const int PduSizeDefault = 480;
         private const int ReadDataHeaderLength = 18;
         private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
-        private readonly IDictionary<string, IEntry> _mappings = new Dictionary<string, IEntry>();
+        private readonly ConcurrentDictionary<string, IEntry> _mappings = new ConcurrentDictionary<string, IEntry>();
+        private readonly ReaderWriterLockSlim _mappingsLock = new ReaderWriterLockSlim();
         private event ReadOperation _onRead;
         private event WriteOperation _onWrite;
         #endregion
@@ -124,13 +127,18 @@ namespace Papper
 
             foreach (var mapping in mappingAttributes)
             {
+
                 IEntry existingMapping;
-                if (_mappings.TryGetValue(mapping.Name, out existingMapping))
+                using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
                 {
-                    var mappingEntry = existingMapping as MappingEntry;
-                    return mappingEntry.Mapping == mapping && mappingEntry.Type == type;
-                }
-                _mappings.Add(mapping.Name, new MappingEntry(mapping, type, _tree, ReadDataBlockSize, mapping.ObservationRate));
+                    if (_mappings.TryGetValue(mapping.Name, out existingMapping))
+                    {
+                        var mappingEntry = existingMapping as MappingEntry;
+                        return mappingEntry.Mapping == mapping && mappingEntry.Type == type;
+                    }
+                    using (upgradeableGuard.UpgradeToWriterLock())
+                        _mappings.TryAdd(mapping.Name, new MappingEntry(mapping, type, _tree, ReadDataBlockSize, mapping.ObservationRate));
+                } 
             }
             return true;
         }
@@ -173,10 +181,14 @@ namespace Papper
             IEntry entry;
             var result = new Dictionary<string, object>();
             var key = $"$ABSSYMBOLS$_{from}";
-            if (!_mappings.TryGetValue(key, out entry))
+            using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
             {
-                entry = new RawEntry(from, _tree, ReadDataBlockSize, 0);
-                _mappings.Add(key, entry);
+                if (!_mappings.TryGetValue(key, out entry))
+                {
+                    entry = new RawEntry(from, _tree, ReadDataBlockSize, 0);
+                    using (upgradeableGuard.UpgradeToWriterLock())
+                        _mappings.TryAdd(key, entry);
+                }
             }
 
             if(entry != null)
@@ -206,7 +218,51 @@ namespace Papper
 
             IEntry entry;
             var result = true;
-            if (_mappings.TryGetValue(mapping, out entry))
+            if (!_mappings.TryGetValue(mapping, out entry))
+                return result;
+
+            foreach (var execution in entry.GetOperations(values.Keys.ToArray()))
+            {
+                foreach (var binding in execution.Bindings)
+                {
+                    if (!binding.Value.MetaData.IsReadOnly)
+                    {
+                        lock (binding.Value.RawData)
+                        {
+                            binding.Value.ConvertToRaw(values[binding.Key]);
+                            if (!Write(binding.Value))
+                            {
+                                Debug.WriteLine($"Error writing {binding.Key}");
+                                result = false;
+                            }
+                        }
+                    }
+                    else
+                        throw new UnauthorizedAccessException($"You could not write the variable {binding.Key} because you have only read access to it!");
+                }
+            }
+
+            return result;
+        }
+
+
+        public bool WriteAbs(string to, Dictionary<string, object> values)
+        {
+            
+            IEntry entry;
+            var result = true;
+            var key = $"$ABSSYMBOLS$_{to}";
+            using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
+            {
+                if (!_mappings.TryGetValue(key, out entry))
+                {
+                    entry = new RawEntry(to, _tree, ReadDataBlockSize, 0);
+                    using (upgradeableGuard.UpgradeToWriterLock())
+                        _mappings.TryAdd(key, entry);
+                }
+            }
+
+            if (entry != null)
             {
                 foreach (var execution in entry.GetOperations(values.Keys.ToArray()))
                 {
