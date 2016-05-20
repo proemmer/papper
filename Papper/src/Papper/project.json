@@ -1,27 +1,31 @@
 {
-  "version": "1.0.2-beta",
-  "description": "Papper Class Library",
+  "version": "1.0.2-beta2",
+  "description": "Papper (Plc Data Mapper)",
   "authors": [ "Benjamin Proemmer" ],
-  "tags": [ "plc S7" ],
-  "projectUrl": "http://proemmer.github.io/papper",
-  "licenseUrl": "",
+  "title": "papper",
+  "copyright": "Copyright 2016",
+  "packOptions": {
+    "tags": [ "siemens plc datamapper S7" ],
+    "projectUrl": "http://proemmer.github.io/papper",
+    "licenseUrl": "https://opensource.org/licenses/Apache-2.0"
+  },
   "frameworks": {
-    "dnxcore50": {
-      "dependencies": {
-        "Microsoft.CSharp": "4.0.1-beta-23516",
-        "System.Collections": "4.0.11-beta-23516",
-        "System.Linq": "4.0.1-beta-23516",
-        "System.Threading": "4.0.11-beta-23516"
-      }
+    "netstandard1.5": {
+      "imports": [ "dnxcore50", "portable-net45+win8", "portable-net452+win81" ]
     }
   },
   "dependencies": {
-    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-rc1-final",
-    "System.Collections.Immutable": "1.1.38-beta-23516",
-    "System.ComponentModel.Annotations": "4.0.11-beta-23516",
-    "System.Reflection.Extensions": "4.0.1-beta-23516",
-    "System.Runtime": "4.0.21-beta-23516",
-    "System.Text.Encoding": "4.0.11-beta-23516",
-    "System.Threading.Tasks.Parallel": "4.0.1-beta-23516"
+    "NETStandard.Library": "1.5.0-rc2-24027",
+    "Microsoft.CSharp": "4.0.1-rc2-24027",
+    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-rc2-final",
+    "System.Collections": "4.0.11-rc2-24027",
+    "System.Collections.Immutable": "1.2.0-rc2-24027",
+    "System.ComponentModel.Annotations": "4.1.0-rc2-24027",
+    "System.Linq": "4.1.0-rc2-24027",
+    "System.Reflection.Extensions": "4.0.1-rc2-24027",
+    "System.Runtime": "4.1.0-rc2-24027",
+    "System.Text.Encoding": "4.0.11-rc2-24027",
+    "System.Threading": "4.0.11-rc2-24027",
+    "System.Threading.Tasks.Parallel": "4.0.1-rc2-24027"
   }
 }

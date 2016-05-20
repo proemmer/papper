@@ -2,17 +2,23 @@
   "version": "1.0.0-*",
   "description": "PapperCmd Console Application",
   "authors": [ "Benjamin" ],
-  "tags": [ "" ],
-  "projectUrl": "",
-  "licenseUrl": "",
 
-  "compilationOptions": {
+  "buildOptions": {
     "emitEntryPoint": true
   },
 
   "dependencies": {
-    "Papper": "1.0.2-beta",
-    "System.Console": "4.0.0-beta-23516"
+    "Microsoft.NETCore.App": {
+      "type": "platform",
+      "version": "1.0.0-rc2-3002702"
+    },
+    "NETStandard.Library": "1.5.0-rc2-24027",
+    "Microsoft.CSharp": "4.0.1-rc2-24027",
+    "System.Collections": "4.0.11-rc2-24027",
+    "System.Linq": "4.1.0-rc2-24027",
+    "System.Runtime": "4.1.0-rc2-24027",
+    "System.Threading": "4.0.11-rc2-24027",
+    "Papper": "1.0.2-beta2"
   },
 
   "commands": {
@@ -20,14 +26,8 @@
   },
 
   "frameworks": {
-    "dnxcore50": {
-      "dependencies": {
-        "Microsoft.CSharp": "4.0.1-beta-23516",
-        "System.Collections": "4.0.11-beta-23516",
-        "System.Linq": "4.0.1-beta-23516",
-        "System.Runtime": "4.0.21-beta-23516",
-        "System.Threading": "4.0.11-beta-23516"
-      }
+    "netcoreapp1.0": {
+      "imports": "dnxcore50"
     }
   }
 }

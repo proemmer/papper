@@ -171,7 +171,7 @@ namespace Papper
         }
 
         /// <summary>
-        /// Read variables from an given mapping
+        /// Read variables from an given address
         /// </summary>
         /// <param name="mapping">mapping name specified in the MappingAttribute</param>
         /// <param name="vars"></param>
@@ -245,7 +245,12 @@ namespace Papper
             return result;
         }
 
-
+        /// <summary>
+        /// Write values from an given address
+        /// </summary>
+        /// <param name="to"></param>
+        /// <param name="values"></param>
+        /// <returns></returns>
         public bool WriteAbs(string to, Dictionary<string, object> values)
         {
             
