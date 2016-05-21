@@ -220,14 +220,17 @@ namespace PapperCmd
             var are = new AutoResetEvent(false);
             OnChangeEventHandler callback = (s, e) => 
             {
-                Console.WriteLine($"DataChanged detected:{e.From} = {e}");
+                Console.WriteLine($"On DataChanged :{e.From}:");
+                foreach (var item in e)
+                    Console.WriteLine($"DataChanged detected:{e.From}: {item.Key} = {item.Value}");
                 are.Set();
             };
             papper.SubscribeDataChanges("DB_Safety", callback);
             papper.SetActiveState(true, "DB_Safety", writeData.Keys.ToArray());
 
             //waiting for initialize
-            are.WaitOne(5000);
+            if (!are.WaitOne(10000))
+                Console.WriteLine($"Error-> change!!!!!");
 
             foreach (var item in writeData)
                 Console.WriteLine($"Write:{item.Key} = {item.Value}");
@@ -235,10 +238,11 @@ namespace PapperCmd
             var result = papper.Write("DB_Safety", writeData);
 
             //waiting for write update
-            are.WaitOne(5000);
+            if(!are.WaitOne(10000))
+                Console.WriteLine($"Error-> change!!!!!");
 
             //test if data change only occurred if data changed
-            if(are.WaitOne(5000))
+            if (are.WaitOne(5000))
                 Console.WriteLine($"Error-> no change!!!!!");
 
             papper.SetActiveState(false, "DB_Safety", writeData.Keys.ToArray());

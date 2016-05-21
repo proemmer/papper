@@ -20,6 +20,19 @@ namespace Papper.Entries
         private event OnChangeEventHandler EventHandler;
         private bool _isWatching;
         private CancellationTokenSource _cs;
+
+
+        private class LruState
+        {
+            public DateTime LastUsage { get; set; }
+            public byte[] Data { get; set; }
+
+            public LruState(int size)
+            {
+                Data = new byte[size];
+            }
+        }
+
         
 
         public string Name { get; private set; }
@@ -187,8 +200,6 @@ namespace Papper.Entries
             if (_cs != null)
                 _cs.Dispose();
 
-           
-
             _cs = new CancellationTokenSource();
             Task.Factory.StartNew(() =>
             {
@@ -196,43 +207,55 @@ namespace Papper.Entries
                 {
                     Debug.WriteLine($"ChangeDetection for {Name} activated!");
                     _isWatching = true;
-                    var forceUpdate = true;
-                    var activeBindings = _bindings.Where(x => x.Value.IsActive).ToList();
-                    var states = new Dictionary<PlcRawData, byte[]>();
-                    var values = new Dictionary<string, byte[]>();
+                    var states = new Dictionary<string, LruState>();
 
                     while (!_cs.IsCancellationRequested)
                     {
                         try
                         {
-                            var force = forceUpdate;
+                            //initialize
                             _cs.Token.ThrowIfCancellationRequested();
-                            var executions = CreateExecutions(null, true);
                             var changed = new Dictionary<string, object>();
+                            var cycleStart = DateTime.Now;
 
-                            foreach (var execution in executions)
+                            //Read and check changes
+                            foreach (var execution in CreateExecutions(null, true))
                             {
                                 _cs.Token.ThrowIfCancellationRequested();
-                                byte[] raw = null;
-                                states.TryGetValue(execution.PlcRawData, out raw);
-
-                                if(_mapper.ReadRawIfDataChanged(execution, ref raw))
+                                lock (execution.PlcRawData)
                                 {
                                     _cs.Token.ThrowIfCancellationRequested();
-                                    foreach (var binding in execution.Bindings)
+                                    if (_mapper.ExecuteRead(execution))
                                     {
-                                        byte[] value;
-                                        if(!values.TryGetValue(binding.Key, out value) || !binding.Value.Data.SequenceEqual(binding.Value.Offset, value, binding.Value.Offset, binding.Value.Size))
+                                        foreach (var binding in execution.Bindings)
                                         {
-                                            changed.Add(binding.Key,binding.Value.ConvertFromRaw());
+                                            _cs.Token.ThrowIfCancellationRequested();
+                                            LruState saved = null;
+                                            var size = binding.Value.Size == 0 ? 1 : binding.Value.Size;
+                                            if (!states.TryGetValue(binding.Key, out saved) || 
+                                                (binding.Value.Size == 0 
+                                                    ? binding.Value.Data[binding.Value.Offset].GetBit(binding.Value.MetaData.Offset.Bits) != saved.Data[0].GetBit(binding.Value.MetaData.Offset.Bits)
+                                                    : !binding.Value.Data.SequenceEqual(binding.Value.Offset, saved.Data,0, size)))
+                                            {
+                                                changed.Add(binding.Key, binding.Value.ConvertFromRaw());
+                                                if(saved == null)
+                                                {
+                                                    saved = new LruState(size);
+                                                    states.Add(binding.Key,saved);
+                                                }
+                                                Array.Copy(execution.PlcRawData.Data, binding.Value.Offset, saved.Data, 0, size);
+                                            }
+
+                                            if(saved != null)
+                                                saved.LastUsage = cycleStart;
                                         }
-                                        values[binding.Key] = binding.Value.Data;
                                     }
                                 }
                             }
 
                             if (changed.Any())
                             {
+                                //Publish changes
                                 _cs.Token.ThrowIfCancellationRequested();
                                 lock (_eventHandlerLock)
                                 {
@@ -241,6 +264,9 @@ namespace Papper.Entries
                                 }
                             }
 
+                            //Remove unused states
+                            foreach (var state in states.Where(x => x.Value.LastUsage < cycleStart).ToList())
+                                states.Remove(state.Key);
                         }
                         catch (OperationCanceledException)
                         {

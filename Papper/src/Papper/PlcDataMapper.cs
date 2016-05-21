@@ -332,7 +332,7 @@ namespace Papper
         
         #region internal read write operations
 
-        private bool ExecuteRead(Execution exec)
+        internal bool ExecuteRead(Execution exec)
         {
             if (exec.Partitions != null)
             {
@@ -448,23 +448,6 @@ namespace Papper
 
                 var bitData = rawData.Data.SubArray(binding.Offset,1);
                 return _onWrite(rawData.Selector, offset, bitData, Converter.SetBit(0, binding.MetaData.Offset.Bits, true));
-            }
-        }
-
-        internal bool ReadRawIfDataChanged(Execution execution, ref byte[] data)
-        {
-            var raw = execution.PlcRawData;
-            lock (raw)
-            {
-                var dataLength = raw.Size == 0 ? 1 : raw.Size;
-                if (ExecuteRead(execution) && (data == null || !raw.Data.SequenceEqual(raw.Offset, data, 0, dataLength)))
-                {
-                    if (data == null)
-                        data = new byte[dataLength];
-                    Array.Copy(raw.Data, raw.Offset, data, 0, dataLength);
-                    return true;
-                }
-                return false;
             }
         }
 
