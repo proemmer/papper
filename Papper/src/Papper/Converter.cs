@@ -214,6 +214,35 @@ namespace Papper
             return (byte)(data & (~(1U << bit)));
         }
 
+        public static bool SequenceEqual<TSource>(this IEnumerable<TSource> first, int firstStartIndex, IEnumerable<TSource> second, int secondStartIndex, int length = -1, IEqualityComparer<TSource> comparer = null)
+        {
+            if (comparer == null) comparer = EqualityComparer<TSource>.Default; ;
+            if (first == null) throw new ArgumentNullException("first");
+            if (second == null) throw new ArgumentNullException("second");
+            using (IEnumerator<TSource> e1 = first.GetEnumerator())
+            using (IEnumerator<TSource> e2 = second.GetEnumerator())
+            {
+                var skip = Math.Max(firstStartIndex, secondStartIndex);
+                for (int i = 0; i < skip; i++)
+                {
+                    if (i < firstStartIndex)
+                        e1.MoveNext();
+                    if(i < secondStartIndex)
+                        e2.MoveNext();
+                }
+                var index = 0;
+                while (e1.MoveNext())
+                {
+                    if (!(e2.MoveNext() && comparer.Equals(e1.Current, e2.Current))) return false;
+                    index++;
+                    if (length > 0 && index >= length)
+                        return true;
+                }
+                if (e2.MoveNext()) return false;
+            }
+            return true;
+        }
+
         public static T[] SubArray<T>(this T[] data, int skip, int length = -1, bool realloc = false)
         {
             var dataLength = data.Length;

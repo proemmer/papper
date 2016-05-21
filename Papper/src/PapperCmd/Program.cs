@@ -2,6 +2,9 @@
 using Papper.Attributes;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace PapperCmd
 {
@@ -135,6 +138,7 @@ namespace PapperCmd
             PerformRead(papper);
             PerformWrite(papper);
             PerformRead(papper);
+            PerformDataChange(papper);
         }
 
         private static void PerformReadFull(PlcDataMapper papper)
@@ -200,6 +204,47 @@ namespace PapperCmd
             }
             plcblock.UpdateBlockSize(minSize);
             return plcblock;
+        }
+
+        private async static void PerformDataChange(PlcDataMapper papper)
+        {
+            Console.WriteLine();
+            Console.WriteLine($"Start PerformDataChange");
+            Console.ForegroundColor = ConsoleColor.Red;
+            var writeData = new Dictionary<string, object> {
+                    { "SafeMotion.Slots[15].SlotId", 3},
+                    { "SafeMotion.Slots[15].HmiId", 4},
+                    { "SafeMotion.Slots[15].Commands.TakeoverPermitted", !_toggle ? true : false },
+                };
+            _toggle = !_toggle;
+            var are = new AutoResetEvent(false);
+            OnChangeEventHandler callback = (s, e) => 
+            {
+                Console.WriteLine($"DataChanged detected:{e.From} = {e}");
+                are.Set();
+            };
+            papper.SubscribeDataChanges("DB_Safety", callback);
+            papper.SetActiveState(true, "DB_Safety", writeData.Keys.ToArray());
+
+            //waiting for initialize
+            are.WaitOne(5000);
+
+            foreach (var item in writeData)
+                Console.WriteLine($"Write:{item.Key} = {item.Value}");
+
+            var result = papper.Write("DB_Safety", writeData);
+
+            //waiting for write update
+            are.WaitOne(5000);
+
+            //test if data change only occurred if data changed
+            if(are.WaitOne(5000))
+                Console.WriteLine($"Error-> no change!!!!!");
+
+            papper.SetActiveState(false, "DB_Safety", writeData.Keys.ToArray());
+            papper.UnsubscribeChanges("DB_Safety", callback);
+            Console.ResetColor();
+            Console.WriteLine($"Finished PerformDataChange");
         }
 
         private static bool Papper_OnWrite(string selector, int offset, byte[] data, byte bitMask = 0)

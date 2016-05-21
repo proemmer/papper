@@ -234,6 +234,8 @@ namespace Papper
         /// </summary>
         internal static PlcObject GetMapping(string name, ITree tree, Type t)
         {
+            if (string.IsNullOrWhiteSpace(name))
+                return null;
             ITreeNode obj;
             var nodePathStack = new Stack<string>();
             nodePathStack.Push(RootNodeName);

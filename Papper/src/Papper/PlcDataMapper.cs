@@ -1,5 +1,6 @@
 ﻿using Papper.Attributes;
 using Papper.Common;
+using Papper.Entries;
 using Papper.Helper;
 using System;
 using System.Collections.Concurrent;
@@ -11,6 +12,10 @@ using System.Threading;
 
 namespace Papper
 {
+    public delegate void OnChangeEventHandler(object sender, PlcNotificationEventArgs e);
+    public delegate void OnConnectionChangeEventHandler(object sender, PlcConnectionNotificationEventArgs e);
+
+
     // This project can output the Class library as a NuGet Package.
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
     public class PlcDataMapper
@@ -137,7 +142,7 @@ namespace Papper
                         return mappingEntry.Mapping == mapping && mappingEntry.Type == type;
                     }
                     using (upgradeableGuard.UpgradeToWriterLock())
-                        _mappings.TryAdd(mapping.Name, new MappingEntry(mapping, type, _tree, ReadDataBlockSize, mapping.ObservationRate));
+                        _mappings.TryAdd(mapping.Name, new MappingEntry(this, mapping, type, _tree, ReadDataBlockSize, mapping.ObservationRate));
                 } 
             }
             return true;
@@ -185,7 +190,7 @@ namespace Papper
             {
                 if (!_mappings.TryGetValue(key, out entry))
                 {
-                    entry = new RawEntry(from, _tree, ReadDataBlockSize, 0);
+                    entry = new RawEntry(this, from, _tree, ReadDataBlockSize, 0);
                     using (upgradeableGuard.UpgradeToWriterLock())
                         _mappings.TryAdd(key, entry);
                 }
@@ -261,7 +266,7 @@ namespace Papper
             {
                 if (!_mappings.TryGetValue(key, out entry))
                 {
-                    entry = new RawEntry(to, _tree, ReadDataBlockSize, 0);
+                    entry = new RawEntry(this, to, _tree, ReadDataBlockSize, 0);
                     using (upgradeableGuard.UpgradeToWriterLock())
                         _mappings.TryAdd(key, entry);
                 }
@@ -323,6 +328,8 @@ namespace Papper
             }
             throw new KeyNotFoundException($"There is variable <{variable}> for mapping <{mapping}>");
         }
+        
+        
         #region internal read write operations
 
         private bool ExecuteRead(Execution exec)
@@ -442,6 +449,68 @@ namespace Papper
                 var bitData = rawData.Data.SubArray(binding.Offset,1);
                 return _onWrite(rawData.Selector, offset, bitData, Converter.SetBit(0, binding.MetaData.Offset.Bits, true));
             }
+        }
+
+        internal bool ReadRawIfDataChanged(Execution execution, ref byte[] data)
+        {
+            var raw = execution.PlcRawData;
+            lock (raw)
+            {
+                var dataLength = raw.Size == 0 ? 1 : raw.Size;
+                if (ExecuteRead(execution) && (data == null || !raw.Data.SequenceEqual(raw.Offset, data, 0, dataLength)))
+                {
+                    if (data == null)
+                        data = new byte[dataLength];
+                    Array.Copy(raw.Data, raw.Offset, data, 0, dataLength);
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region active polling
+
+
+        public bool SubscribeDataChanges(string mapping, OnChangeEventHandler callback)
+        {
+            IEntry entry;
+            if (_mappings.TryGetValue(mapping, out entry))
+            {
+                entry.OnChange += callback;
+                return true;
+            }
+            return false;
+        }
+
+        public bool UnsubscribeChanges(string mapping, OnChangeEventHandler callback)
+        {
+            IEntry entry;
+            if (_mappings.TryGetValue(mapping, out entry))
+            {
+                entry.OnChange -= callback;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Activate or deactivate data change detection
+        /// </summary>
+        /// <param name="enable"></param>
+        /// <param name="mapping"></param>
+        /// <param name="vars"></param>
+        /// <returns></returns>
+        public bool SetActiveState(bool enable, string mapping, params string[] vars)
+        {
+            if (string.IsNullOrWhiteSpace(mapping))
+                throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
+            IEntry entry;
+            var result = new Dictionary<string, object>();
+            if (_mappings.TryGetValue(mapping, out entry))
+                return entry.SetActiveState(enable, vars);
+            return false;
         }
 
         #endregion
