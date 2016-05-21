@@ -1,5 +1,5 @@
 {
-  "version": "1.0.2-beta2",
+  "version": "1.0.2-beta3",
   "description": "Papper (Plc Data Mapper)",
   "authors": [ "Benjamin Proemmer" ],
   "title": "papper",
@@ -12,6 +12,9 @@
   "frameworks": {
     "netstandard1.5": {
       "imports": [ "dnxcore50", "portable-net45+win8", "portable-net452+win81" ]
+    },
+    "dnxcore50": {
+
     }
   },
   "dependencies": {

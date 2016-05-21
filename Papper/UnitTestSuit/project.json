@@ -24,6 +24,9 @@
         "dnxcore50",
         "portable-net452+win81"
       ]
+    },
+    "dnxcore50": {
+
     }
   }
 }
