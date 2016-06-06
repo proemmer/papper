@@ -43,6 +43,7 @@ namespace Papper
         #endregion
 
         #region Fields
+        private const string ADDRESS_PREFIX = "$ABSSYMBOLS$_";
         private const int PduSizeDefault = 480;
         private const int ReadDataHeaderLength = 18;
         private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
@@ -498,7 +499,7 @@ namespace Papper
         public bool SubscribeRawDataChanges(string area, OnChangeEventHandler callback)
         {
             IEntry entry;
-            var key = $"$ABSSYMBOLS$_{area}";
+            var key = $"{ADDRESS_PREFIX}{area}";
             using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
             {
                 if (!_mappings.TryGetValue(key, out entry))
@@ -522,7 +523,7 @@ namespace Papper
         public bool UnsubscribeRawDataChanges(string area, OnChangeEventHandler callback)
         {
             IEntry entry;
-            var key = $"$ABSSYMBOLS$_{area}";
+            var key = $"{ADDRESS_PREFIX}{area}";
             if (_mappings.TryGetValue(key, out entry))
             {
                 entry.OnChange -= callback;
