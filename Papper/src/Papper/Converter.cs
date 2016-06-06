@@ -11,6 +11,12 @@ namespace Papper
     {
         private const string HexDigits = "0123456789ABCDEF";
 
+        /// <summary>
+        /// Convert numeric values to a byte array with swapped bytes
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static byte[] SetSwap<T>(this T value)
         {
             byte[] buffer = null;
@@ -43,6 +49,12 @@ namespace Papper
             return buffer;
         }
 
+        /// <summary>
+        /// Convert numeric values to a byte array
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static byte[] SetNoSwap<T>(this T value)
         {
             byte[] buffer = null;
@@ -76,11 +88,25 @@ namespace Papper
             return buffer;
         }
 
+        /// <summary>
+        /// Extract a numeric value from an IEnumerable of byte with swapped bytes
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
         public static T GetSwap<T>(this IEnumerable<byte> buffer, int offset = 0)
         {
             return buffer.Skip(offset).Take(sizeof(Single)).ToArray().GetSwap<T>();
         }
 
+        /// <summary>
+        /// Extract a numeric value from an byte array with swapped bytes
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
         public static T GetSwap<T>(this byte[] buffer, int offset = 0)
         {
             object value = default(T);
@@ -113,11 +139,25 @@ namespace Papper
             return (T)value;
         }
 
+        /// <summary>
+        /// Extract a numeric value from an IEnumerable of byte
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
         public static T GetNoSwap<T>(this IEnumerable<byte> buffer, int offset = 0)
         {
             return buffer.Skip(offset).Take(sizeof(Single)).ToArray().GetNoSwap<T>();
         }
 
+        /// <summary>
+        /// Extract a numeric value from an byte array
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
         public static T GetNoSwap<T>(this byte[] buffer, int offset = 0)
         {
             object value = default(T);
@@ -150,6 +190,11 @@ namespace Papper
             return (T)value;
         }
 
+        /// <summary>
+        /// Swap bytes in a word
+        /// </summary>
+        /// <param name="word"></param>
+        /// <returns></returns>
         public static UInt16 SwapWord(this UInt16 word)
         {
             return (UInt16)(
@@ -157,6 +202,11 @@ namespace Papper
                     ((word & 0xFF00U) >> 8));
         }
 
+        /// <summary>
+        /// swap bytes in a dword
+        /// </summary>
+        /// <param name="dword"></param>
+        /// <returns></returns>
         public static UInt32 SwapDWord(this UInt32 dword)
         {
             return (
@@ -167,6 +217,11 @@ namespace Papper
                     );
         }
 
+        /// <summary>
+        /// swap bytes in an integer
+        /// </summary>
+        /// <param name="intVal"></param>
+        /// <returns></returns>
         public static Int16 SwapInt(this Int16 intVal)
         {
             var buffer = new byte[2];
@@ -176,6 +231,11 @@ namespace Papper
             return BitConverter.ToInt16(buffer, 0);
         }
 
+        /// <summary>
+        /// swap bytes in an double integer
+        /// </summary>
+        /// <param name="intVal"></param>
+        /// <returns></returns>
         public static Int32 SwapDInt(this Int32 intVal)
         {
             var buffer = new byte[4];
@@ -187,6 +247,12 @@ namespace Papper
             return BitConverter.ToInt32(buffer, 0);
         }
 
+
+        /// <summary>
+        /// swap bytes in an single
+        /// </summary>
+        /// <param name="intVal"></param>
+        /// <returns></returns>
         public static Single SwapSingle(this Single intVal)
         {
             var buffer = new byte[4];
@@ -198,6 +264,12 @@ namespace Papper
             return BitConverter.ToSingle(buffer, 0);
         }
 
+        /// <summary>
+        /// Get a bit by its nummer brom a byte
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="bit"></param>
+        /// <returns></returns>
         public static bool GetBit(this byte data, int bit)
         {
             // Shift the bit to the first location
@@ -207,6 +279,13 @@ namespace Papper
             return (data & 1) == 1;
         }
 
+        /// <summary>
+        /// Set a bit by its number in a byte
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="bit"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static byte SetBit(this byte data, int bit, bool value)
         {
             if (value)
@@ -214,6 +293,17 @@ namespace Papper
             return (byte)(data & (~(1U << bit)));
         }
 
+        /// <summary>
+        /// Sequential Equal with offset and length specification
+        /// </summary>
+        /// <typeparam name="TSource"></typeparam>
+        /// <param name="first"></param>
+        /// <param name="firstStartIndex"></param>
+        /// <param name="second"></param>
+        /// <param name="secondStartIndex"></param>
+        /// <param name="length"></param>
+        /// <param name="comparer"></param>
+        /// <returns></returns>
         public static bool SequenceEqual<TSource>(this IEnumerable<TSource> first, int firstStartIndex, IEnumerable<TSource> second, int secondStartIndex, int length = -1, IEqualityComparer<TSource> comparer = null)
         {
             if (comparer == null) comparer = EqualityComparer<TSource>.Default; ;
@@ -243,6 +333,15 @@ namespace Papper
             return true;
         }
 
+        /// <summary>
+        /// Extract subarray from byte array
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="data"></param>
+        /// <param name="skip"></param>
+        /// <param name="length"></param>
+        /// <param name="realloc"></param>
+        /// <returns></returns>
         public static T[] SubArray<T>(this T[] data, int skip, int length = -1, bool realloc = false)
         {
             var dataLength = data.Length;
@@ -255,7 +354,13 @@ namespace Papper
             return result;
         }
 
-
+        /// <summary>
+        /// Convert a struct to a byte array
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="value"></param>
+        /// <param name="maxLength"></param>
+        /// <returns></returns>
         public static byte[] ToByteArray<T>(this T value, int maxLength)
         {
             var rawdata = new byte[Marshal.SizeOf(value)];
@@ -270,6 +375,12 @@ namespace Papper
             return temp;
         }
 
+        /// <summary>
+        /// Convert a byte array to a struct
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="rawValue"></param>
+        /// <returns></returns>
         public static T FromByteArray<T>(this byte[] rawValue)
         {
             var handle = GCHandle.Alloc(rawValue, GCHandleType.Pinned);
@@ -278,6 +389,11 @@ namespace Papper
             return structure;
         }
 
+        /// <summary>
+        /// Get bcd value from byte
+        /// </summary>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static int GetBcdByte(this byte b)
         {
             //Acepted Values 00 to 99
@@ -290,6 +406,11 @@ namespace Papper
             return bt1;
         }
 
+        /// <summary>
+        /// Set bcd value in byte
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static byte SetBcdByte(this int value)
         {
             int b0 = 0, b1 = 0;
@@ -302,6 +423,12 @@ namespace Papper
             return (byte)((b1 << 4) + b0);
         }
 
+        /// <summary>
+        /// Get bcd word from byte array
+        /// </summary>
+        /// <param name="b"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
         public static int GetBcdWord(this byte[] b, int offset = 0)
         {
             int bt1 = b[offset];
@@ -314,6 +441,12 @@ namespace Papper
             return (neg ? (bt1 * 100 + bt2) * -1 : bt1 * 100 + bt2);
         }
 
+        /// <summary>
+        /// set bcd word in byte array
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
         public static byte[] SetBcdWord(this int value, int offset = 0)
         {
             //Acepted Values -999 to +999

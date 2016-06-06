@@ -251,7 +251,7 @@ namespace Papper
         }
 
         /// <summary>
-        /// Write values from an given address
+        /// Write values to a given address
         /// </summary>
         /// <param name="to"></param>
         /// <param name="values"></param>
@@ -455,7 +455,12 @@ namespace Papper
 
         #region active polling
 
-
+        /// <summary>
+        /// Subscribe to changes of symbolic variables
+        /// </summary>
+        /// <param name="mapping">Name of the registered mappings</param>
+        /// <param name="callback">Callback method</param>
+        /// <returns></returns>
         public bool SubscribeDataChanges(string mapping, OnChangeEventHandler callback)
         {
             IEntry entry;
@@ -467,10 +472,58 @@ namespace Papper
             return false;
         }
 
-        public bool UnsubscribeChanges(string mapping, OnChangeEventHandler callback)
+        /// <summary>
+        /// Subscribe to changes of symbolic variables
+        /// </summary>
+        /// <param name="mapping">Name of the registered mappings</param>
+        /// <param name="callback">Callback method</param>
+        /// <returns></returns>
+        public bool UnsubscribeDataChanges(string mapping, OnChangeEventHandler callback)
         {
             IEntry entry;
             if (_mappings.TryGetValue(mapping, out entry))
+            {
+                entry.OnChange -= callback;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Subscribe to changes of absolute variables
+        /// </summary>
+        /// <param name="area">DB??, FB, IB, ...</param>
+        /// <param name="callback">Callback method</param>
+        /// <returns></returns>
+        public bool SubscribeRawDataChanges(string area, OnChangeEventHandler callback)
+        {
+            IEntry entry;
+            var key = $"$ABSSYMBOLS$_{area}";
+            using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
+            {
+                if (!_mappings.TryGetValue(key, out entry))
+                {
+                    entry = new RawEntry(this, area, _tree, ReadDataBlockSize, 0);
+                    using (upgradeableGuard.UpgradeToWriterLock())
+                        _mappings.TryAdd(key, entry);
+                }
+
+                entry.OnChange += callback;
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Unsubscribe to changes of absolute variables
+        /// </summary>
+        /// <param name="area">DB??, FB, IB, ...</param>
+        /// <param name="callback">Callback method</param>
+        /// <returns></returns>
+        public bool UnsubscribeRawDataChanges(string area, OnChangeEventHandler callback)
+        {
+            IEntry entry;
+            var key = $"$ABSSYMBOLS$_{area}";
+            if (_mappings.TryGetValue(key, out entry))
             {
                 entry.OnChange -= callback;
                 return true;
@@ -492,6 +545,25 @@ namespace Papper
             IEntry entry;
             var result = new Dictionary<string, object>();
             if (_mappings.TryGetValue(mapping, out entry))
+                return entry.SetActiveState(enable, vars);
+            return false;
+        }
+
+        /// <summary>
+        /// Activate or deactivate data change detection
+        /// </summary>
+        /// <param name="enable"></param>
+        /// <param name="area"></param>
+        /// <param name="vars"></param>
+        /// <returns></returns>
+        public bool SetRawActiveState(bool enable, string area, params string[] vars)
+        {
+            if (string.IsNullOrWhiteSpace(area))
+                throw new ArgumentException("The given argument could not be null or whitespace.", "area");
+            IEntry entry;
+            var key = $"$ABSSYMBOLS$_{area}";
+            var result = new Dictionary<string, object>();
+            if (_mappings.TryGetValue(key, out entry))
                 return entry.SetActiveState(enable, vars);
             return false;
         }

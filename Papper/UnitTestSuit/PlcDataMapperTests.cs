@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using UnitTestSuit.Mappings;
 using UnitTestSuit.Util;
 using Xunit;
@@ -204,6 +205,93 @@ namespace UnitTestSuit
             Assert.True(AreDataEqual(ToExpando(header), result2.Values.FirstOrDefault()));
         }
 
+        [Fact]
+        public void TestDataCahnge()
+        {
+            var mapping = "DB_Safety";
+            var intiState = true;
+            var originData = new Dictionary<string, object> {
+                    { "SafeMotion.Slots[15].SlotId", (byte)0},
+                    { "SafeMotion.Slots[15].HmiId", (UInt32)0},
+                    { "SafeMotion.Slots[15].Commands.TakeoverPermitted", false },
+                };
+            var writeData = new Dictionary<string, object> {
+                    { "SafeMotion.Slots[15].SlotId", (byte)3},
+                    { "SafeMotion.Slots[15].HmiId", (UInt32)4},
+                    { "SafeMotion.Slots[15].Commands.TakeoverPermitted", true },
+                };
+            var are = new AutoResetEvent(false);
+            OnChangeEventHandler callback = (s, e) =>
+            {
+                foreach (var item in e)
+                {
+                    if (!intiState)
+                        Assert.Equal(writeData[item.Key], item.Value);
+                    else
+                        Assert.Equal(originData[item.Key], item.Value);
+                }
+                are.Set();
+            };
+            Assert.True(_papper.SubscribeDataChanges(mapping, callback));
+            Assert.True(_papper.SetActiveState(true, mapping, writeData.Keys.ToArray()));
+
+            //waiting for initialize
+            Assert.True(are.WaitOne(5000));
+            intiState = false;
+            Assert.True(_papper.Write(mapping, writeData));
+
+            //waiting for write update
+            Assert.True(are.WaitOne(5000));
+
+            //test if data change only occurred if data changed
+            Assert.False(are.WaitOne(5000));
+
+            Assert.True(_papper.SetActiveState(false, mapping, writeData.Keys.ToArray()));
+            Assert.True(_papper.UnsubscribeDataChanges(mapping, callback));
+        }
+
+        [Fact]
+        public void PerformRawDataChange()
+        {
+            var area = "DB15";
+            var intiState = true;
+            var originData = new Dictionary<string, object> {
+                    { "W88", (UInt16)0},
+                    { "X99_0", false  },
+                };
+            var writeData = new Dictionary<string, object> {
+                    { "W88", (UInt16)3},
+                    { "X99_0", true  },
+                };
+            var are = new AutoResetEvent(false);
+            OnChangeEventHandler callback = (s, e) =>
+            {
+                foreach (var item in e)
+                {
+                    if(!intiState)
+                        Assert.Equal(writeData[item.Key], item.Value);
+                    else
+                        Assert.Equal(originData[item.Key], item.Value);
+                }
+                are.Set();
+            };
+            Assert.True(_papper.SubscribeRawDataChanges(area, callback));
+            Assert.True(_papper.SetRawActiveState(true, area, writeData.Keys.ToArray()));
+
+            //waiting for initialize
+            Assert.True(are.WaitOne(5000));
+            intiState = false;
+            Assert.True(_papper.WriteAbs(area, writeData));
+
+            //waiting for write update
+            Assert.True(are.WaitOne(5000));
+
+            //test if data change only occurred if data changed
+            Assert.False(are.WaitOne(5000));
+
+            Assert.True(_papper.SetRawActiveState(false, area, writeData.Keys.ToArray()));
+            Assert.True(_papper.UnsubscribeRawDataChanges(area, callback));
+        }
 
         #region Helper
 

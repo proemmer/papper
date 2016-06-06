@@ -176,11 +176,21 @@ namespace Papper
             return ((IEnumerable<KeyValuePair<string, object>>)_changedItems).GetEnumerator();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
         }
 
+        /// <summary>
+        /// Add a property to the expando object
+        /// </summary>
+        /// <param name="parent"></param>
+        /// <param name="name"></param>
+        /// <param name="value"></param>
         private static void AddProperty(dynamic parent, string name, object value)
         {
             var list = (parent as List<dynamic>);
@@ -196,6 +206,12 @@ namespace Papper
             }
         }
 
+        /// <summary>
+        /// Get a value from the expando object
+        /// </summary>
+        /// <param name="parent"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
         private static dynamic GetPropertyValue(dynamic parent, string name)
         {
             var dictionary = parent as IDictionary<string, object>;

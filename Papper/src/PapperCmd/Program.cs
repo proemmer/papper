@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace PapperCmd
 {
@@ -139,6 +138,7 @@ namespace PapperCmd
             PerformWrite(papper);
             PerformRead(papper);
             PerformDataChange(papper);
+            PerformRawDataChange(papper);
         }
 
         private static void PerformReadFull(PlcDataMapper papper)
@@ -206,7 +206,7 @@ namespace PapperCmd
             return plcblock;
         }
 
-        private async static void PerformDataChange(PlcDataMapper papper)
+        private static void PerformDataChange(PlcDataMapper papper)
         {
             Console.WriteLine();
             Console.WriteLine($"Start PerformDataChange");
@@ -218,7 +218,7 @@ namespace PapperCmd
                 };
             _toggle = !_toggle;
             var are = new AutoResetEvent(false);
-            OnChangeEventHandler callback = (s, e) => 
+            OnChangeEventHandler callback = (s, e) =>
             {
                 Console.WriteLine($"On DataChanged :{e.From}:");
                 foreach (var item in e)
@@ -238,7 +238,7 @@ namespace PapperCmd
             var result = papper.Write("DB_Safety", writeData);
 
             //waiting for write update
-            if(!are.WaitOne(10000))
+            if (!are.WaitOne(10000))
                 Console.WriteLine($"Error-> change!!!!!");
 
             //test if data change only occurred if data changed
@@ -246,10 +246,55 @@ namespace PapperCmd
                 Console.WriteLine($"Error-> no change!!!!!");
 
             papper.SetActiveState(false, "DB_Safety", writeData.Keys.ToArray());
-            papper.UnsubscribeChanges("DB_Safety", callback);
+            papper.UnsubscribeDataChanges("DB_Safety", callback);
             Console.ResetColor();
             Console.WriteLine($"Finished PerformDataChange");
         }
+
+        private static void PerformRawDataChange(PlcDataMapper papper)
+        {
+            Console.WriteLine();
+            Console.WriteLine($"Start PerformRawDataChange");
+            Console.ForegroundColor = ConsoleColor.Red;
+            var writeData = new Dictionary<string, object> {
+                    { "W0", 3},
+                    { "X5_0", !_toggle ? true : false },
+                };
+            _toggle = !_toggle;
+            var are = new AutoResetEvent(false);
+            OnChangeEventHandler callback = (s, e) =>
+            {
+                Console.WriteLine($"On DataChanged :{e.From}:");
+                foreach (var item in e)
+                    Console.WriteLine($"DataChanged detected:{e.From}: {item.Key} = {item.Value}");
+                are.Set();
+            };
+            papper.SubscribeRawDataChanges("DB15", callback);
+            papper.SetRawActiveState(true, "DB15", writeData.Keys.ToArray());
+
+            //waiting for initialize
+            if (!are.WaitOne(10000))
+                Console.WriteLine($"Error-> change!!!!!");
+
+            foreach (var item in writeData)
+                Console.WriteLine($"Write:{item.Key} = {item.Value}");
+
+            var result = papper.WriteAbs("DB15", writeData);
+
+            //waiting for write update
+            if (!are.WaitOne(10000))
+                Console.WriteLine($"Error-> change!!!!!");
+
+            //test if data change only occurred if data changed
+            if (are.WaitOne(5000))
+                Console.WriteLine($"Error-> no change!!!!!");
+
+            papper.SetRawActiveState(false, "DB15", writeData.Keys.ToArray());
+            papper.UnsubscribeDataChanges("DB15", callback);
+            Console.ResetColor();
+            Console.WriteLine($"Finished PerformDataChange");
+        }
+
 
         private static bool Papper_OnWrite(string selector, int offset, byte[] data, byte bitMask = 0)
         {

@@ -6,7 +6,7 @@ using System.Linq;
 namespace Papper
 {
     /// <summary>
-    /// 
+    /// Holds the execution operaton
     /// </summary>
     internal class Execution
     {
