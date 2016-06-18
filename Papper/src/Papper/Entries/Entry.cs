@@ -259,8 +259,7 @@ namespace Papper.Entries
                                 _cs.Token.ThrowIfCancellationRequested();
                                 lock (_eventHandlerLock)
                                 {
-                                    if (EventHandler != null)
-                                        EventHandler(this, new PlcNotificationEventArgs(Name, changed));
+                                    EventHandler?.Invoke(this, new PlcNotificationEventArgs(Name, changed));
                                 }
                             }
 

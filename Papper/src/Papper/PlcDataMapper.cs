@@ -13,7 +13,7 @@ using System.Threading;
 namespace Papper
 {
     public delegate void OnChangeEventHandler(object sender, PlcNotificationEventArgs e);
-    public delegate void OnConnectionChangeEventHandler(object sender, PlcConnectionNotificationEventArgs e);
+    
 
 
     // This project can output the Class library as a NuGet Package.
