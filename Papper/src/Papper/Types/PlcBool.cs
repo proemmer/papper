@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using Papper.Helper;
+using System;
 
 namespace Papper.Types
 {
@@ -25,7 +26,7 @@ namespace Papper.Types
         {
             var baseOffset = plcObjectBinding.Offset + (plcObjectBinding.MetaData.Offset.Bits) / 8;
             var bit = plcObjectBinding.Offset + plcObjectBinding.MetaData.Offset.Bits - baseOffset;
-            plcObjectBinding.Data[baseOffset] = plcObjectBinding.Data[baseOffset].SetBit(bit, (bool)value);
+            plcObjectBinding.Data[baseOffset] = plcObjectBinding.Data[baseOffset].SetBit(bit, Convert.ToBoolean(value));
         }
 
     }
