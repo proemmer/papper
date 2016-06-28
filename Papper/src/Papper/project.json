@@ -1,5 +1,5 @@
 {
-  "version": "1.0.2-beta4",
+  "version": "1.0.2",
   "description": "Papper (Plc Data Mapper)",
   "authors": [ "Benjamin Proemmer" ],
   "title": "papper",
@@ -10,20 +10,17 @@
     "licenseUrl": "https://opensource.org/licenses/Apache-2.0"
   },
   "frameworks": {
-    "netstandard1.5": {
-
-    },
-    "dnxcore50": {
-
+    "netstandard1.6": {
+      "imports": "dnxcore50"
     }
   },
   "dependencies": {
-    "NETStandard.Library": "1.5.0-rc2-24027",
-    "Microsoft.CSharp": "4.0.1-rc2-24027",
-    "System.Threading.Thread": "4.0.0-rc2-24027",
-    "System.Reflection.Extensions": "4.0.1-rc2-24027",
-    "System.Reflection.TypeExtensions": "4.1.0-rc2-24027",
-    "System.Dynamic.Runtime": "4.0.11-rc2-24027"
+    "NETStandard.Library": "1.6.0",
+    "Microsoft.CSharp": "4.0.1",
+    "System.Threading.Thread": "4.0.0",
+    "System.Reflection.Extensions": "4.0.1",
+    "System.Reflection.TypeExtensions": "4.1.0",
+    "System.Dynamic.Runtime": "4.0.11"
   },
   "scripts": {
     "postcompile": [ "dotnet pack --no-build --version-suffix %project:Version% project.json" ]
