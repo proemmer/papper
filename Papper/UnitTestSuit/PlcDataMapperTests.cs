@@ -10,6 +10,8 @@ using UnitTestSuit.Mappings;
 using UnitTestSuit.Util;
 using Xunit;
 
+//run in sequence because of db sharing
+[assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
 namespace UnitTestSuit
 {
     // This project can output the Class library as a NuGet Package.
@@ -49,7 +51,7 @@ namespace UnitTestSuit
                     { "SafeMotion.Slots[254].Motion.ManualOperation1", true},
                     { "SafeMotion.Slots[254].Motion.ManualOperation2", true},
                 };
-
+            
             Test(mapping, accessDict, false);
         }
 
@@ -69,7 +71,7 @@ namespace UnitTestSuit
                     { "SafeMotion.Slots[254].AggregateOffset", (Int16)9},
                     { "SafeMotion.Slots[254].SafeSlotVersion", (Int16)10},
                 };
-
+            
             Test(mapping, accessDict, (Int16)0);
         }
 
@@ -83,10 +85,9 @@ namespace UnitTestSuit
                     { "SafeMotion.Slots[254].UnitChecksum", (UInt16)8},
 
                 };
-
+            
             Test(mapping, accessDict, (UInt16)0);
         }
-
 
         [Fact]
         public void UInt32AccessTest()
@@ -100,7 +101,7 @@ namespace UnitTestSuit
                     { "SafeMotion.Slots[254].HmiId", (UInt32)9},
                     { "SafeMotion.Slots[254].AccessRightReqFromHmiId", (UInt32)10},
                 };
-
+            
             Test(mapping, accessDict, (UInt32)0);
         }
 
@@ -114,7 +115,7 @@ namespace UnitTestSuit
                     { "SafeMotion.Slots[100].UnitTimestamp", Normalize(DateTime.Now)},
                     { "SafeMotion.Slots[254].UnitTimestamp",Normalize( DateTime.Now)},
                 };
-
+            
             Test(mapping, accessDict, new DateTime(599266080000000000));  //01.01.1900
         }
 
@@ -134,6 +135,7 @@ namespace UnitTestSuit
                     { "IntElements[1]", 30},
                 };
 
+            
             Test(mapping, accessDict.Take(3).ToDictionary(kvp => kvp.Key, kvp => kvp.Value), default(byte));
             Test(mapping, accessDict.Skip(3).Take(3).ToDictionary(kvp => kvp.Key, kvp => kvp.Value), default(char));
             Test(mapping, accessDict.Skip(6).Take(3).ToDictionary(kvp => kvp.Key, kvp => kvp.Value), default(int));
@@ -146,7 +148,7 @@ namespace UnitTestSuit
             var accessDict = new Dictionary<string, object> {
                     { "BigByteArray", Enumerable.Repeat<byte>(0x01,50000).ToArray()},
                 };
-
+            
             Test(mapping, accessDict, Enumerable.Repeat<byte>(0x00, 50000).ToArray());
         }
 
@@ -157,7 +159,7 @@ namespace UnitTestSuit
             var accessDict = new Dictionary<string, object> {
                     { "BigCharArray", Enumerable.Repeat<char>('a',50000).ToArray()},
                 };
-
+            
             Test(mapping, accessDict, Enumerable.Repeat<char>(default(char), 50000).ToArray());
         }
 
@@ -168,7 +170,7 @@ namespace UnitTestSuit
             var accessDict = new Dictionary<string, object> {
                     { "BigIntArray", Enumerable.Repeat<Int32>(2,5000).ToArray()},
                 };
-
+            
             Test(mapping, accessDict, Enumerable.Repeat<int>((int)0, 5000).ToArray());
         }
 
@@ -206,7 +208,7 @@ namespace UnitTestSuit
         }
 
         [Fact]
-        public void TestDataCahnge()
+        public void TestDataChange()
         {
             var mapping = "DB_Safety";
             var intiState = true;
@@ -253,6 +255,7 @@ namespace UnitTestSuit
         [Fact]
         public void PerformRawDataChange()
         {
+            
             var area = "DB15";
             var intiState = true;
             var originData = new Dictionary<string, object> {

@@ -31,6 +31,11 @@ namespace UnitTestSuit.Util
         private static Dictionary<string, PlcBlock> _plc = new Dictionary<string, PlcBlock>();
 
 
+        public static void Clear()
+        {
+            _plc.Clear();
+        }
+
         public static PlcBlock GetPlcEntry(string selector, int minSize)
         {
             PlcBlock plcblock;
