@@ -1,5 +1,5 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Papper (Plc Data Mapper)",
   "authors": [ "Benjamin Proemmer" ],
   "title": "papper",
@@ -18,11 +18,9 @@
     "NETStandard.Library": "1.6.0",
     "Microsoft.CSharp": "4.0.1",
     "System.Threading.Thread": "4.0.0",
-    "System.Reflection.Extensions": "4.0.1",
-    "System.Reflection.TypeExtensions": "4.1.0",
-    "System.Dynamic.Runtime": "4.0.11"
+    "System.Reflection.TypeExtensions": "4.1.0"
   },
   "scripts": {
-    "postcompile": [ "dotnet pack --no-build --version-suffix %project:Version% project.json" ]
+    "postcompile": [ "dotnet pack  --configuration release --no-build --version-suffix %project:Version% project.json" ]
   }
 }
