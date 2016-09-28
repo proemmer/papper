@@ -3,11 +3,11 @@ Plc Data Mapper is a library to map C# classes to plc blocks to get symbolic acc
 
 NuGet
 =====
-PM>  Install-Package Papper -Pre
+    PM>  Install-Package Papper
 
 Description
 ==============================
-Papper could use with any S7 library, because it's a top level component. It converts the given command in read or write commands for the S7 library.
+Papper could be used with any S7 library, because it's a top level component. It convert's the given command to read or write commands for the S7 library.
 
 
 Sample-Code
