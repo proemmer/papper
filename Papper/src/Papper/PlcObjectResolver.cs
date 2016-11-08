@@ -321,9 +321,9 @@ namespace Papper
         /// <summary>
         /// Calculates the Offset of the new Object, add it to the tree and update the offsets
         /// </summary>
-        private static void AddPlcObject(ITree tree, PlcObject pred, PlcObject plcObject, IEnumerable<string> nodePathStack, ref int byteOffset, ref int bitOffset, bool hasCustomeOffset)
+        private static void AddPlcObject(ITree tree, PlcObject pred, PlcObject plcObject, IEnumerable<string> nodePathStack, ref int byteOffset, ref int bitOffset, bool hasCustomOffset)
         {
-            if(!hasCustomeOffset)
+            if(!hasCustomOffset)
                 CalculateOffset(pred, plcObject, ref byteOffset, ref bitOffset);
             plcObject.Offset.Bytes = byteOffset;
             plcObject.Offset.Bits = bitOffset;
