@@ -1,17 +1,27 @@
 # Papper
 Plc Data Mapper is a library to map C# classes to plc blocks to get symbolic access to the plc.
 
-NuGet
-=====
-PM>  Install-Package Papper -Pre
+<!-- TOC -->
 
-Description
-==============================
-Papper could use with any S7 library, because it's a top level component. It converts the given command in read or write commands for the S7 library.
+- [Papper](#Papper)
+- [NuGet](#nuget)
+- [Description](#description)
+- [Sample-Code](#sample-code)
+- [Release Notes](#release-notes)
+
+<!-- /TOC -->
+
+# NuGet
+
+    PM>  Install-Package Papper
+
+# Description
+
+Papper could be used with any S7 library, because it's a top level component. It convert's the given command to read or write commands for the S7 library.
 
 
-Sample-Code
-==============================
+# Sample-Code
+
 
 To access the data you fist have to declare a class with a mapping attribute like the following one:
 <pre><code>
@@ -134,3 +144,5 @@ private static bool Papper_OnWrite(string selector, int offset, byte[] data, byt
     //call s7 library to write data
 }
 </code></pre>
+
+# Release Notes
