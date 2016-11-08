@@ -296,6 +296,16 @@ namespace UnitTestSuit
             Assert.True(_papper.UnsubscribeRawDataChanges(area, callback));
         }
 
+        [Fact]
+        public void ArrayIndexAccessTest()
+        {
+            var mapping = "ARRAY_TEST_MAPPING";
+            var accessDict = new Dictionary<string, object> {
+                    { "BigCharArray[1]", 'X'},
+                };
+
+            Test(mapping, accessDict, default(char));
+        }
         #region Helper
 
 

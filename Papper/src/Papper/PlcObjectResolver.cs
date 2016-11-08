@@ -307,8 +307,8 @@ namespace Papper
                         plcObject = new PlcObjectRef(plcObject.Name, GetMetaData(tree, pi.PropertyType));
 
 
-                    PlcObjectFactory.GetOffsetFromAttribute(pi, ref byteOffset, ref bitOffset);
-                    AddPlcObject(tree, pred, plcObject, nodePathStack, ref byteOffset, ref bitOffset);
+                    var hasCustomOffset = PlcObjectFactory.GetOffsetFromAttribute(pi, ref byteOffset, ref bitOffset);
+                    AddPlcObject(tree, pred, plcObject, nodePathStack, ref byteOffset, ref bitOffset, hasCustomOffset);
                     pred = plcObject;
                 }
                 DebugOutPut("}} = {0}", parent.Size.Bytes);
@@ -321,9 +321,12 @@ namespace Papper
         /// <summary>
         /// Calculates the Offset of the new Object, add it to the tree and update the offsets
         /// </summary>
-        private static void AddPlcObject(ITree tree, PlcObject pred, PlcObject plcObject, IEnumerable<string> nodePathStack, ref int byteOffset, ref int bitOffset)
+        private static void AddPlcObject(ITree tree, PlcObject pred, PlcObject plcObject, IEnumerable<string> nodePathStack, ref int byteOffset, ref int bitOffset, bool hasCustomeOffset)
         {
-            CalculateOffset(pred, plcObject, ref byteOffset, ref bitOffset);
+            if(!hasCustomeOffset)
+                CalculateOffset(pred, plcObject, ref byteOffset, ref bitOffset);
+            plcObject.Offset.Bytes = byteOffset;
+            plcObject.Offset.Bits = bitOffset;
             DebugOutPut("{0}: Offset:{1,3}.{2}    Size={3}.{4}", plcObject.Name.PadRight(20), byteOffset, bitOffset, plcObject.Size.Bytes, plcObject.Size.Bits);
             PlcObject.AddPlcObjectToTree(plcObject, tree, PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse().ToArray()));
             byteOffset += plcObject.Size.Bytes;
@@ -487,9 +490,6 @@ namespace Papper
                     }
                 }
             }
-
-            cur.Offset.Bytes = byteOffset;
-            cur.Offset.Bits = bitOffset;
         }
 
 

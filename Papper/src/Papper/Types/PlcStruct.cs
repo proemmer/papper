@@ -14,22 +14,18 @@ namespace Papper.Types
         {
             get
             {
-                PlcObject prev = null;
-                var byteOffset = 0;
-                var bitOffset = 0;
-                var isBit = false;
-                foreach (var obj in Childs.Cast<PlcObject>())
+                int byteOffset = 0;
+                if (Childs.Any())
                 {
-                    PlcObjectResolver.CalculateOffset(prev, obj, ref byteOffset, ref bitOffset);
-                    byteOffset += obj.Size.Bytes;
-                    bitOffset += obj.Size.Bits;
-                    isBit = obj is PlcBool;
-                    prev = obj;
+                    var first = Childs.OfType<PlcObject>().FirstOrDefault();
+                    var last = Childs.OfType<PlcObject>().LastOrDefault();
+
+                    if (first != last)
+                        byteOffset = (last.Offset.Bytes + (last.Size.Bytes == 0 ? 1 : last.Size.Bytes)) - first.Offset.Bytes;
+                    else
+                        byteOffset = (first.Size.Bytes == 0 ? 1 : first.Size.Bytes);
                 }
 
-                if (isBit)
-                    byteOffset++;
-                
                 return new PlcSize
                 {
                     Bytes = ((byteOffset + AlignmentInBytes - 1) / AlignmentInBytes) * AlignmentInBytes
