@@ -7,18 +7,21 @@
   },
   "testRunner": "xunit",
   "dependencies": {
-    "Microsoft.CSharp": "4.0.1",
-    "NETStandard.Library": "1.6.0",
+    "Papper": {
+      "type": "build",
+      "version": "1.0.*"
+    },
+    "Microsoft.CSharp": "4.3.0-*",
     "Microsoft.NETCore.App": {
       "type": "platform",
-      "version": "1.0.0"
+      "version": "1.0.1-*"
     },
-    "Papper": "1.0.3",
-    "System.Collections": "4.0.11",
-    "System.Linq": "4.1.0",
-    "System.Runtime": "4.1.0",
-    "System.Threading": "4.0.11",
-    "xunit": "2.2.0-beta2-build3300",
+    "NETStandard.Library": "1.6.1-*",
+    "System.Collections": "4.3.0-*",
+    "System.Linq": "4.3.0-*",
+    "System.Runtime": "4.3.0-*",
+    "System.Threading": "4.3.0-*",
+    "xunit": "2.2.0-beta4-build3444",
     "dotnet-test-xunit": "2.2.0-preview2-build1029"
   },
   "commands": {
@@ -26,10 +29,6 @@
   },
   "frameworks": {
     "netcoreapp1.0": {
-      "imports": [
-        "dotnet5.6",
-        "portable-net45+win8"
-      ]
     }
   }
 }

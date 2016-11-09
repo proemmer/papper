@@ -1,5 +1,5 @@
 {
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Papper (Plc Data Mapper)",
   "authors": [ "Benjamin Proemmer" ],
   "title": "papper",
@@ -7,7 +7,9 @@
   "packOptions": {
     "tags": [ "siemens plc datamapper S7" ],
     "projectUrl": "http://proemmer.github.io/papper",
-    "licenseUrl": "https://opensource.org/licenses/Apache-2.0"
+    "licenseUrl": "https://opensource.org/licenses/Apache-2.0",
+    "releaseNotes": "fix a bug in offset calculation if MappingOffsetAttribute will be used",
+    "requireLicenseAcceptance": true
   },
   "frameworks": {
     "netstandard1.6": {
@@ -15,10 +17,10 @@
     }
   },
   "dependencies": {
-    "NETStandard.Library": "1.6.0",
-    "Microsoft.CSharp": "4.0.1",
-    "System.Threading.Thread": "4.0.0",
-    "System.Reflection.TypeExtensions": "4.1.0"
+    "System.Reflection.TypeExtensions": "4.3.0-*",
+    "NETStandard.Library": "1.6.1-*",
+    "Microsoft.CSharp": "4.3.0-*",
+    "System.Threading.Thread": "4.3.0-*"
   },
   "scripts": {
     "postcompile": [ "dotnet pack  --configuration release --no-build --version-suffix %project:Version% project.json" ]
