@@ -100,7 +100,7 @@ namespace Papper.Types
                 return InternalConvert(plcObjectBinding, new UInt16());
             if (ArrayType is PlcDWord)
                 return InternalConvert(plcObjectBinding, new UInt32());
-            if (ArrayType is PlcDateTime || ArrayType is PlcTimeOfDay)
+            if (ArrayType is PlcDate || ArrayType is PlcDateTime || ArrayType is PlcTimeOfDay)
                 return InternalConvert(plcObjectBinding, new DateTime());
             if (ArrayType is PlcS5Time || ArrayType is PlcTime)
                 return InternalConvert(plcObjectBinding, new TimeSpan());
