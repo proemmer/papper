@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 namespace UnitTestSuit.Mappings
 {
     [Mapping("STRING_ARRAY_TEST_MAPPING", "DB30", 0)]
+    [Mapping("STRING_ARRAY_TEST_MAPPING_1", "DB31", 0)]
     public class StringArrayTestMapping
     {
         [ArrayBounds(1, 10, 0)]
@@ -15,5 +16,9 @@ namespace UnitTestSuit.Mappings
 
         [StringLength(10)]
         public string TEST { get; set; }
+
+        [PlcType("TimeOfDay")]
+        [ArrayBounds(1, 10, 0)]
+        public TimeSpan[] Time { get; set; }
     }
 }

@@ -15,16 +15,13 @@ namespace Papper.Types
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding)
         {
             if (plcObjectBinding.Data == null || !plcObjectBinding.Data.Any())
-            {
-                return DateTime.MinValue;
-            }
-            return new DateTime(plcObjectBinding.Data.GetSwap<uint>(plcObjectBinding.Offset) * 10000);  // Is this really correct?
+                return TimeSpan.MinValue;
+            return TimeSpan.FromMilliseconds(plcObjectBinding.Data.GetSwap<uint>(plcObjectBinding.Offset));
         }
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding)
         {
-            var dateVal = (DateTime)value;
-            var time = new TimeSpan(0, dateVal.Hour, dateVal.Minute, dateVal.Second, dateVal.Millisecond);
+            var time = (TimeSpan)value;
             var subset = Convert.ToUInt32(time.TotalMilliseconds).SetSwap();
             for (var i = 0; i < subset.Length; i++)
                 plcObjectBinding.Data[plcObjectBinding.Offset + i] = subset[i];

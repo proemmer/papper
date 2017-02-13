@@ -327,6 +327,25 @@ namespace UnitTestSuit
             Assert.True(dbData.SubArray(152, 2).SequenceEqual(new byte[] { 35, 5 }));
             Assert.True(dbData.SubArray(154, 5).SequenceEqual("TEST5".ToByteArray(5)));
         }
+
+
+        [Fact]
+        public void TODTest()
+        {
+            var mapping = "STRING_ARRAY_TEST_MAPPING_1";
+            var accessDict = new Dictionary<string, object> {
+                    { "Time[1]", TimeSpan.FromHours(12)},
+                    { "Time[2]", TimeSpan.FromHours(1)},
+                    { "Time[3]", TimeSpan.FromSeconds(10)},
+                    { "Time[4]", TimeSpan.FromMilliseconds(111)},
+                };
+
+            Test(mapping, accessDict, new TimeSpan(0));
+
+
+        }
+
+
         #region Helper
 
 
