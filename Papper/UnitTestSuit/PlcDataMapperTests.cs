@@ -319,13 +319,13 @@ namespace UnitTestSuit
 
             Test(mapping, accessDict, "");
 
-            //Real data check
+            //Byte data check
             var dbData = MockPlc.GetPlcEntry("DB30").Data;
             Assert.True(dbData.SubArray(0, 2).SequenceEqual(new byte[] { 35, 5 }));
             Assert.True(dbData.SubArray(2, 5).SequenceEqual("TEST1".ToByteArray(5)));
 
             Assert.True(dbData.SubArray(152, 2).SequenceEqual(new byte[] { 35, 5 }));
-            Assert.True(dbData.SubArray(154, 5).SequenceEqual("TEST2".ToByteArray(5)));
+            Assert.True(dbData.SubArray(154, 5).SequenceEqual("TEST5".ToByteArray(5)));
         }
         #region Helper
 
