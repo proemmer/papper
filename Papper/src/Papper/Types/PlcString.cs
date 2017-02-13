@@ -76,5 +76,11 @@ namespace Papper.Types
 
         }
 
+
+        public void AssigneLengthFrom(PlcString s)
+        {
+            if(s != null) _size.Bytes = s.StringLength;
+        }
+
     }
 }

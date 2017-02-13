@@ -186,7 +186,7 @@ namespace Papper.Types
                         var child = Childs.OfType<PlcObject>().Skip(i).FirstOrDefault();
                         if (child == null)
                             throw new Exception("Array error");
-                        var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + (child.Size.Bytes * i), plcObjectBinding.ValidationTimeInMs);
+                        var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + (GetElementSizeForOffset()), plcObjectBinding.ValidationTimeInMs);
                         list[i] = ((T)ArrayType.ConvertFromRaw(binding));
                     }
                     return list;
@@ -195,7 +195,12 @@ namespace Papper.Types
             return new T[ArrayLength]; ;
         }
 
-
+        /// <summary>
+        /// Compare two object if they are structural equal and also the value of each element of the structure
+        /// </summary>
+        /// <param name="obj1"></param>
+        /// <param name="obj2"></param>
+        /// <returns></returns>
         public override bool AreDataEqual(object obj1, object obj2)
         {
             var list1 = obj1 as IEnumerable;
@@ -221,6 +226,9 @@ namespace Papper.Types
             return true;
         }
 
+        /// <summary>
+        /// Holds all elements of the array
+        /// </summary>
         public override IEnumerable<ITreeNode> Childs
         {
             get
@@ -232,11 +240,23 @@ namespace Papper.Types
             }
         }
 
+        /// <summary>
+        /// Returns the child with the given name or null if there is no child with that name
+        /// </summary>
+        /// <param name="name">Name of the child</param>
+        /// <returns></returns>
         public override ITreeNode GetChildByName(string name)
         {
             return base.GetChildByName(name);
         }
 
+        /// <summary>
+        /// Get a Node by it's path recursively
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="offset">we have to give the offset to the next element of the array (because of recursive data structures)</param>
+        /// <param name="getRef"></param>
+        /// <returns></returns>
         public override ITreeNode Get(ITreePath path, ref int offset, bool getRef = false)
         {
             if (path.IsPathToCurrent && !path.IsPathIndexed)
@@ -244,13 +264,22 @@ namespace Papper.Types
             var idx = path.ArrayIndizes.First();
             if (idx >= From && idx <= To)
             {
-                offset += Offset.Bytes + ((idx - From)*(LeafElementType ?? ArrayType).Size.Bytes);
+                offset += Offset.Bytes + ((idx - From)* GetElementSizeForOffset());
                 ITreeNode ret;
                 return (_indexCache.TryGetValue(idx, out ret) ? 
                     ret :
                     GetIndex(idx)).Get(CreateSubPath(path), ref offset);
             }
             return null;
+        }
+
+        private int GetElementSizeForOffset()
+        {
+            var elem = LeafElementType ?? ArrayType;
+            var size = elem.Size.Bytes;
+            if (!elem.AllowOddByteOffsetInArray && size % 2 != 0)
+                size++;
+            return size;
         }
 
         private static ITreePath CreateSubPath(ITreePath path)
@@ -276,7 +305,19 @@ namespace Papper.Types
         private void CalculateSize()
         {
             Size.Bits = _arrayType is PlcBool ? ArrayLength * _arrayType.Size.Bits : 0;
-            Size.Bytes = _arrayType is PlcBool ? 0 : ArrayLength * _arrayType.Size.Bytes;
+            if (_arrayType is PlcString && _arrayType.Size.Bytes % 2 != 0)
+            {
+                var result = 0;
+                for (int i = 0; i < ArrayLength; i++)
+                {
+                    if (result % 2 != 0)
+                        result++;
+                    result += _arrayType.Size.Bytes;
+                }
+                Size.Bytes = result;
+            }
+            else
+                Size.Bytes = _arrayType is PlcBool ? 0 : ArrayLength * _arrayType.Size.Bytes;
 
             if (_arrayType is PlcBool)
             {
@@ -300,6 +341,13 @@ namespace Papper.Types
             }
         }
 
+        /// <summary>
+        /// This method tries to convert a string to an object, this could be used to convert a string to an array or so.
+        /// Depending on the ArrayType we use the string and slit them by element (e.g. Char or Byte) or in any other case we
+        /// use ';' as a separator for the elements
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public override object StringToObject(string value)
         {
             try

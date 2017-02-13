@@ -134,21 +134,8 @@ namespace Papper.Types
 
             if (plcObject != null && arrayIndex != null)
             {
-                var str = obj as PlcString;
-                var newStr = plcObject as PlcString;
-                if (str != null && newStr != null)
-                    newStr.StringLength = str.StringLength;
-
-                if (obj is PlcBool)
-                {
-                    var idx = (int)arrayIndex - @from;
-                    var offsetBits = idx * obj.Size.Bits;
-                    var offsetByte = offsetBits / 8;
-                    offsetBits = offsetBits - offsetByte * 8;
-
-                    plcObject.Offset.Bytes += offsetByte;
-                    plcObject.Offset.Bits += offsetBits;
-                }
+                (plcObject as PlcBool)?.AssigneOffsetFrom(((int)arrayIndex - @from) * obj.Size.Bits);
+                (plcObject as PlcString)?.AssigneLengthFrom(obj as PlcString);
             }
             return plcObject;
         }

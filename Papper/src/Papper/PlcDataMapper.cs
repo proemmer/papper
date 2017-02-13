@@ -43,6 +43,7 @@ namespace Papper
         #endregion
 
         #region Fields
+        internal enum ReadResult { Successfully, Failed, UseCache }
         private const string ADDRESS_PREFIX = "$ABSSYMBOLS$_";
         private const int PduSizeDefault = 480;
         private const int ReadDataHeaderLength = 18;
@@ -166,7 +167,7 @@ namespace Papper
             {
                 foreach (var execution in entry.GetOperations(vars))
                 {
-                    if (ExecuteRead(execution))
+                    if (ExecuteRead(execution) != ReadResult.Failed)
                     {
                         foreach (var item in execution.Bindings)
                             result.Add(item.Key, item.Value.ConvertFromRaw());
@@ -201,7 +202,7 @@ namespace Papper
             { 
                 foreach (var execution in entry.GetOperations(vars))
                 {
-                    if (ExecuteRead(execution))
+                    if (ExecuteRead(execution) != ReadResult.Failed)
                     {
                         foreach (var item in execution.Bindings)
                             result.Add(item.Key, item.Value.ConvertFromRaw());
@@ -333,16 +334,16 @@ namespace Papper
         
         #region internal read write operations
 
-        internal bool ExecuteRead(Execution exec)
+        internal ReadResult ExecuteRead(Execution exec)
         {
             if (exec.Partitions != null)
             {
-                if (exec.Partitions.Min(x => x.LastUpdate).AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now)
-                    return ReadPartitions(exec.PlcRawData, exec.Partitions);
+                if (exec.ValidationTimeMs <= 0 || exec.Partitions.Min(x => x.LastUpdate).AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now)
+                    return ReadPartitions(exec.PlcRawData, exec.Partitions) ? ReadResult.Successfully : ReadResult.Failed;
             }
-            else if (exec.PlcRawData.LastUpdate.AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now)
-                return Read(exec.PlcRawData);
-            return false;
+            else if (exec.ValidationTimeMs <= 0 || exec.PlcRawData.LastUpdate.AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now)
+                return Read(exec.PlcRawData) ? ReadResult.Successfully : ReadResult.Failed;
+            return ReadResult.UseCache; //We need no read, because the timestamps are ok
         }
 
         private bool Read(PlcRawData rawData)

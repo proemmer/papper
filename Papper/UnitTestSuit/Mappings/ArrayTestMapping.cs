@@ -3,7 +3,11 @@ using System;
 
 namespace UnitTestSuit.Mappings
 {
-    [Mapping("ARRAY_TEST_MAPPING", "DB16", 0)]
+    [Mapping("ARRAY_TEST_MAPPING_1", "DB21", 0)]
+    [Mapping("ARRAY_TEST_MAPPING_2", "DB22", 0)]
+    [Mapping("ARRAY_TEST_MAPPING_3", "DB23", 0)]
+    [Mapping("ARRAY_TEST_MAPPING_4", "DB24", 0)]
+    [Mapping("ARRAY_TEST_MAPPING_5", "DB25", 0)]
     public class ArrayTestMapping
     {
         [ArrayBounds(1, 50000, 0)]

@@ -15,6 +15,7 @@ namespace Papper.Types
         private readonly PlcSize _offset = new PlcSize();
         public string Selector { get; set; }
         public Type ElemenType { get; set; }
+        public bool AllowOddByteOffsetInArray { get; set; }
 
         public PlcSize Offset
         {
