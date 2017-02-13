@@ -17,10 +17,10 @@
     }
   },
   "dependencies": {
-    "System.Reflection.TypeExtensions": "4.3.0-*",
-    "NETStandard.Library": "1.6.1-*",
-    "Microsoft.CSharp": "4.3.0-*",
-    "System.Threading.Thread": "4.3.0-*"
+    "Microsoft.CSharp": "4.3.0",
+    "NETStandard.Library": "1.6.1",
+    "System.Reflection.TypeExtensions": "4.3.0",
+    "System.Threading.Thread": "4.3.0"
   },
   "scripts": {
     "postcompile": [ "dotnet pack  --configuration release --no-build --version-suffix %project:Version% project.json" ]

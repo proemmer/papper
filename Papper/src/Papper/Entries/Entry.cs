@@ -225,7 +225,7 @@ namespace Papper.Entries
                                 lock (execution.PlcRawData)
                                 {
                                     _cs.Token.ThrowIfCancellationRequested();
-                                    if (_mapper.ExecuteRead(execution))
+                                    if (_mapper.ExecuteRead(execution) == PlcDataMapper.ReadResult.Successfully)
                                     {
                                         foreach (var binding in execution.Bindings)
                                         {

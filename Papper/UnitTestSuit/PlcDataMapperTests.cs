@@ -123,7 +123,7 @@ namespace UnitTestSuit
         [Fact]
         public void ArrayElementsAccessTest()
         {
-            var mapping = "ARRAY_TEST_MAPPING1";
+            var mapping = "ARRAY_TEST_MAPPING_1";
             var accessDict = new Dictionary<string, object> {
                     { "ByteElements[10]", (byte)0x05},
                     { "ByteElements[5]", (byte)0x06},
@@ -145,7 +145,7 @@ namespace UnitTestSuit
         [Fact]
         public void BigByteArrayAccessTest()
         {
-            var mapping = "ARRAY_TEST_MAPPING2";
+            var mapping = "ARRAY_TEST_MAPPING_2";
             var accessDict = new Dictionary<string, object> {
                     { "BigByteArray", Enumerable.Repeat<byte>(0x01,50000).ToArray()},
                 };
@@ -156,7 +156,7 @@ namespace UnitTestSuit
         [Fact]
         public void BigCharArrayAccessTest()
         {
-            var mapping = "ARRAY_TEST_MAPPING3";
+            var mapping = "ARRAY_TEST_MAPPING_3";
             var accessDict = new Dictionary<string, object> {
                     { "BigCharArray", Enumerable.Repeat<char>('a',50000).ToArray()},
                 };
@@ -167,7 +167,7 @@ namespace UnitTestSuit
         [Fact]
         public void BigIntArrayAccessTest()
         {
-            var mapping = "ARRAY_TEST_MAPPING4";
+            var mapping = "ARRAY_TEST_MAPPING_4";
             var accessDict = new Dictionary<string, object> {
                     { "BigIntArray", Enumerable.Repeat(2,5000).ToArray()},
                 };
@@ -300,7 +300,7 @@ namespace UnitTestSuit
         [Fact]
         public void ArrayIndexAccessTest()
         {
-            var mapping = "ARRAY_TEST_MAPPING5";
+            var mapping = "ARRAY_TEST_MAPPING_5";
             var accessDict = new Dictionary<string, object> {
                     { "BigCharArray[1]", 'X'},
                 };
