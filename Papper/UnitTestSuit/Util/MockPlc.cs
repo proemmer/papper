@@ -36,16 +36,17 @@ namespace UnitTestSuit.Util
             _plc.Clear();
         }
 
-        public static PlcBlock GetPlcEntry(string selector, int minSize)
+        public static PlcBlock GetPlcEntry(string selector, int minSize = -1)
         {
             PlcBlock plcblock;
             if (!_plc.TryGetValue(selector, out plcblock))
             {
-                plcblock = new PlcBlock(minSize);
+                plcblock = new PlcBlock(minSize > 0 ? minSize : 0);
                 _plc.Add(selector, plcblock);
                 return plcblock;
             }
-            plcblock.UpdateBlockSize(minSize);
+            if(minSize > 0)
+                plcblock.UpdateBlockSize(minSize);
             return plcblock;
         }
     }

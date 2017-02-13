@@ -27,6 +27,7 @@ namespace UnitTestSuit
 
             _papper.AddMapping(typeof(DB_Safety));
             _papper.AddMapping(typeof(ArrayTestMapping));
+            _papper.AddMapping(typeof(StringArrayTestMapping));
         }
 
         [Fact]
@@ -122,7 +123,7 @@ namespace UnitTestSuit
         [Fact]
         public void ArrayElementsAccessTest()
         {
-            var mapping = "ARRAY_TEST_MAPPING";
+            var mapping = "ARRAY_TEST_MAPPING1";
             var accessDict = new Dictionary<string, object> {
                     { "ByteElements[10]", (byte)0x05},
                     { "ByteElements[5]", (byte)0x06},
@@ -144,7 +145,7 @@ namespace UnitTestSuit
         [Fact]
         public void BigByteArrayAccessTest()
         {
-            var mapping = "ARRAY_TEST_MAPPING";
+            var mapping = "ARRAY_TEST_MAPPING2";
             var accessDict = new Dictionary<string, object> {
                     { "BigByteArray", Enumerable.Repeat<byte>(0x01,50000).ToArray()},
                 };
@@ -155,7 +156,7 @@ namespace UnitTestSuit
         [Fact]
         public void BigCharArrayAccessTest()
         {
-            var mapping = "ARRAY_TEST_MAPPING";
+            var mapping = "ARRAY_TEST_MAPPING3";
             var accessDict = new Dictionary<string, object> {
                     { "BigCharArray", Enumerable.Repeat<char>('a',50000).ToArray()},
                 };
@@ -166,12 +167,12 @@ namespace UnitTestSuit
         [Fact]
         public void BigIntArrayAccessTest()
         {
-            var mapping = "ARRAY_TEST_MAPPING";
+            var mapping = "ARRAY_TEST_MAPPING4";
             var accessDict = new Dictionary<string, object> {
-                    { "BigIntArray", Enumerable.Repeat<Int32>(2,5000).ToArray()},
+                    { "BigIntArray", Enumerable.Repeat(2,5000).ToArray()},
                 };
             
-            Test(mapping, accessDict, Enumerable.Repeat<int>((int)0, 5000).ToArray());
+            Test(mapping, accessDict, Enumerable.Repeat(0, 5000).ToArray());
         }
 
         [Fact]
@@ -299,12 +300,32 @@ namespace UnitTestSuit
         [Fact]
         public void ArrayIndexAccessTest()
         {
-            var mapping = "ARRAY_TEST_MAPPING";
+            var mapping = "ARRAY_TEST_MAPPING5";
             var accessDict = new Dictionary<string, object> {
                     { "BigCharArray[1]", 'X'},
                 };
 
             Test(mapping, accessDict, default(char));
+        }
+
+        [Fact]
+        public void ArrayStringAccessTest()
+        {
+            var mapping = "STRING_ARRAY_TEST_MAPPING";
+            var accessDict = new Dictionary<string, object> {
+                    { "TEXT[1]", "TEST1"},
+                    { "TEXT[5]", "TEST5"},
+                };
+
+            Test(mapping, accessDict, "");
+
+            //Real data check
+            var dbData = MockPlc.GetPlcEntry("DB30").Data;
+            Assert.True(dbData.SubArray(0, 2).SequenceEqual(new byte[] { 35, 5 }));
+            Assert.True(dbData.SubArray(2, 5).SequenceEqual("TEST1".ToByteArray(5)));
+
+            Assert.True(dbData.SubArray(152, 2).SequenceEqual(new byte[] { 35, 5 }));
+            Assert.True(dbData.SubArray(154, 5).SequenceEqual("TEST2".ToByteArray(5)));
         }
         #region Helper
 
