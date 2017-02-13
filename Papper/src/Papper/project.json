@@ -1,14 +1,14 @@
 {
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Papper (Plc Data Mapper)",
   "authors": [ "Benjamin Proemmer" ],
   "title": "papper",
-  "copyright": "Copyright 2016",
+  "copyright": "Copyright 2017",
   "packOptions": {
     "tags": [ "siemens plc datamapper S7" ],
     "projectUrl": "http://proemmer.github.io/papper",
     "licenseUrl": "https://opensource.org/licenses/Apache-2.0",
-    "releaseNotes": "fix a bug in offset calculation if MappingOffsetAttribute will be used",
+    "releaseNotes": "fixed a bug in string array calculation, updated nuget packages, optimize read during valid data time",
     "requireLicenseAcceptance": true
   },
   "frameworks": {
