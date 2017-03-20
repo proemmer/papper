@@ -552,8 +552,7 @@ namespace Papper
 
         public static byte[] HexGetBytes(this string hexString)
         {
-            int discarded;
-            return (HexGetBytes(hexString, out discarded));
+            return (HexGetBytes(hexString, out int discarded));
         }
 
         public static T HexGet<T>(this string hexString)
@@ -600,8 +599,7 @@ namespace Papper
 
         public static byte[] BinGetBytes(this string binString)
         {
-            int discarded;
-            return (BinGetBytes(binString, out discarded));
+            return (BinGetBytes(binString, out int discarded));
         }
 
         public static T BinGet<T>(this string binString)
@@ -648,8 +646,7 @@ namespace Papper
                 data.ToHexString("", offset + 5, 1),
                 data.ToHexString("", offset + 6, 1),
                 data.ToHexString("", offset + 7, 1));
-            DateTime parsedDate;
-            if (DateTime.TryParseExact(str, "dd/MM/yy HH:mm:ss.ffff", null, DateTimeStyles.None, out parsedDate))
+            if (DateTime.TryParseExact(str, "dd/MM/yy HH:mm:ss.ffff", null, DateTimeStyles.None, out DateTime parsedDate))
                 return parsedDate;
             return DateTime.MinValue;
         }

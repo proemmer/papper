@@ -195,8 +195,7 @@ namespace PapperCmd
 
         private static PlcBlock GetPlcEntry(string selector, int minSize)
         {
-            PlcBlock plcblock;
-            if (!_plc.TryGetValue(selector, out plcblock))
+            if (!_plc.TryGetValue(selector, out PlcBlock plcblock))
             {
                 plcblock = new PlcBlock(minSize);
                 _plc.Add(selector, plcblock);

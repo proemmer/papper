@@ -111,9 +111,8 @@ namespace Papper
         /// <returns></returns>
         public IEnumerable<string> GetVariablesOf(string mapping)
         {
-            IEntry entry;
             var result = new List<string>();
-            if (_mappings.TryGetValue(mapping, out entry))
+            if (_mappings.TryGetValue(mapping, out IEntry entry))
                 return PlcObjectResolver.GetLeafs(entry.PlcObject, result);
             throw new KeyNotFoundException($"The mapping {mapping} does not exist.");
         }
@@ -135,17 +134,16 @@ namespace Papper
             foreach (var mapping in mappingAttributes)
             {
 
-                IEntry existingMapping;
                 using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
                 {
-                    if (_mappings.TryGetValue(mapping.Name, out existingMapping))
+                    if (_mappings.TryGetValue(mapping.Name, out IEntry existingMapping))
                     {
                         var mappingEntry = existingMapping as MappingEntry;
                         return mappingEntry.Mapping == mapping && mappingEntry.Type == type;
                     }
                     using (upgradeableGuard.UpgradeToWriterLock())
                         _mappings.TryAdd(mapping.Name, new MappingEntry(this, mapping, type, _tree, ReadDataBlockSize, mapping.ObservationRate));
-                } 
+                }
             }
             return true;
         }
@@ -161,9 +159,8 @@ namespace Papper
             if (string.IsNullOrWhiteSpace(mapping))
                 throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
 
-            IEntry entry;
             var result = new Dictionary<string, object>();
-            if(_mappings.TryGetValue(mapping, out entry))
+            if (_mappings.TryGetValue(mapping, out IEntry entry))
             {
                 foreach (var execution in entry.GetOperations(vars))
                 {
@@ -223,9 +220,8 @@ namespace Papper
             if (string.IsNullOrWhiteSpace(mapping))
                 throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
 
-            IEntry entry;
             var result = true;
-            if (!_mappings.TryGetValue(mapping, out entry))
+            if (!_mappings.TryGetValue(mapping, out IEntry entry))
                 return result;
 
             foreach (var execution in entry.GetOperations(values.Keys.ToArray()))
@@ -313,12 +309,10 @@ namespace Papper
             if (string.IsNullOrWhiteSpace(variable))
                 throw new ArgumentException("The given argument could not be null or whitespace.", "variable");
 
-            IEntry entry;
             var result = new Dictionary<string, object>();
-            if (_mappings.TryGetValue(mapping, out entry))
+            if (_mappings.TryGetValue(mapping, out IEntry entry))
             {
-                Tuple<int, Types.PlcObject> varibleEntry;
-                if (entry.Variables.TryGetValue(variable, out varibleEntry))
+                if (entry.Variables.TryGetValue(variable, out Tuple<int, Types.PlcObject> varibleEntry))
                 {
                     return new PlcItemAddress(
                         varibleEntry.Item2.Selector,
@@ -465,8 +459,7 @@ namespace Papper
         /// <returns></returns>
         public bool SubscribeDataChanges(string mapping, OnChangeEventHandler callback)
         {
-            IEntry entry;
-            if (_mappings.TryGetValue(mapping, out entry))
+            if (_mappings.TryGetValue(mapping, out IEntry entry))
             {
                 entry.OnChange += callback;
                 return true;
@@ -482,8 +475,7 @@ namespace Papper
         /// <returns></returns>
         public bool UnsubscribeDataChanges(string mapping, OnChangeEventHandler callback)
         {
-            IEntry entry;
-            if (_mappings.TryGetValue(mapping, out entry))
+            if (_mappings.TryGetValue(mapping, out IEntry entry))
             {
                 entry.OnChange -= callback;
                 return true;
@@ -499,11 +491,10 @@ namespace Papper
         /// <returns></returns>
         public bool SubscribeRawDataChanges(string area, OnChangeEventHandler callback)
         {
-            IEntry entry;
             var key = $"{ADDRESS_PREFIX}{area}";
             using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
             {
-                if (!_mappings.TryGetValue(key, out entry))
+                if (!_mappings.TryGetValue(key, out IEntry entry))
                 {
                     entry = new RawEntry(this, area, _tree, ReadDataBlockSize, 0);
                     using (upgradeableGuard.UpgradeToWriterLock())
@@ -523,9 +514,8 @@ namespace Papper
         /// <returns></returns>
         public bool UnsubscribeRawDataChanges(string area, OnChangeEventHandler callback)
         {
-            IEntry entry;
             var key = $"{ADDRESS_PREFIX}{area}";
-            if (_mappings.TryGetValue(key, out entry))
+            if (_mappings.TryGetValue(key, out IEntry entry))
             {
                 entry.OnChange -= callback;
                 return true;
@@ -544,9 +534,8 @@ namespace Papper
         {
             if (string.IsNullOrWhiteSpace(mapping))
                 throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
-            IEntry entry;
             var result = new Dictionary<string, object>();
-            if (_mappings.TryGetValue(mapping, out entry))
+            if (_mappings.TryGetValue(mapping, out IEntry entry))
                 return entry.SetActiveState(enable, vars);
             return false;
         }
@@ -562,10 +551,9 @@ namespace Papper
         {
             if (string.IsNullOrWhiteSpace(area))
                 throw new ArgumentException("The given argument could not be null or whitespace.", "area");
-            IEntry entry;
             var key = $"$ABSSYMBOLS$_{area}";
             var result = new Dictionary<string, object>();
-            if (_mappings.TryGetValue(key, out entry))
+            if (_mappings.TryGetValue(key, out IEntry entry))
                 return entry.SetActiveState(enable, vars);
             return false;
         }
