@@ -346,6 +346,20 @@ namespace UnitTestSuit
         }
 
 
+        [Fact]
+        public void ReadNonExistingValue()
+        {
+            var mapping = "STRING_ARRAY_TEST_MAPPING";
+            var accessDict = new Dictionary<string, object> {
+                    { "XXX", "TEST1"}
+                };
+
+
+            var result = _papper.Read(mapping, accessDict.Keys.ToArray());
+            Assert.Equal(0, result.Count);
+        }
+
+
         #region Helper
 
 
@@ -497,8 +511,7 @@ namespace UnitTestSuit
             {
                 foreach (var o1 in dictionary1)
                 {
-                    object o2;
-                    if (!dictionary2.TryGetValue(o1.Key, out o2) || !AreDataEqual(o1.Value, o2))
+                    if (!dictionary2.TryGetValue(o1.Key, out object o2) || !AreDataEqual(o1.Value, o2))
                         return false;
 
                 }

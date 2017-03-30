@@ -236,7 +236,6 @@ namespace Papper
         {
             if (string.IsNullOrWhiteSpace(name))
                 return null;
-            ITreeNode obj;
             var nodePathStack = new Stack<string>();
             nodePathStack.Push(RootNodeName);
             nodePathStack.Push(InstancesNodeName);
@@ -245,7 +244,7 @@ namespace Papper
 
             var path = PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse().ToArray());
             var offset = 0;
-            if (!tree.TryGet(path, ref offset, out obj, true))
+            if (!tree.TryGet(path, ref offset, out ITreeNode obj, true))
             {
                 if (t == null)
                     throw new ArgumentNullException("t");
@@ -279,13 +278,12 @@ namespace Papper
         {
             var nodePathStack = new Stack<string>();
             var name = t.FullName.Replace(".", "");
-            ITreeNode obj;
             nodePathStack.Push(RootNodeName);
             nodePathStack.Push(MetaDataNodeName);
             nodePathStack.Push(name);
             var path = PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse().ToArray());
             var offset = 0;
-            if (!tree.TryGet(path, ref offset, out obj))
+            if (!tree.TryGet(path, ref offset, out ITreeNode obj))
             {
                 var byteOffset = 0;
                 var bitOffset = 0;
@@ -299,9 +297,8 @@ namespace Papper
                 foreach (var pi in t.GetTypeInfo().DeclaredProperties)
                 {
                     var plcObject = PlcObjectFactory.CreatePlcObject(pi);
-                    var plcObjectArray = plcObject as PlcArray;
 
-                    if (plcObjectArray != null && (plcObjectArray.LeafElementType ?? plcObjectArray.ArrayType) is PlcStruct)
+                    if (plcObject is PlcArray plcObjectArray && (plcObjectArray.LeafElementType ?? plcObjectArray.ArrayType) is PlcStruct)
                         plcObjectArray.ArrayType = GetMetaData(tree, plcObjectArray.ElemenType);
                     else if (plcObject is PlcStruct)
                         plcObject = new PlcObjectRef(plcObject.Name, GetMetaData(tree, pi.PropertyType));
@@ -414,8 +411,8 @@ namespace Papper
 
                 pred.AddReference(item.Key, offset, item.Value.Item2);
 
-                var array = item.Value.Item2 as PlcArray;
-                if (array != null)
+
+                if (item.Value.Item2 is PlcArray array)
                 {
                     HandleArray(offset, array, item, pred);
                 }

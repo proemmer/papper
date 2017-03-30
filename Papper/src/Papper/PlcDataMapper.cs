@@ -189,7 +189,7 @@ namespace Papper
             {
                 if (!_mappings.TryGetValue(key, out entry))
                 {
-                    entry = new RawEntry(this, from, _tree, ReadDataBlockSize, 0);
+                    entry = new RawEntry(this, from, ReadDataBlockSize, 0);
                     using (upgradeableGuard.UpgradeToWriterLock())
                         _mappings.TryAdd(key, entry);
                 }
@@ -264,7 +264,7 @@ namespace Papper
             {
                 if (!_mappings.TryGetValue(key, out entry))
                 {
-                    entry = new RawEntry(this, to, _tree, ReadDataBlockSize, 0);
+                    entry = new RawEntry(this, to, ReadDataBlockSize, 0);
                     using (upgradeableGuard.UpgradeToWriterLock())
                         _mappings.TryAdd(key, entry);
                 }
@@ -496,7 +496,7 @@ namespace Papper
             {
                 if (!_mappings.TryGetValue(key, out IEntry entry))
                 {
-                    entry = new RawEntry(this, area, _tree, ReadDataBlockSize, 0);
+                    entry = new RawEntry(this, area, ReadDataBlockSize, 0);
                     using (upgradeableGuard.UpgradeToWriterLock())
                         _mappings.TryAdd(key, entry);
                 }

@@ -13,7 +13,7 @@ namespace Papper.Entries
 {
     internal abstract class Entry : IEntry
     {
-        private IDictionary<string, PlcObjectBinding> _bindings;
+        private IDictionary<string, PlcObjectBinding> _bindings = new Dictionary<string, PlcObjectBinding>();
         private readonly ReaderWriterLockSlim _bindingLock = new ReaderWriterLockSlim();
         private readonly object _eventHandlerLock = new object();
         private readonly PlcDataMapper _mapper;
@@ -71,20 +71,13 @@ namespace Papper.Entries
             }
         }
 
-        public Entry(PlcDataMapper mapper, PlcObject plcObject, PlcMetaDataTree tree, int readDataBlockSize, int validationTimeInMs)
+        public Entry(PlcDataMapper mapper, PlcObject plcObject, int readDataBlockSize, int validationTimeInMs)
         {
-            if (mapper == null)
-                throw new ArgumentNullException("mapper");
-            if (plcObject == null)
-                throw new ArgumentNullException("plcObject");
-            if (tree == null)
-                throw new ArgumentNullException("tree");
-
-            _mapper = mapper;
+            _mapper = mapper ?? throw new ArgumentNullException("mapper");
             ReadDataBlockSize = readDataBlockSize;
             ValidationTimeMs = validationTimeInMs;
             Variables = new Dictionary<string, Tuple<int, PlcObject>>();
-            PlcObject = plcObject;
+            PlcObject = plcObject ?? throw new ArgumentNullException("plcObject");
             Name = plcObject.Name;
         }
 
@@ -169,12 +162,13 @@ namespace Papper.Entries
             var result = new Dictionary<PlcRawData, Dictionary<string, PlcObjectBinding>>();
             IEnumerable<KeyValuePair<string, PlcObjectBinding>> bindingSnapshot = null;
             using (var guard = new ReaderGuard(_bindingLock))
+            {
                 bindingSnapshot = _bindings.Where(binding => (vars == null || vars.Contains(binding.Key)) && (!onlyActive || binding.Value.IsActive)).ToList();
+            }
 
             foreach (var binding in bindingSnapshot)
             {
-                Dictionary<string, PlcObjectBinding> entry;
-                if (!result.TryGetValue(binding.Value.RawData, out entry))
+                if (!result.TryGetValue(binding.Value.RawData, out Dictionary<string, PlcObjectBinding> entry))
                 {
                     entry = new Dictionary<string, PlcObjectBinding>();
                     result.Add(binding.Value.RawData, entry);
@@ -230,9 +224,8 @@ namespace Papper.Entries
                                         foreach (var binding in execution.Bindings)
                                         {
                                             _cs.Token.ThrowIfCancellationRequested();
-                                            LruState saved = null;
                                             var size = binding.Value.Size == 0 ? 1 : binding.Value.Size;
-                                            if (!states.TryGetValue(binding.Key, out saved) || 
+                                            if (!states.TryGetValue(binding.Key, out LruState saved) || 
                                                 (binding.Value.Size == 0 
                                                     ? binding.Value.Data[binding.Value.Offset].GetBit(binding.Value.MetaData.Offset.Bits) != saved.Data[0].GetBit(binding.Value.MetaData.Offset.Bits)
                                                     : !binding.Value.Data.SequenceEqual(binding.Value.Offset, saved.Data,0, size)))

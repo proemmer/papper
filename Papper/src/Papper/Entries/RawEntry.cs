@@ -9,8 +9,8 @@ namespace Papper.Entries
     internal class RawEntry : Entry
     {
 
-        public RawEntry(PlcDataMapper mapper, string from, PlcMetaDataTree tree, int readDataBlockSize, int validationTimeInMs)
-            : base(mapper, new PlcObjectRef(from, null) { Selector = @from }, tree, readDataBlockSize, validationTimeInMs)
+        public RawEntry(PlcDataMapper mapper, string from, int readDataBlockSize, int validationTimeInMs)
+            : base(mapper, new PlcObjectRef(from, null) { Selector = @from }, readDataBlockSize, validationTimeInMs)
         {
         }
 

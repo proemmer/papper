@@ -14,15 +14,10 @@ namespace Papper.Entries
         public Type Type { get; private set; }
 
         public MappingEntry(PlcDataMapper mapper, MappingAttribute mapping, Type type, PlcMetaDataTree tree, int readDataBlockSize, int validationTimeInMs)
-            : base(mapper, PlcObjectResolver.GetMapping(mapping?.Name, tree, type), tree, readDataBlockSize, validationTimeInMs)
+            : base(mapper, PlcObjectResolver.GetMapping(mapping?.Name, tree, type), readDataBlockSize, validationTimeInMs)
         {
-            if (mapping == null)
-                throw new ArgumentNullException("mapping");
-            if (type == null)
-                throw new ArgumentNullException("type");
-
-            Mapping = mapping;
-            Type = type;
+            Mapping = mapping ?? throw new ArgumentNullException("mapping");
+            Type = type ?? throw new ArgumentNullException("type");
         }
 
         protected override bool AddObject(ITreeNode plcObj, Dictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values)
