@@ -126,8 +126,7 @@ namespace Papper.Types
             {
                 foreach (var o1 in dictionary1)
                 {
-                    object o2;
-                    if (!dictionary2.TryGetValue(o1.Key, out o2) || !AreDataEqual(o1.Value, o2))
+                    if (!dictionary2.TryGetValue(o1.Key, out object o2) || !AreDataEqual(o1.Value, o2))
                         return false;
 
                 }

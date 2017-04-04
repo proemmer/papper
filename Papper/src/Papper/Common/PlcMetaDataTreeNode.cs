@@ -25,8 +25,7 @@ namespace Papper.Common
         {
             if (GetChildByName(child.Name) != null)
                 throw new ArgumentException(string.Format("TreeNode: A child with name {0} already exists!", child.Name));
-            var baseTreeNode = child as PlcMetaDataBaseTreeNode;
-            if (baseTreeNode != null) baseTreeNode.Parent = this;
+            if (child is PlcMetaDataBaseTreeNode baseTreeNode) baseTreeNode.Parent = this;
             _childs.Add(child);
         }
 
@@ -36,8 +35,7 @@ namespace Papper.Common
             if (child == null)
                 throw new ArgumentException(string.Format("TreeNode: A child with name {0} does not exist!", name));
             _childs.Remove(child);
-            var baseTreeNode = child as PlcMetaDataBaseTreeNode;
-            if (baseTreeNode != null) baseTreeNode.Parent = null;
+            if (child is PlcMetaDataBaseTreeNode baseTreeNode) baseTreeNode.Parent = null;
             return child;
         }
 
@@ -90,10 +88,10 @@ namespace Papper.Common
             if (path.IsPathIndexed)
             {
                 var arrayChild = GetChildByName(path.ArrayName);
-                return (arrayChild == null) ? null : arrayChild.Get(path, ref offset, getRef);
+                return arrayChild?.Get(path, ref offset, getRef);
             }
             var child = GetChildByName(path.Nodes.First());
-            return (child == null) ? null : child.Get(path.StepDown(), ref offset, getRef);
+            return child?.Get(path.StepDown(), ref offset, getRef);
         }
 
         public override void AddChild(ITreePath path, ITreeNode node)

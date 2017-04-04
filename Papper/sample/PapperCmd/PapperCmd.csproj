@@ -18,15 +18,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Papper\Papper.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="System.Collections" Version="4.3.0" />
     <PackageReference Include="System.Threading" Version="4.3.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.3.0" />
     <PackageReference Include="System.Linq" Version="4.3.0" />
     <PackageReference Include="System.Runtime" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Papper\Papper.csproj" />
   </ItemGroup>
 
 </Project>

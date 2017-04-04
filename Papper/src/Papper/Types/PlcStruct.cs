@@ -58,8 +58,7 @@ namespace Papper.Types
                 foreach (var child in plcObjectBinding.MetaData.Childs.OfType<PlcObject>())
                 {
                     var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes, plcObjectBinding.ValidationTimeInMs);
-                    object prop;
-                    if (properties.TryGetValue(child.Name, out prop))
+                    if (properties.TryGetValue(child.Name, out object prop))
                         child.ConvertToRaw(prop, binding);
                 }
             }
