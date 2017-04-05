@@ -146,3 +146,6 @@ private static bool Papper_OnWrite(string selector, int offset, byte[] data, byt
 </code></pre>
 
 # Release Notes
+* 1.0.6:
+    * migrated to VS2017 and C#7.
+    * Refactoring
