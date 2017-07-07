@@ -215,8 +215,7 @@ namespace Papper
         private static dynamic GetPropertyValue(dynamic parent, string name)
         {
             var dictionary = parent as IDictionary<string, object>;
-            object ret;
-            if (dictionary != null && dictionary.TryGetValue(name, out ret))
+            if (dictionary != null && dictionary.TryGetValue(name, out object ret))
                 return ret;
             return null;
         }

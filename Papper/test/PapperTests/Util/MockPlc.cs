@@ -38,14 +38,13 @@ namespace UnitTestSuit.Util
 
         public static PlcBlock GetPlcEntry(string selector, int minSize = -1)
         {
-            PlcBlock plcblock;
-            if (!_plc.TryGetValue(selector, out plcblock))
+            if (!_plc.TryGetValue(selector, out PlcBlock plcblock))
             {
                 plcblock = new PlcBlock(minSize > 0 ? minSize : 0);
                 _plc.Add(selector, plcblock);
                 return plcblock;
             }
-            if(minSize > 0)
+            if (minSize > 0)
                 plcblock.UpdateBlockSize(minSize);
             return plcblock;
         }

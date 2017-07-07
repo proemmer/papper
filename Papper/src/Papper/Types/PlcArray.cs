@@ -116,10 +116,9 @@ namespace Papper.Types
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding)
         {
             var list = value as IEnumerable;
-            var convert = list as string;
 
             //handle byte array for Json --- TODO:  not so beautiful here
-            if (convert != null && (ArrayType is PlcByte || ArrayType.ElemenType == typeof(byte)))
+            if (list is string convert && (ArrayType is PlcByte || ArrayType.ElemenType == typeof(byte)))
                 value = list = Convert.FromBase64String(convert);
 
             if (list != null)
@@ -267,10 +266,9 @@ namespace Papper.Types
             if (idx >= From && idx <= To)
             {
                 offset += Offset.Bytes + ((idx - From)* GetElementSizeForOffset());
-                ITreeNode ret;
-                return (_indexCache.TryGetValue(idx, out ret) ? 
-                    ret :
-                    GetIndex(idx)).Get(CreateSubPath(path), ref offset);
+                return (_indexCache.TryGetValue(idx, out ITreeNode ret) ?
+                            ret :
+                            GetIndex(idx)).Get(CreateSubPath(path), ref offset);
             }
             return null;
         }
@@ -332,8 +330,7 @@ namespace Papper.Types
         {
             lock (_indexCache)
             {
-                ITreeNode ret;
-                if (_indexCache.TryGetValue(idx, out ret))
+                if (_indexCache.TryGetValue(idx, out ITreeNode ret))
                     return ret as PlcObject;
                 ret = ArrayType is PlcStruct
                     ? new PlcObjectRef(string.Format("[{0}]", idx), ArrayType)

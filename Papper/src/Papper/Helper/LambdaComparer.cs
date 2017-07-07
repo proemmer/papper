@@ -33,16 +33,9 @@ namespace Papper.Helper
 
         public LambdaComparer(Func<T, T, int> lambdaCompare, Func<T, T, bool> lambdaEquals, Func<T, int> lambdaHash)
         {
-            if (lambdaCompare == null)
-                throw new ArgumentNullException("lambdaCompare");
-            if (lambdaEquals == null)
-                throw new ArgumentNullException("lambdaEquals");
-            if (lambdaHash == null)
-                throw new ArgumentNullException("lambdaHash");
-
-            _lambdaCompare = lambdaCompare;
-            _lambdaEquals = lambdaEquals;
-            _lambdaHash = lambdaHash;
+            _lambdaCompare = lambdaCompare ?? throw new ArgumentNullException("lambdaCompare");
+            _lambdaEquals = lambdaEquals ?? throw new ArgumentNullException("lambdaEquals");
+            _lambdaHash = lambdaHash ?? throw new ArgumentNullException("lambdaHash");
         }
 
         public int Compare(T x, T y)

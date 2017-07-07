@@ -97,8 +97,7 @@ namespace Papper.Types
                 {
                     if (leafPlcObject != null)
                     {
-                        var plcArray = instance as PlcArray;
-                        if (plcArray != null)
+                        if (instance is PlcArray plcArray)
                             plcArray.LeafElementType = leafPlcObject;
                     }
 
@@ -205,8 +204,7 @@ namespace Papper.Types
             var attribute = pi.GetCustomAttributes<PlcTypeAttribute>().FirstOrDefault();
             if (attribute != null)
             {
-                Type plcType;
-                if (TypeNameMatch.TryGetValue(attribute.Name, out plcType))
+                if (TypeNameMatch.TryGetValue(attribute.Name, out Type plcType))
                     return plcType;
             }
             return null;
@@ -214,8 +212,7 @@ namespace Papper.Types
 
         public static Type GetTypeForPlcObject(Type plcObjectType)
         {
-            Type retType;
-            return ReverseTypeMatch.TryGetValue(plcObjectType, out retType) ? retType : typeof(object);
+            return ReverseTypeMatch.TryGetValue(plcObjectType, out Type retType) ? retType : typeof(object);
         }
     }
 }

@@ -1,3 +1,5 @@
+[![insite MyGet Build Status](https://www.myget.org/BuildSource/Badge/insite?identifier=1311b225-6a23-4112-834f-931a82266bff)](https://www.myget.org/)
+
 # Papper
 Plc Data Mapper is a library to map C# classes to plc blocks to get symbolic access to the plc.
 
@@ -146,3 +148,6 @@ private static bool Papper_OnWrite(string selector, int offset, byte[] data, byt
 </code></pre>
 
 # Release Notes
+* 1.0.6:
+    * migrated to VS2017 and C#7.
+    * Refactoring
