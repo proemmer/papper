@@ -1,8 +1,6 @@
 ﻿using Papper.Common;
 using Papper.Helper;
-using Papper.Types;
 using System;
-using System.Collections.Generic;
 
 namespace Papper
 {
@@ -33,6 +31,8 @@ namespace Papper
         public T Deserialize<T>(byte[] data)
         {
             var binding = GetTypeForConversion(typeof(T));
+            if (data.Length < binding.Size)
+                throw new ArgumentOutOfRangeException($"{nameof(data)}");
             binding.RawData.Data = data;
             return (T)binding.ConvertFromRaw();
         }

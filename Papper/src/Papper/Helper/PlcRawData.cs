@@ -84,9 +84,8 @@ namespace Papper.Helper
                 var partitions = new List<Partiton>();
                 for (var i = offset; i <= Math.Min(Data.Length, offset+size); i+= _partitionSize)
                 {
-                    Partiton partiton;
                     var partitionId = i / _partitionSize;
-                    if (Partitons.TryGetValue(partitionId, out partiton))
+                    if (Partitons.TryGetValue(partitionId, out Partiton partiton))
                         partitions.Add(partiton);
                 }
                 return partitions;
