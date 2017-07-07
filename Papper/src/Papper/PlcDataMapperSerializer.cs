@@ -1,4 +1,5 @@
-﻿using Papper.Helper;
+﻿using Papper.Common;
+using Papper.Helper;
 using Papper.Types;
 using System;
 using System.Collections.Generic;
@@ -7,15 +8,14 @@ namespace Papper
 {
     public class PlcDataMapperSerializer
     {
-        private PlcDataMapper _mapper;
-        private string[] VarNames = { "This" };
-        private Dictionary<string, Dictionary<string, Tuple<int, PlcObject>>> _plcObjects = new Dictionary<string, Dictionary<string, Tuple<int, PlcObject>>>();
+        private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
 
-        public PlcDataMapperSerializer(PlcDataMapper mapper)
-        {
-            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-        }
-
+        /// <summary>
+        /// Converts a data type to a plc known format.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public byte[] Serialize<T>(T data)
         {
             var binding = GetTypeForConversion(typeof(T));
@@ -24,7 +24,12 @@ namespace Papper
             return binding.RawData.Data;
         }
 
-
+        /// <summary>
+        /// Converts a plc known format to a datatype
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public T Deserialize<T>(byte[] data)
         {
             var binding = GetTypeForConversion(typeof(T));
@@ -35,15 +40,8 @@ namespace Papper
 
         private PlcObjectBinding GetTypeForConversion(Type type)
         {
-            var key = $"PlcDataMapperSerializerExtensions{type.Name}";
-            var plcObject = PlcObjectResolver.GetMapping(key, _mapper._tree, type, true);
+            var plcObject = PlcObjectResolver.GetMapping(type.Name, _tree, type, true);
             return new PlcObjectBinding(new PlcRawData(plcObject.ByteSize), plcObject, 0, 0, true);
-            //if(!_plcObjects.TryGetValue(key,out var plcObjectEntry))
-            //{
-            //    plcObjectEntry = new Dictionary<string, Tuple<int, PlcObject>>();
-
-            //    _plcObjects.Add(key, plcObjectEntry);
-            //}
         }
     }
 }

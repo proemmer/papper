@@ -47,7 +47,7 @@ namespace Papper
         private const string ADDRESS_PREFIX = "$ABSSYMBOLS$_";
         private const int PduSizeDefault = 480;
         private const int ReadDataHeaderLength = 18;
-        internal readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
+        private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
         private readonly ConcurrentDictionary<string, IEntry> _mappings = new ConcurrentDictionary<string, IEntry>();
         private readonly ReaderWriterLockSlim _mappingsLock = new ReaderWriterLockSlim();
         private event ReadOperation _onRead;

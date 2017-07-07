@@ -12,7 +12,7 @@ using System.Text;
 
 namespace Papper
 {
-    internal class PlcObjectResolver
+    internal static class PlcObjectResolver
     {
 
         public const string RootNodeName = "Plc";

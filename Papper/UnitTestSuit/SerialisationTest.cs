@@ -12,8 +12,7 @@ namespace UnitTestSuit
         [Fact]
         void TestSerialisation()
         {
-            PlcDataMapper papper = new PlcDataMapper(960);
-            var s = new PlcDataMapperSerializer(papper);
+            var s = new PlcDataMapperSerializer();
             var tt = new StringArrayTestMapping
             {
                 TEST = "Hallo",
@@ -26,7 +25,10 @@ namespace UnitTestSuit
 
             Assert.Equal(tt.TEST, deserialized.TEST);
             Assert.Equal(tt.TEXT[0], deserialized.TEXT[0]);
-            Assert.Equal(tt.Time[0], deserialized.Time[0]);
+
+            // Precision is not the same after conveting to the plc format
+            var cmpVal = Convert.ToUInt32(tt.Time[0].TotalMilliseconds);
+            Assert.Equal(cmpVal, deserialized.Time[0].TotalMilliseconds);
         }
     }
 }
