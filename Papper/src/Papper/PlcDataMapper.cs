@@ -47,7 +47,7 @@ namespace Papper
         private const string ADDRESS_PREFIX = "$ABSSYMBOLS$_";
         private const int PduSizeDefault = 480;
         private const int ReadDataHeaderLength = 18;
-        private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
+        internal readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
         private readonly ConcurrentDictionary<string, IEntry> _mappings = new ConcurrentDictionary<string, IEntry>();
         private readonly ReaderWriterLockSlim _mappingsLock = new ReaderWriterLockSlim();
         private event ReadOperation _onRead;
@@ -120,7 +120,7 @@ namespace Papper
         /// <summary>
         /// Add a type with an MappingAttribute to register this type as an mapping for read and write operations
         /// </summary>
-        /// <param name="type">Has to be a type with at least one an MappingAttribute</param>
+        /// <param name="type">Has to be a type with at least one MappingAttribute</param>
         /// <returns></returns>
         public bool AddMapping(Type type)
         {
@@ -147,6 +147,7 @@ namespace Papper
             }
             return true;
         }
+
 
         /// <summary>
         /// Read variables from an given mapping

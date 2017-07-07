@@ -181,13 +181,15 @@ namespace Papper.Types
                 else
                 {
                     var list = new T[ArrayLength];
+                    var idx = From;
                     for (var i = 0; i < ArrayLength; i++)
                     {
                         var child = Childs.OfType<PlcObject>().Skip(i).FirstOrDefault();
                         if (child == null)
                             throw new Exception("Array error");
-                        var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + (GetElementSizeForOffset()), plcObjectBinding.ValidationTimeInMs);
+                        var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + ((idx - From) * GetElementSizeForOffset()), plcObjectBinding.ValidationTimeInMs);
                         list[i] = ((T)ArrayType.ConvertFromRaw(binding));
+                        idx++;
                     }
                     return list;
                 }
