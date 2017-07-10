@@ -110,7 +110,10 @@ namespace Papper.Types
                 return InternalConvert(plcObjectBinding, new char());
             if (ArrayType is PlcArray)
                 return ArrayType.ConvertFromRaw(plcObjectBinding);
+            if (plcObjectBinding.FullType)
+                return InternalConvert(plcObjectBinding, Activator.CreateInstance(plcObjectBinding.MetaData.ElemenType), true, plcObjectBinding.MetaData.ElemenType);
             return InternalConvert(plcObjectBinding, new ExpandoObject());
+
         }
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding)
@@ -156,6 +159,8 @@ namespace Papper.Types
             }
         }
 
+
+
         /// <summary>
         /// This method converts the given binding data to the correct representation data type
         /// </summary>
@@ -163,7 +168,7 @@ namespace Papper.Types
         /// <param name="plcObjectBinding"></param>
         /// <param name="type">instance of target type</param>
         /// <returns></returns>
-        private object InternalConvert<T>(PlcObjectBinding plcObjectBinding, T type)
+        private object InternalConvert<T>(PlcObjectBinding plcObjectBinding, T type, bool fully = false, Type t = null)
         {
             
             if (plcObjectBinding.Data != null && plcObjectBinding.Data.Any())
@@ -177,6 +182,25 @@ namespace Papper.Types
                 {
                     return Encoding.ASCII.GetChars(plcObjectBinding.RawData.Data.SubArray(plcObjectBinding.Offset, ArrayLength));
                 }
+                else if (fully && t != null)
+                {
+                    //Special handlying for object types
+                    Type generic = typeof(List<>);
+                    Type constructed = typeof(T).MakeArrayType();
+
+                    var list = Array.CreateInstance(t, ArrayLength);
+                    var idx = From;
+                    for (var i = 0; i < ArrayLength; i++)
+                    {
+                        var child = Childs.OfType<PlcObject>().Skip(i).FirstOrDefault();
+                        if (child == null)
+                            throw new Exception("Array error");
+                        var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + ((idx - From) * GetElementSizeForOffset()), plcObjectBinding.ValidationTimeInMs, fully);
+                        list.SetValue(((T)ArrayType.ConvertFromRaw(binding)),i);
+                        idx++;
+                    }
+                    return list;
+                }
                 else
                 {
                     var list = new T[ArrayLength];
@@ -186,7 +210,7 @@ namespace Papper.Types
                         var child = Childs.OfType<PlcObject>().Skip(i).FirstOrDefault();
                         if (child == null)
                             throw new Exception("Array error");
-                        var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + ((idx - From) * GetElementSizeForOffset()), plcObjectBinding.ValidationTimeInMs);
+                        var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + ((idx - From) * GetElementSizeForOffset()), plcObjectBinding.ValidationTimeInMs, fully);
                         list[i] = ((T)ArrayType.ConvertFromRaw(binding));
                         idx++;
                     }
