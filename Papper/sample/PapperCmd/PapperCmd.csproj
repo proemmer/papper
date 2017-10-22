@@ -3,11 +3,10 @@
   <PropertyGroup>
     <Description>PapperCmd Console Application</Description>
     <Authors>Benjamin</Authors>
-    <TargetFramework>netcoreapp1.0</TargetFramework>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
     <AssemblyName>PapperCmd</AssemblyName>
     <OutputType>Exe</OutputType>
     <PackageId>PapperCmd</PackageId>
-    <RuntimeFrameworkVersion>1.1.1</RuntimeFrameworkVersion>
     <PackageTargetFallback>$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
@@ -20,7 +19,7 @@
   <ItemGroup>
     <PackageReference Include="System.Collections" Version="4.3.0" />
     <PackageReference Include="System.Threading" Version="4.3.0" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.3.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.4.0" />
     <PackageReference Include="System.Linq" Version="4.3.0" />
     <PackageReference Include="System.Runtime" Version="4.3.0" />
   </ItemGroup>
