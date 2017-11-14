@@ -28,6 +28,9 @@ namespace UnitTestSuit
             _papper.AddMapping(typeof(DB_Safety));
             _papper.AddMapping(typeof(ArrayTestMapping));
             _papper.AddMapping(typeof(StringArrayTestMapping));
+
+            var vars = _papper.GetVariablesOf(nameof(DB_Safety));
+            Assert.Equal(4596, vars.Count());
         }
 
         [Fact]
