@@ -10,7 +10,7 @@
     <AssemblyName>Papper</AssemblyName>
     <PackageId>Papper</PackageId>
     <PackageTags>siemens plc datamapper S7</PackageTags>
-    <PackageReleaseNotes>fixed a bug in string array calculation, updated nuget packages, optimize read during valid data time</PackageReleaseNotes>
+    <PackageReleaseNotes>* Fixed a bug in PlcArray (deserialisation was not working with complex types)</PackageReleaseNotes>
     <PackageProjectUrl>http://proemmer.github.io/papper</PackageProjectUrl>
     <PackageLicenseUrl>https://opensource.org/licenses/Apache-2.0</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
@@ -22,8 +22,10 @@
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
-    <Version>1.0.6</Version>
+    <Version>1.0.8</Version>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <RepositoryUrl>https://github.com/proemmer/papper.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>

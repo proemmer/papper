@@ -80,7 +80,7 @@ namespace Papper.Types
                         UpdateSize(pi, element);
                     }
                     else
-                        element = Activator.CreateInstance(typeof(PlcStruct), name) as PlcObject;
+                        element = Activator.CreateInstance(typeof(PlcStruct), name, pi.PropertyType) as PlcObject;
 
                     leafPlcObject = element;
                     for (var i = dimensions; i > 0; i--)
@@ -90,7 +90,7 @@ namespace Papper.Types
                     }
                 }
                 else
-                    element = Activator.CreateInstance(typeof (PlcStruct), name) as PlcObject;
+                    element = Activator.CreateInstance(typeof (PlcStruct), name, pi.PropertyType) as PlcObject;
 
                 instance = Activator.CreateInstance(typeof(PlcArray), name, element, 0, 0) as PlcObject;
                 if (instance != null)
@@ -113,7 +113,7 @@ namespace Papper.Types
                     UpdateSize(pi, instance);
                 }
                 else
-                    instance = Activator.CreateInstance(typeof(PlcStruct), arrayIndex == null ? name : name + string.Format("[{0}]", arrayIndex)) as PlcObject;
+                    instance = Activator.CreateInstance(typeof(PlcStruct), arrayIndex == null ? name : name + string.Format("[{0}]", arrayIndex), pi.PropertyType) as PlcObject;
 
                 if (instance != null)
                     instance.ElemenType = pi.PropertyType;

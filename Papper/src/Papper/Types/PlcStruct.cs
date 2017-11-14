@@ -3,12 +3,14 @@ using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using Papper.Helper;
+using System;
 
 namespace Papper.Types
 {
     internal class PlcStruct : PlcObject
     {
         public const int AlignmentInBytes = 2;
+        private readonly Type _structType;
 
         public override PlcSize Size
         {
@@ -34,20 +36,35 @@ namespace Papper.Types
         }
 
 
-        public PlcStruct(string name) 
+        public PlcStruct(string name, Type structType) 
             : base(name)
         {
+            _structType = structType ?? throw new ArgumentNullException(nameof(structType));
         }
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding)
         {
-            var obj = new ExpandoObject();
-            foreach (var child in plcObjectBinding.MetaData.Childs.OfType<PlcObject>())
+            if (!plcObjectBinding.FullType || _structType == null)
             {
-                var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes, plcObjectBinding.ValidationTimeInMs);
-                AddProperty(obj, child.Name, child.ConvertFromRaw(binding));
+                var obj = new ExpandoObject();
+                foreach (var child in plcObjectBinding.MetaData.Childs.OfType<PlcObject>())
+                {
+                    var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes, plcObjectBinding.ValidationTimeInMs);
+                    AddProperty(obj, child.Name, child.ConvertFromRaw(binding));
+                }
+                return obj;
             }
-            return obj;
+            else
+            {
+                var obj = Activator.CreateInstance(_structType);
+                foreach (var child in plcObjectBinding.MetaData.Childs.OfType<PlcObject>())
+                {
+                    var prop = _structType.GetProperty(child.Name);
+                    var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes, plcObjectBinding.ValidationTimeInMs, true);
+                    prop.SetValue(obj, child.ConvertFromRaw(binding));
+                }
+                return obj;
+            }
         }
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding)

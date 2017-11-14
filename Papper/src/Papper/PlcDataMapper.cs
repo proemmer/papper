@@ -120,7 +120,7 @@ namespace Papper
         /// <summary>
         /// Add a type with an MappingAttribute to register this type as an mapping for read and write operations
         /// </summary>
-        /// <param name="type">Has to be a type with at least one an MappingAttribute</param>
+        /// <param name="type">Has to be a type with at least one MappingAttribute</param>
         /// <returns></returns>
         public bool AddMapping(Type type)
         {
@@ -147,6 +147,7 @@ namespace Papper
             }
             return true;
         }
+
 
         /// <summary>
         /// Read variables from an given mapping

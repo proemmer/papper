@@ -8,16 +8,19 @@ namespace Papper.Helper
         private readonly PlcRawData _rawData;
         private readonly PlcObject _metaData;
 
-        public PlcObjectBinding(PlcRawData rawData, PlcObject metaData, int offset, int validationTimeMs)
+        public PlcObjectBinding(PlcRawData rawData, PlcObject metaData, int offset, int validationTimeMs, bool fullType = false)
         {
             _rawData = rawData;
             _metaData = metaData;
             Offset = offset;
             ValidationTimeInMs = validationTimeMs;
+            FullType = fullType;
         }
 
         public bool IsActive { get; set; }
         public int ValidationTimeInMs { get; set; }
+
+        public bool FullType { get; private set; }
 
         public byte[] Data
         {
