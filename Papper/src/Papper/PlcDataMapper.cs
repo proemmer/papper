@@ -176,11 +176,41 @@ namespace Papper
         }
 
         /// <summary>
+        /// Read variables from an given mapping
+        /// </summary>
+        /// <param name="vars"></param>
+        /// <returns>return a dictionary with all variables and the read value</returns>
+        public PlcReadResult[] Read(params PlcReference[] vars)
+        {
+            throw new NotImplementedException();
+
+            var executions = new List<Execution>();
+            foreach (var item in vars)
+            {
+                if (_mappings.TryGetValue(item.Mapping, out IEntry entry))
+                {
+                    executions.AddRange(entry.GetOperations(item.Variables));
+                }
+            }
+
+                //foreach (var execution in entry.GetOperations(vars))
+                //{
+                //    if (ExecuteRead(execution) != ReadResult.Failed)
+                //    {
+                //        foreach (var item in execution.Bindings)
+                //            result.Add(item.Key, item.Value.ConvertFromRaw());
+                //    }
+                //}
+                
+            return null;
+        }
+
+        /// <summary>
         /// Read variables from an given address
         /// </summary>
         /// <param name="mapping">mapping name specified in the MappingAttribute</param>
         /// <param name="vars"></param>
-        /// <returns>return a dictionary with all variables and the red value</returns>
+        /// <returns>return a dictionary with all variables and the read value</returns>
         public Dictionary<string, object> ReadAbs(string from, params string[] vars)
         {
             IEntry entry;
