@@ -2,6 +2,7 @@
 using Papper.Common;
 using Papper.Entries;
 using Papper.Helper;
+using Papper.Optimizer;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -13,8 +14,23 @@ using System.Threading;
 namespace Papper
 {
     public delegate void OnChangeEventHandler(object sender, PlcNotificationEventArgs e);
-    
+   
+    public enum ActionResult
+    {
+        Unknown,
+        Ok,
+        Error
+    }
+    public struct DataPack
+    {
+        public string Selector { get; set; }
+        public int Offset { get; set; }
+        public int Length { get; set; }
 
+        public byte[] Data { get; set; }
+
+        public ActionResult ActionResult { get; set; }
+    }
 
     // This project can output the Class library as a NuGet Package.
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
@@ -28,7 +44,7 @@ namespace Papper
         /// <param name="offset">Offset in byte to the first byte to read</param>
         /// <param name="length">Number of bytes to read.</param>
         /// <returns></returns>
-        public delegate byte[] ReadOperation(string selector, int offset, int length);
+        public delegate byte[] ReadOperation(IEnumerable<DataPack> reads);
 
         /// <summary>
         /// his delegate is used to invoke the write operations.
@@ -52,6 +68,7 @@ namespace Papper
         private readonly ReaderWriterLockSlim _mappingsLock = new ReaderWriterLockSlim();
         private event ReadOperation _onRead;
         private event WriteOperation _onWrite;
+        private readonly IReadOperationOptimizer _optimizer;
         #endregion
 
         #region Properties
@@ -80,11 +97,14 @@ namespace Papper
                 _onWrite -= value;
             }
         }
+
+        internal IReadOperationOptimizer Optimizer => _optimizer;
         #endregion
 
-        public PlcDataMapper(int pduSize = PduSizeDefault)
+        public PlcDataMapper(int pduSize = PduSizeDefault, OptimizerType optimizer = OptimizerType.Block)
         {
             PduSize = pduSize;
+            _optimizer = OptimizerFactory.CreateOptimizer(optimizer);
             ReadDataBlockSize = pduSize - ReadDataHeaderLength;
             if (ReadDataBlockSize <= 0)
                 throw new ArgumentException($"PDU size have to be greater then {ReadDataHeaderLength}", "pduSize");
@@ -152,38 +172,10 @@ namespace Papper
         /// <summary>
         /// Read variables from an given mapping
         /// </summary>
-        /// <param name="mapping">mapping name specified in the MappingAttribute</param>
-        /// <param name="vars"></param>
-        /// <returns>return a dictionary with all variables and the red value</returns>
-        public Dictionary<string, object> Read(string mapping, params string[] vars)
-        {
-            if (string.IsNullOrWhiteSpace(mapping))
-                throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
-
-            var result = new Dictionary<string, object>();
-            if (_mappings.TryGetValue(mapping, out IEntry entry))
-            {
-                foreach (var execution in entry.GetOperations(vars))
-                {
-                    if (ExecuteRead(execution) != ReadResult.Failed)
-                    {
-                        foreach (var item in execution.Bindings)
-                            result.Add(item.Key, item.Value.ConvertFromRaw());
-                    } 
-                }
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// Read variables from an given mapping
-        /// </summary>
         /// <param name="vars"></param>
         /// <returns>return a dictionary with all variables and the read value</returns>
         public PlcReadResult[] Read(params PlcReference[] vars)
         {
-            throw new NotImplementedException();
-
             var executions = new List<Execution>();
             foreach (var item in vars)
             {
@@ -193,16 +185,25 @@ namespace Papper
                 }
             }
 
-                //foreach (var execution in entry.GetOperations(vars))
-                //{
-                //    if (ExecuteRead(execution) != ReadResult.Failed)
-                //    {
-                //        foreach (var item in execution.Bindings)
-                //            result.Add(item.Key, item.Value.ConvertFromRaw());
-                //    }
-                //}
-                
-            return null;
+            var needUpdate = executions.Where(exec => exec.ValidationTimeMs <= 0 || exec.PlcRawData.LastUpdate.AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now);
+            var packs = needUpdate.Select(x => new KeyValuePair<Execution, DataPack>(x, new DataPack { Selector = x.PlcRawData.Selector, Offset = x.PlcRawData.Offset, Length = x.PlcRawData.Size > 0 ? x.PlcRawData.Size : 1 })).ToDictionary(x => x.Key, x => x.Value);
+            ExecuteRead(packs.Values);
+
+            var results = new List<PlcReadResult>();
+            foreach (var execution in executions)
+            {
+                if (packs.TryGetValue(execution, out var pack))
+                {
+                    execution.PlcRawData.Data = pack.Data;
+                    execution.PlcRawData.LastUpdate = DateTime.Now;
+                }
+                foreach (var item in execution.Bindings)
+                {
+                    results.Add(new PlcReadResult { Name = item.Key, Value = item.Value.ConvertFromRaw(), ActionResult = pack.ActionResult });
+                }
+            }
+
+            return results.ToArray();
         }
 
         /// <summary>
@@ -355,107 +356,26 @@ namespace Papper
             }
             throw new KeyNotFoundException($"There is variable <{variable}> for mapping <{mapping}>");
         }
-        
-        
+
+
         #region internal read write operations
+
+        internal ReadResult ExecuteRead(IEnumerable<DataPack> reads)
+        {
+
+            // rawData.LastUpdate = DateTime.Now;
+
+            return ReadResult.UseCache; //We need no read, because the timestamps are ok
+        }
+
 
         internal ReadResult ExecuteRead(Execution exec)
         {
-            if (exec.Partitions != null)
-            {
-                if (exec.ValidationTimeMs <= 0 || exec.Partitions.Min(x => x.LastUpdate).AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now)
-                    return ReadPartitions(exec.PlcRawData, exec.Partitions) ? ReadResult.Successfully : ReadResult.Failed;
-            }
-            else if (exec.ValidationTimeMs <= 0 || exec.PlcRawData.LastUpdate.AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now)
+            if (exec.ValidationTimeMs <= 0 || exec.PlcRawData.LastUpdate.AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now)
                 return Read(exec.PlcRawData) ? ReadResult.Successfully : ReadResult.Failed;
             return ReadResult.UseCache; //We need no read, because the timestamps are ok
         }
 
-        private bool Read(PlcRawData rawData)
-        {
-            lock (rawData)
-            {
-                var size = rawData.Size > 0 ? rawData.Size : 1;
-                if (Read(rawData.Selector, rawData.Offset, size, rawData.Data))
-                {
-                    rawData.LastUpdate = DateTime.Now;
-                    return true;
-                }
-                return false;
-            }
-        }
-
-        private bool ReadPartitions(PlcRawData rawData, IEnumerable<Partiton> partitons)
-        {
-            lock (rawData)
-            {
-                try
-                {
-                    var startPartition = partitons.First();
-                    var offset = rawData.Offset + startPartition.Offset;
-                    var readSize = partitons.Sum(x => x.Size);
-
-                    Partiton prev = null;
-                    var blocks = new List<Tuple<int, int>>();
-                    foreach (var part in partitons)
-                    {
-                        if (prev != null)
-                        {
-                            var pos = prev.Offset + prev.Size;
-                            if (pos != part.Offset)
-                            {
-                                blocks.Add(new Tuple<int, int>(offset, pos));
-                                prev = null;
-                            }
-                            else
-                                prev = part;
-                        }
-                        else
-                        {
-                            offset = rawData.Offset + part.Offset; // offset of block
-                            prev = part;
-                        }
-                    }
-                    if (prev != null)
-                        blocks.Add(new Tuple<int, int>(offset, prev.Offset + prev.Size));
-
-                    var targetOffset = startPartition.Offset;
-                    foreach (var item in blocks)
-                    {
-                        if (Read(rawData.Selector, item.Item1, item.Item2, rawData.Data, targetOffset))
-                        {
-                            foreach (var partiton in partitons)
-                                partiton.LastUpdate = DateTime.Now;
-                        }
-                    }
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
-                return true;
-            }
-        }
-
-        private bool Read(string selector, int offset, int length, byte[] data, int targetOffset = 0)
-        {
-            if (_onRead == null)
-                throw new NullReferenceException("The event handler for the read method is not registered.");
-
-            try
-            {
-                byte[] red = _onRead(selector,  offset, length);
-                if (red != null)
-                    red.CopyTo(data, targetOffset);
-                else
-                    return false;
-            }
-            catch(Exception)
-            {
-                return false;
-            }
-            return true;
-        }
 
         private bool Write(PlcObjectBinding binding)
         {

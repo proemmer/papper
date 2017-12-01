@@ -1,5 +1,4 @@
-﻿using Papper.Common;
-using Papper.Helper;
+﻿using Papper.Helper;
 using Papper.Interfaces;
 using Papper.Types;
 using System;
@@ -11,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Papper.Entries
 {
-    internal abstract class Entry : IEntry
+    internal abstract partial class Entry : IEntry
     {
         private IDictionary<string, PlcObjectBinding> _bindings = new Dictionary<string, PlcObjectBinding>();
         private readonly ReaderWriterLockSlim _bindingLock = new ReaderWriterLockSlim();
@@ -21,20 +20,7 @@ namespace Papper.Entries
         private bool _isWatching;
         private CancellationTokenSource _cs;
 
-
-        private class LruState
-        {
-            public DateTime LastUsage { get; set; }
-            public byte[] Data { get; set; }
-
-            public LruState(int size)
-            {
-                Data = new byte[size];
-            }
-        }
-
         
-
         public string Name { get; private set; }
         public int ReadDataBlockSize { get; private set; }
         public int ValidationTimeMs { get; set; }
@@ -123,7 +109,7 @@ namespace Papper.Entries
             if (AddObject(PlcObject, Variables, vars))
             {
                 var bindings = new Dictionary<string, PlcObjectBinding>();
-                foreach (var rawDataBlock in PlcObjectResolver.CreateRawReadOperations(PlcObject.Selector, Variables, ReadDataBlockSize))
+                foreach (var rawDataBlock in _mapper.Optimizer.CreateRawReadOperations(PlcObject.Selector, Variables, ReadDataBlockSize))
                 {
                     if (rawDataBlock.References.Any())
                     {
