@@ -230,32 +230,39 @@ namespace UnitTestSuit
                     { "SafeMotion.Slots[15].Commands.TakeoverPermitted", true },
                 };
             var are = new AutoResetEvent(false);
-            OnChangeEventHandler callback = (s, e) =>
+
+
+            using (var subscription = _papper.CreateSubscribe())
             {
-                foreach (var item in e)
-                {
-                    if (!intiState)
-                        Assert.Equal(writeData[item.Key], item.Value);
-                    else
-                        Assert.Equal(originData[item.Key], item.Value);
-                }
-                are.Set();
-            };
-            Assert.True(_papper.Subscribe(originData.Keys.Select( variable => PlcReference.FromAddress($"{mapping}.{variable}")).ToArray());
+                subscription.AddItems(originData.Keys.Select(variable => PlcReference.FromAddress($"{mapping}.{variable}")).ToArray());
+                var t = Task.Run(async () =>
+               {
+                   while(!subscription.Watching.IsCompleted)
+                   {
+                       var res = await subscription.DetectChangesAsync();
+                       foreach (var item in res.Results)
+                       {
+                           if (!intiState)
+                               Assert.Equal(writeData[item.Variable], item.Value);
+                           else
+                               Assert.Equal(originData[item.Variable], item.Value);
+                       }
+                       are.Set();
+                   }
+               });
 
-            //waiting for initialize
-            Assert.True(are.WaitOne(5000));
-            intiState = false;
-            Assert.True(_papper.Write(mapping, writeData));
+                //waiting for initialize
+                Assert.True(are.WaitOne(10000));
+                intiState = false;
+                Assert.True(_papper.Write(mapping, writeData));
 
-            //waiting for write update
-            Assert.True(are.WaitOne(5000));
+                //waiting for write update
+                Assert.True(are.WaitOne(5000));
 
-            //test if data change only occurred if data changed
-            Assert.False(are.WaitOne(5000));
+                //test if data change only occurred if data changed
+                Assert.False(are.WaitOne(5000));
 
-            Assert.True(_papper.SetActiveState(false, mapping, writeData.Keys.ToArray()));
-            Assert.True(_papper.Unsubscribe(mapping, callback));
+            }
         }
 
         [Fact]
@@ -284,22 +291,22 @@ namespace UnitTestSuit
                 }
                 are.Set();
             };
-            Assert.True(_papper.SubscribeRawDataChanges(area, callback));
-            Assert.True(_papper.SetRawActiveState(true, area, writeData.Keys.ToArray()));
+            //Assert.True(_papper.SubscribeRawDataChanges(area, callback));
+            //Assert.True(_papper.SetRawActiveState(true, area, writeData.Keys.ToArray()));
 
-            //waiting for initialize
-            Assert.True(are.WaitOne(5000));
-            intiState = false;
-            Assert.True(_papper.WriteAbs(area, writeData));
+            ////waiting for initialize
+            //Assert.True(are.WaitOne(5000));
+            //intiState = false;
+            //Assert.True(_papper.WriteAbs(area, writeData));
 
-            //waiting for write update
-            Assert.True(are.WaitOne(5000));
+            ////waiting for write update
+            //Assert.True(are.WaitOne(5000));
 
-            //test if data change only occurred if data changed
-            Assert.False(are.WaitOne(5000));
+            ////test if data change only occurred if data changed
+            //Assert.False(are.WaitOne(5000));
 
-            Assert.True(_papper.SetRawActiveState(false, area, writeData.Keys.ToArray()));
-            Assert.True(_papper.UnsubscribeRawDataChanges(area, callback));
+            //Assert.True(_papper.SetRawActiveState(false, area, writeData.Keys.ToArray()));
+            //Assert.True(_papper.UnsubscribeRawDataChanges(area, callback));
         }
 
         [Fact]
@@ -406,6 +413,11 @@ namespace UnitTestSuit
                 if(res != null)
                 {
                     item.ApplyData(res);
+                    item.ExecutionResult = ExecutionResult.Ok;
+                }
+                else
+                {
+                    item.ExecutionResult = ExecutionResult.Error;
                 }
             }
             await Task.CompletedTask;

@@ -80,6 +80,8 @@ namespace Papper
         #endregion
 
         #region Properties
+
+
         public int ReadDataBlockSize { get; private set; }
         public int PduSize { get; private set; }
         public event ReadOperation OnRead
@@ -185,17 +187,13 @@ namespace Papper
         public async Task<PlcReadResult[]> ReadAsync(params PlcReference[] vars)
         {
             // determine executions
-            var executions = vars.GroupBy(x => x.Mapping)
-                                .Select((execution) => _mappings.TryGetValue(execution.Key, out IEntry entry) ? (execution, entry) : (null, null))
-                                .Where(x => x.execution != null)
-                                .SelectMany(x => x.entry.GetOperations(x.execution.SelectMany(exec => exec.Variables)))
-                                .ToList();
+            var executions = DetermineExecutions(vars);
 
             // determine outdated
             var needUpdate = UpdateableItems(executions);
 
-            // read outdated
-            await _onRead(needUpdate.Values);
+            // read from plc
+            await ReadFromPlc(needUpdate);
 
             // transform to result
             return CreatePlcReadResults(executions, needUpdate);
@@ -210,9 +208,16 @@ namespace Papper
                                 .ToList(); 
         }
 
-        private PlcReadResult[] CreatePlcReadResults(List<Execution> executions, Dictionary<Execution, DataPack> updated)
+        internal async Task ReadFromPlc(Dictionary<Execution, DataPack> needUpdate)
         {
-            return executions.Select(exec => updated.TryGetValue(exec, out var pack) ? exec.ApplyDataPack(pack) : exec)
+            // read outdated
+            await _onRead(needUpdate.Values);
+        }
+
+        internal PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions, Dictionary<Execution, DataPack> needUpdate, bool withChangeDetection = false)
+        {
+            return executions.Select(exec => needUpdate.TryGetValue(exec, out var pack) ? exec.ApplyDataPack(pack) : exec)
+                             .Where(exec => !withChangeDetection || exec.ChangeDetected(withChangeDetection))
                              .GroupBy(exec => exec.ExecutionResult)
                              .SelectMany(group => group.SelectMany(g => g.Bindings)
                                                        .Select(b => new PlcReadResult
@@ -223,7 +228,7 @@ namespace Papper
                                                        })).ToArray();
         }
 
-        private Dictionary<Execution, DataPack> UpdateableItems(List<Execution> executions)
+        internal Dictionary<Execution, DataPack> UpdateableItems(List<Execution> executions)
         {
             return executions.Where(exec => exec.ValidationTimeMs <= 0 || exec.PlcRawData.LastUpdate.AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now)
                            .Select(x => new KeyValuePair<Execution, DataPack>(x,

@@ -225,28 +225,28 @@ namespace PapperCmd
                     Console.WriteLine($"DataChanged detected:{e.From}: {item.Key} = {item.Value}");
                 are.Set();
             };
-            papper.Subscribe("DB_Safety", callback);
-            papper.SetActiveState(true, "DB_Safety", writeData.Keys.ToArray());
+            //papper.Subscribe("DB_Safety", callback);
+            //papper.SetActiveState(true, "DB_Safety", writeData.Keys.ToArray());
 
-            //waiting for initialize
-            if (!are.WaitOne(10000))
-                Console.WriteLine($"Error-> change!!!!!");
+            ////waiting for initialize
+            //if (!are.WaitOne(10000))
+            //    Console.WriteLine($"Error-> change!!!!!");
 
-            foreach (var item in writeData)
-                Console.WriteLine($"Write:{item.Key} = {item.Value}");
+            //foreach (var item in writeData)
+            //    Console.WriteLine($"Write:{item.Key} = {item.Value}");
 
-            var result = papper.Write("DB_Safety", writeData);
+            //var result = papper.Write("DB_Safety", writeData);
 
-            //waiting for write update
-            if (!are.WaitOne(10000))
-                Console.WriteLine($"Error-> change!!!!!");
+            ////waiting for write update
+            //if (!are.WaitOne(10000))
+            //    Console.WriteLine($"Error-> change!!!!!");
 
-            //test if data change only occurred if data changed
-            if (are.WaitOne(5000))
-                Console.WriteLine($"Error-> no change!!!!!");
+            ////test if data change only occurred if data changed
+            //if (are.WaitOne(5000))
+            //    Console.WriteLine($"Error-> no change!!!!!");
 
-            papper.SetActiveState(false, "DB_Safety", writeData.Keys.ToArray());
-            papper.Unsubscribe("DB_Safety", callback);
+            //papper.SetActiveState(false, "DB_Safety", writeData.Keys.ToArray());
+            //papper.Unsubscribe("DB_Safety", callback);
             Console.ResetColor();
             Console.WriteLine($"Finished PerformDataChange");
         }
@@ -269,28 +269,28 @@ namespace PapperCmd
                     Console.WriteLine($"DataChanged detected:{e.From}: {item.Key} = {item.Value}");
                 are.Set();
             };
-            papper.SubscribeRawDataChanges("DB15", callback);
-            papper.SetRawActiveState(true, "DB15", writeData.Keys.ToArray());
+            //papper.SubscribeRawDataChanges("DB15", callback);
+            //papper.SetRawActiveState(true, "DB15", writeData.Keys.ToArray());
 
-            //waiting for initialize
-            if (!are.WaitOne(10000))
-                Console.WriteLine($"Error-> change!!!!!");
+            ////waiting for initialize
+            //if (!are.WaitOne(10000))
+            //    Console.WriteLine($"Error-> change!!!!!");
 
-            foreach (var item in writeData)
-                Console.WriteLine($"Write:{item.Key} = {item.Value}");
+            //foreach (var item in writeData)
+            //    Console.WriteLine($"Write:{item.Key} = {item.Value}");
 
-            var result = papper.WriteAbs("DB15", writeData);
+            //var result = papper.WriteAbs("DB15", writeData);
 
-            //waiting for write update
-            if (!are.WaitOne(10000))
-                Console.WriteLine($"Error-> change!!!!!");
+            ////waiting for write update
+            //if (!are.WaitOne(10000))
+            //    Console.WriteLine($"Error-> change!!!!!");
 
-            //test if data change only occurred if data changed
-            if (are.WaitOne(5000))
-                Console.WriteLine($"Error-> no change!!!!!");
+            ////test if data change only occurred if data changed
+            //if (are.WaitOne(5000))
+            //    Console.WriteLine($"Error-> no change!!!!!");
 
-            papper.SetRawActiveState(false, "DB15", writeData.Keys.ToArray());
-            papper.Unsubscribe("DB15", callback);
+            //papper.SetRawActiveState(false, "DB15", writeData.Keys.ToArray());
+            //papper.Unsubscribe("DB15", callback);
             Console.ResetColor();
             Console.WriteLine($"Finished PerformDataChange");
         }
@@ -344,6 +344,11 @@ namespace PapperCmd
                 if (res != null)
                 {
                     item.ApplyData(res);
+                    item.ExecutionResult = ExecutionResult.Ok;
+                }
+                else
+                {
+                    item.ExecutionResult = ExecutionResult.Error;
                 }
             }
             await Task.CompletedTask;
