@@ -17,10 +17,10 @@ namespace Papper.Entries
         private readonly object _eventHandlerLock = new object();
         private readonly PlcDataMapper _mapper;
         private event OnChangeEventHandler EventHandler;
-        private bool _isWatching;
-        private CancellationTokenSource _cs;
+        //private bool _isWatching;
+        //private CancellationTokenSource _cs;
 
-        
+
         public string Name { get; private set; }
         public int ReadDataBlockSize { get; private set; }
         public int ValidationTimeMs { get; set; }
@@ -72,7 +72,7 @@ namespace Papper.Entries
             _bindingLock.Dispose();
         }
 
-        public IEnumerable<Execution> GetOperations(string[] vars)
+        public IEnumerable<Execution> GetOperations(IEnumerable<string> vars)
         {
             UpdateInternalState(vars);
             return CreateExecutions(vars);
@@ -104,7 +104,7 @@ namespace Papper.Entries
             return true;
         }
 
-        protected void UpdateInternalState(string[] vars)
+        protected void UpdateInternalState(IEnumerable<string> vars)
         {
             if (AddObject(PlcObject, Variables, vars))
             {
@@ -143,7 +143,7 @@ namespace Papper.Entries
 
         protected abstract bool AddObject(ITreeNode plcObj, Dictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values);
 
-        protected IEnumerable<Execution> CreateExecutions(string[] vars, bool onlyActive = false)
+        protected IEnumerable<Execution> CreateExecutions(IEnumerable<string> vars, bool onlyActive = false)
         {
             var result = new Dictionary<PlcRawData, Dictionary<string, PlcObjectBinding>>();
             IEnumerable<KeyValuePair<string, PlcObjectBinding>> bindingSnapshot = null;
@@ -174,115 +174,115 @@ namespace Papper.Entries
 
         private void StartChangeDetection()
         {
-            if (_isWatching)
-                return;
+            //if (_isWatching)
+            //    return;
 
-            if (_cs != null)
-                _cs.Dispose();
+            //if (_cs != null)
+            //    _cs.Dispose();
 
-            _cs = new CancellationTokenSource();
-            Task.Factory.StartNew(() =>
-            {
-                try
-                {
-                    Debug.WriteLine($"ChangeDetection for {Name} activated!");
-                    _isWatching = true;
-                    var states = new Dictionary<string, LruState>();
+            //_cs = new CancellationTokenSource();
+            //Task.Factory.StartNew(() =>
+            //{
+            //    try
+            //    {
+            //        Debug.WriteLine($"ChangeDetection for {Name} activated!");
+            //        _isWatching = true;
+            //        var states = new Dictionary<string, LruState>();
 
-                    while (!_cs.IsCancellationRequested)
-                    {
-                        try
-                        {
-                            //initialize
-                            _cs.Token.ThrowIfCancellationRequested();
-                            var changed = new Dictionary<string, object>();
-                            var cycleStart = DateTime.Now;
+            //        while (!_cs.IsCancellationRequested)
+            //        {
+            //            try
+            //            {
+            //                //initialize
+            //                _cs.Token.ThrowIfCancellationRequested();
+            //                var changed = new Dictionary<string, object>();
+            //                var cycleStart = DateTime.Now;
 
-                            //Read and check changes
-                            foreach (var execution in CreateExecutions(null, true))
-                            {
-                                _cs.Token.ThrowIfCancellationRequested();
-                                lock (execution.PlcRawData)
-                                {
-                                    _cs.Token.ThrowIfCancellationRequested();
-                                    if (_mapper.ExecuteRead(execution) == PlcDataMapper.ReadResult.Successfully)
-                                    {
-                                        foreach (var binding in execution.Bindings)
-                                        {
-                                            _cs.Token.ThrowIfCancellationRequested();
-                                            var size = binding.Value.Size == 0 ? 1 : binding.Value.Size;
-                                            if (!states.TryGetValue(binding.Key, out LruState saved) || 
-                                                (binding.Value.Size == 0 
-                                                    ? binding.Value.Data[binding.Value.Offset].GetBit(binding.Value.MetaData.Offset.Bits) != saved.Data[0].GetBit(binding.Value.MetaData.Offset.Bits)
-                                                    : !binding.Value.Data.SequenceEqual(binding.Value.Offset, saved.Data,0, size)))
-                                            {
-                                                changed.Add(binding.Key, binding.Value.ConvertFromRaw());
-                                                if(saved == null)
-                                                {
-                                                    saved = new LruState(size);
-                                                    states.Add(binding.Key,saved);
-                                                }
-                                                Array.Copy(execution.PlcRawData.Data, binding.Value.Offset, saved.Data, 0, size);
-                                            }
+            //                //Read and check changes
+            //                foreach (var execution in CreateExecutions(null, true))
+            //                {
+            //                    _cs.Token.ThrowIfCancellationRequested();
+            //                    lock (execution.PlcRawData)
+            //                    {
+            //                        _cs.Token.ThrowIfCancellationRequested();
+            //                        if (_mapper.ExecuteRead(execution) == PlcDataMapper.ReadResult.Successfully)
+            //                        {
+            //                            foreach (var binding in execution.Bindings)
+            //                            {
+            //                                _cs.Token.ThrowIfCancellationRequested();
+            //                                var size = binding.Value.Size == 0 ? 1 : binding.Value.Size;
+            //                                if (!states.TryGetValue(binding.Key, out LruState saved) || 
+            //                                    (binding.Value.Size == 0 
+            //                                        ? binding.Value.Data[binding.Value.Offset].GetBit(binding.Value.MetaData.Offset.Bits) != saved.Data[0].GetBit(binding.Value.MetaData.Offset.Bits)
+            //                                        : !binding.Value.Data.SequenceEqual(binding.Value.Offset, saved.Data,0, size)))
+            //                                {
+            //                                    changed.Add(binding.Key, binding.Value.ConvertFromRaw());
+            //                                    if(saved == null)
+            //                                    {
+            //                                        saved = new LruState(size);
+            //                                        states.Add(binding.Key,saved);
+            //                                    }
+            //                                    Array.Copy(execution.PlcRawData.Data, binding.Value.Offset, saved.Data, 0, size);
+            //                                }
 
-                                            if(saved != null)
-                                                saved.LastUsage = cycleStart;
-                                        }
-                                    }
-                                }
-                            }
+            //                                if(saved != null)
+            //                                    saved.LastUsage = cycleStart;
+            //                            }
+            //                        }
+            //                    }
+            //                }
 
-                            if (changed.Any())
-                            {
-                                //Publish changes
-                                _cs.Token.ThrowIfCancellationRequested();
-                                lock (_eventHandlerLock)
-                                {
-                                    EventHandler?.Invoke(this, new PlcNotificationEventArgs(Name, changed));
-                                }
-                            }
+            //                if (changed.Any())
+            //                {
+            //                    //Publish changes
+            //                    _cs.Token.ThrowIfCancellationRequested();
+            //                    lock (_eventHandlerLock)
+            //                    {
+            //                        EventHandler?.Invoke(this, new PlcNotificationEventArgs(Name, changed));
+            //                    }
+            //                }
 
-                            //Remove unused states
-                            foreach (var state in states.Where(x => x.Value.LastUsage < cycleStart).ToList())
-                                states.Remove(state.Key);
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            throw;
-                        }
-                        catch(Exception ex)
-                        {
-                            Debug.WriteLine($"Unknown exception for {Name}. Exception was {ex.Message}!");
-                        }
+            //                //Remove unused states
+            //                foreach (var state in states.Where(x => x.Value.LastUsage < cycleStart).ToList())
+            //                    states.Remove(state.Key);
+            //            }
+            //            catch (OperationCanceledException)
+            //            {
+            //                throw;
+            //            }
+            //            catch(Exception ex)
+            //            {
+            //                Debug.WriteLine($"Unknown exception for {Name}. Exception was {ex.Message}!");
+            //            }
 
 
-                        Thread.Sleep(DataChangeWatchCycleTimeMs);
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    //Write debug output!
-                    Debug.WriteLine($"Unknown exception for {Name}. Exception was {ex.Message}!");
-                }
-                finally
-                {
-                    _isWatching = false;
-                    Debug.WriteLine($"ChangeDetection for {Name} deactivated!");
-                }
+            //            Thread.Sleep(DataChangeWatchCycleTimeMs);
+            //        }
+            //    }
+            //    catch (OperationCanceledException)
+            //    {
+            //        throw;
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        //Write debug output!
+            //        Debug.WriteLine($"Unknown exception for {Name}. Exception was {ex.Message}!");
+            //    }
+            //    finally
+            //    {
+            //        _isWatching = false;
+            //        Debug.WriteLine($"ChangeDetection for {Name} deactivated!");
+            //    }
                 
-            }, _cs.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default).ConfigureAwait(false);
+            //}, _cs.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default).ConfigureAwait(false);
         }
 
         private void StopChangeDetection()
         {
-            if(_cs != null)
-            {
-                _cs.Cancel();
-            }
+            //if(_cs != null)
+            //{
+            //    _cs.Cancel();
+            //}
         }
     }
 

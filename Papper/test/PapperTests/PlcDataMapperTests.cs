@@ -6,6 +6,7 @@ using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using UnitTestSuit.Mappings;
 using UnitTestSuit.Util;
 using Xunit;
@@ -202,13 +203,15 @@ namespace UnitTestSuit
                     { "SafeMotion.Header", header},
                 };
 
-            var result = _papper.Read(mapping, accessDict.Keys.ToArray());
-            Assert.Equal(accessDict.Count, result.Count);
+            var result = _papper.ReadAsync(accessDict.Keys.Select( variable => PlcReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult(); 
+            Assert.Equal(accessDict.Count, result.Length);
             Assert.True(_papper.Write(mapping, accessDict));
-            var result2 = _papper.Read(mapping, accessDict.Keys.ToArray());
-            Assert.Equal(accessDict.Count, result2.Count);
+            var result2 = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult(); 
+            Assert.Equal(accessDict.Count, result2.Length);
             Assert.False(AreDataEqual(result, result2));
-            Assert.True(AreDataEqual(ToExpando(header), result2.Values.FirstOrDefault()));
+
+
+            // Assert.True(AreDataEqual(ToExpando(header), result2.Values.FirstOrDefault()));
         }
 
         [Fact]
@@ -238,8 +241,7 @@ namespace UnitTestSuit
                 }
                 are.Set();
             };
-            Assert.True(_papper.SubscribeDataChanges(mapping, callback));
-            Assert.True(_papper.SetActiveState(true, mapping, writeData.Keys.ToArray()));
+            Assert.True(_papper.Subscribe(originData.Keys.Select( variable => PlcReference.FromAddress($"{mapping}.{variable}")).ToArray());
 
             //waiting for initialize
             Assert.True(are.WaitOne(5000));
@@ -253,7 +255,7 @@ namespace UnitTestSuit
             Assert.False(are.WaitOne(5000));
 
             Assert.True(_papper.SetActiveState(false, mapping, writeData.Keys.ToArray()));
-            Assert.True(_papper.UnsubscribeDataChanges(mapping, callback));
+            Assert.True(_papper.Unsubscribe(mapping, callback));
         }
 
         [Fact]
@@ -358,8 +360,8 @@ namespace UnitTestSuit
                 };
 
 
-            var result = _papper.Read(mapping, accessDict.Keys.ToArray());
-            Assert.Equal(0, result.Count);
+            var result = _papper.ReadAsync(PlcReference.FromRoot(mapping, accessDict.Keys.ToArray()).ToArray()).GetAwaiter().GetResult(); ;
+            Assert.Empty(result);
         }
 
 
@@ -369,8 +371,8 @@ namespace UnitTestSuit
         private void Test<T>(string mapping, Dictionary<string, object> accessDict, T defaultValue)
         {
             //Initial read to ensure all are false
-            var result = _papper.Read(mapping, accessDict.Keys.ToArray());
-            Assert.Equal(accessDict.Count, result.Count);
+            var result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult(); ;
+            Assert.Equal(accessDict.Count, result.Length);
             foreach (var item in result)
                 Assert.Equal(defaultValue, (T)item.Value);
 
@@ -378,10 +380,10 @@ namespace UnitTestSuit
             Assert.True(_papper.Write(mapping, accessDict));
 
             //Second read to ensure correct written
-            result = _papper.Read(mapping, accessDict.Keys.ToArray());
-            Assert.Equal(accessDict.Count, result.Count);
+            result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult(); ;
+            Assert.Equal(accessDict.Count, result.Length);
             foreach (var item in result)
-                Assert.Equal((T)accessDict[item.Key], (T)item.Value);
+                Assert.Equal((T)accessDict[item.Address], (T)item.Value);
         }
 
         /// <summary>
@@ -394,10 +396,19 @@ namespace UnitTestSuit
             return dt.AddTicks((dt.Ticks % 10000) * -1);
         }
 
-        private static byte[] Papper_OnRead(string selector, int offset, int length)
+        private static async Task Papper_OnRead(IEnumerable<DataPack> reads)
         {
-            Console.WriteLine($"OnRead: selector:{selector}; offset:{offset}; length:{length}");
-            return MockPlc.GetPlcEntry(selector, offset + length).Data.SubArray(offset, length);
+            var result = reads.ToList();
+            foreach (var item in result)
+            {
+                Console.WriteLine($"OnRead: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
+                var res = MockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length).Data.SubArray(item.Offset, item.Length);
+                if(res != null)
+                {
+                    item.ApplyData(res);
+                }
+            }
+            await Task.CompletedTask;
         }
 
         private static bool Papper_OnWrite(string selector, int offset, byte[] data, byte bitMask = 0)

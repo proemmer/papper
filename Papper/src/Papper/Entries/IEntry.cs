@@ -13,6 +13,6 @@ namespace Papper.Entries
         event OnChangeEventHandler OnChange;
 
         bool SetActiveState(bool enable, string[] vars);
-        IEnumerable<Execution> GetOperations(string[] vars);
+        IEnumerable<Execution> GetOperations(IEnumerable<string> vars);
     }
 }

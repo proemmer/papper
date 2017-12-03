@@ -2,9 +2,11 @@
 {
     public struct PlcReadResult
     {
-        public string Name { get; set; }
+        public string Mapping { get; set; }
+        public string Variable { get; set; }
+        public string Address { get; set; }
         public object Value { get; set; }
 
-        public ActionResult ActionResult { get; set; }
+        public ExecutionResult ActionResult { get; set; }
     }
 }
