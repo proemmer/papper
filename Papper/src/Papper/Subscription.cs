@@ -93,6 +93,7 @@ namespace Papper
 
         private IEnumerable<KeyValuePair<string, PlcObjectBinding>> FilterChanged(DateTime detect, IEnumerable<KeyValuePair<string, PlcObjectBinding>> all)
         {
+            var result = new List<KeyValuePair<string, PlcObjectBinding>>();
             foreach (var binding in all)
             {
                 var size = binding.Value.Size == 0 ? 1 : binding.Value.Size;
@@ -101,21 +102,22 @@ namespace Papper
                         ? binding.Value.Data[binding.Value.Offset].GetBit(binding.Value.MetaData.Offset.Bits) != saved.Data[0].GetBit(binding.Value.MetaData.Offset.Bits)
                         : !binding.Value.Data.SequenceEqual(binding.Value.Offset, saved.Data, 0, size)))
                 {
+                    result.Add(binding);
                     if (saved == null)
                     {
                         saved = new LruState(size);
                         _states.Add(binding.Key, saved);
                     }
                 }
-
                 if (saved != null)
                     saved.LastUsage = detect;
             }
 
-
             //Remove unused states
             foreach (var state in _states.Where(x => x.Value.LastUsage < detect).ToList())
                 _states.Remove(state.Key);
+
+            return result;
         }
 
 
