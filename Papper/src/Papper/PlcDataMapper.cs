@@ -214,12 +214,19 @@ namespace Papper
             await _onRead(needUpdate.Values);
         }
 
-        internal PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions, Dictionary<Execution, DataPack> needUpdate, bool withChangeDetection = false)
+        internal PlcReadResult[] CreatePlcReadResults(    IEnumerable<Execution> executions, Dictionary<Execution
+                                                        , DataPack> needUpdate
+                                                        , DateTime? changedAfter = null
+                                                        , Func<IEnumerable<KeyValuePair<string, PlcObjectBinding>>, IEnumerable<KeyValuePair<string, PlcObjectBinding>>> filter = null)
         {
+            if(filter == null)
+            {
+                filter = (x) => x; 
+            }
             return executions.Select(exec => needUpdate.TryGetValue(exec, out var pack) ? exec.ApplyDataPack(pack) : exec)
-                             .Where(exec => !withChangeDetection || exec.ChangeDetected(withChangeDetection))
+                             .Where(exec => changedAfter == null || exec.LastChange > changedAfter) // filter by data area
                              .GroupBy(exec => exec.ExecutionResult)
-                             .SelectMany(group => group.SelectMany(g => g.Bindings)
+                             .SelectMany(group => filter(group.SelectMany(g => g.Bindings))
                                                        .Select(b => new PlcReadResult
                                                        {
                                                            Address = b.Key,
@@ -299,10 +306,12 @@ namespace Papper
                     {
                         lock (binding.Value.RawData)
                         {
-                            binding.Value.ConvertToRaw(values[binding.Key]);
+                            // temporary workaround
+                            var key = binding.Key.Substring(binding.Key.IndexOf(".") + 1);
+                            binding.Value.ConvertToRaw(values[key]);
                             if (!Write(binding.Value))
                             {
-                                Debug.WriteLine($"Error writing {binding.Key}");
+                                Debug.WriteLine($"Error writing {key}");
                                 result = false;
                             }
                         }
@@ -310,6 +319,8 @@ namespace Papper
                     else
                         throw new UnauthorizedAccessException($"You could not write the variable {binding.Key} because you have only read access to it!");
                 }
+
+                execution.Invalidate();
             }
 
             return result;

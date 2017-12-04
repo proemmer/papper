@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Papper.Entries
 {
@@ -14,17 +13,12 @@ namespace Papper.Entries
     {
         private IDictionary<string, PlcObjectBinding> _bindings = new Dictionary<string, PlcObjectBinding>();
         private readonly ReaderWriterLockSlim _bindingLock = new ReaderWriterLockSlim();
-        private readonly object _eventHandlerLock = new object();
         private readonly PlcDataMapper _mapper;
-        private event OnChangeEventHandler EventHandler;
-        //private bool _isWatching;
-        //private CancellationTokenSource _cs;
 
 
         public string Name { get; private set; }
         public int ReadDataBlockSize { get; private set; }
         public int ValidationTimeMs { get; set; }
-        public int DataChangeWatchCycleTimeMs { get; set; } = 500;
         public PlcObject PlcObject { get; private set; }
         public Dictionary<string, Tuple<int, PlcObject>> Variables { get; private set; }
 
@@ -37,26 +31,7 @@ namespace Papper.Entries
             }
         }
 
-        public event OnChangeEventHandler OnChange
-        {
-            add
-            {
-                if (value != null)
-                {
-                    lock (_eventHandlerLock)
-                        EventHandler += value;
-                }
-            }
-            remove
-            {
-                if (value != null)
-                {
-                    lock (_eventHandlerLock)
-                        EventHandler -= value;
-                }
-            }
-        }
-
+  
         public Entry(PlcDataMapper mapper, PlcObject plcObject, int readDataBlockSize, int validationTimeInMs)
         {
             _mapper = mapper ?? throw new ArgumentNullException("mapper");
@@ -78,31 +53,6 @@ namespace Papper.Entries
             return CreateExecutions(vars);
         }
 
-        public bool SetActiveState(bool enable, string[] vars)
-        {
-            try
-            {
-                if (!vars.Any())
-                    return false;
-                UpdateInternalState(vars);
-                List<KeyValuePair<string, PlcObjectBinding>> toUpdate;
-                using (var guard = new ReaderGuard(_bindingLock))
-                    toUpdate = _bindings.Where(x => vars.Contains(x.Key)).ToList();
-
-                foreach (var item in toUpdate)
-                    item.Value.IsActive = enable;
-
-                if(enable)
-                    StartChangeDetection();
-                else if(!HasActiveVariables)
-                    StopChangeDetection();
-            }
-            catch(Exception)
-            {
-                return false;
-            }
-            return true;
-        }
 
         protected void UpdateInternalState(IEnumerable<string> vars)
         {
@@ -159,7 +109,7 @@ namespace Papper.Entries
                     entry = new Dictionary<string, PlcObjectBinding>();
                     result.Add(binding.Value.RawData, entry);
                 }
-                entry.Add(binding.Key, binding.Value);
+                entry.Add($"{Name}.{binding.Key}", binding.Value);
             }
             return result.Select(res => new Execution(res.Key, res.Value, ValidationTimeMs));
         }
@@ -275,14 +225,6 @@ namespace Papper.Entries
             //    }
                 
             //}, _cs.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default).ConfigureAwait(false);
-        }
-
-        private void StopChangeDetection()
-        {
-            //if(_cs != null)
-            //{
-            //    _cs.Cancel();
-            //}
         }
     }
 

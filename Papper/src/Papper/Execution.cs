@@ -10,12 +10,15 @@ namespace Papper
     /// </summary>
     internal class Execution
     {
-        private bool _changeDetected = false;
+        private DataPack _pack;
+        private DateTime _changeDetected = DateTime.MaxValue;
         public PlcRawData PlcRawData { get; private set; }
         public IEnumerable<Partiton> Partitions { get; private set; }
         public Dictionary<string, PlcObjectBinding> Bindings { get; private set; }
         public int ValidationTimeMs { get; private set; }
         public ExecutionResult ExecutionResult { get; private set; }
+
+        public DateTime LastChange => _changeDetected;
 
 
         public Execution(PlcRawData plcRawData, Dictionary<string, PlcObjectBinding> bindings, int validationTimeMS)
@@ -31,10 +34,11 @@ namespace Papper
         {
             if (pack.ExecutionResult == ExecutionResult.Ok)
             {
-                if(PlcRawData.Data == null || !PlcRawData.Data.SequenceEqual(pack.Data))
+                if(_pack == null || _pack.Data == null || !_pack.Data.SequenceEqual(pack.Data))
                 {
-                    _changeDetected = true;  // TODO: Handle Bit
+                    _changeDetected = DateTime.Now;  // TODO: Handle Bit
                 }
+                _pack = pack;
                 PlcRawData.Data = pack.Data;
                 PlcRawData.LastUpdate = DateTime.Now;
             }
@@ -42,12 +46,11 @@ namespace Papper
             return this;
         }
 
-        internal bool ChangeDetected(bool resetState)
+        public void Invalidate()
         {
-            var currentState = _changeDetected;
-            if (resetState)
-                _changeDetected = false;
-            return currentState;
+            PlcRawData.LastUpdate = _changeDetected = DateTime.Now;
+
         }
+
     }
 }

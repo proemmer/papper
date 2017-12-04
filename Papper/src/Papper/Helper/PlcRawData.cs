@@ -34,7 +34,8 @@ namespace Papper.Helper
                 if (_data != value)
                 {
                     _data = value;
-                    CreatePartitions();
+                    if (!Partitons.Any())
+                        CreatePartitions();
                 }
             }
         }

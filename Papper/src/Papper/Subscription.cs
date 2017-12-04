@@ -1,6 +1,8 @@
 ﻿using Papper.Entries;
+using Papper.Helper;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,6 +16,7 @@ namespace Papper
         private List<Execution> _executions;
         private bool _modified = true;
         private Dictionary<string, LruState> _states = new Dictionary<string, LruState>();
+        private DateTime _lastRun = DateTime.MinValue.AddSeconds(1);
 
         /// <summary>
         /// Provides read access to the watch task.
@@ -70,21 +73,49 @@ namespace Papper
                     // read outdated
                     await _mapper.ReadFromPlc(needUpdate);
 
-                    var readRes = _mapper.CreatePlcReadResults(needUpdate.Keys, needUpdate, true);
-
-                    if(readRes.Length > 0)
+                    var detect = DateTime.Now;
+                    var readRes = _mapper.CreatePlcReadResults(needUpdate.Keys, needUpdate, _lastRun, (x) => FilterChanged(detect, x));
+                    if (readRes.Length > 0)
                     {
+                        _lastRun = detect;
                         return new ChangeResult(readRes, Watching.IsCanceled, Watching.IsCompleted);
                     }
 
                     await Task.Delay(Interval);
                 }
             }
-            catch(Exception ex)
+            catch(Exception)
             {
                 
             }
             return new ChangeResult(null, Watching.IsCanceled, Watching.IsCompleted);
+        }
+
+        private IEnumerable<KeyValuePair<string, PlcObjectBinding>> FilterChanged(DateTime detect, IEnumerable<KeyValuePair<string, PlcObjectBinding>> all)
+        {
+            foreach (var binding in all)
+            {
+                var size = binding.Value.Size == 0 ? 1 : binding.Value.Size;
+                if (!_states.TryGetValue(binding.Key, out LruState saved) ||
+                    (binding.Value.Size == 0
+                        ? binding.Value.Data[binding.Value.Offset].GetBit(binding.Value.MetaData.Offset.Bits) != saved.Data[0].GetBit(binding.Value.MetaData.Offset.Bits)
+                        : !binding.Value.Data.SequenceEqual(binding.Value.Offset, saved.Data, 0, size)))
+                {
+                    if (saved == null)
+                    {
+                        saved = new LruState(size);
+                        _states.Add(binding.Key, saved);
+                    }
+                }
+
+                if (saved != null)
+                    saved.LastUsage = detect;
+            }
+
+
+            //Remove unused states
+            foreach (var state in _states.Where(x => x.Value.LastUsage < detect).ToList())
+                _states.Remove(state.Key);
         }
 
 

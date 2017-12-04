@@ -2,11 +2,13 @@
 {
     public struct PlcReadResult
     {
-        public string Mapping { get; set; }
-        public string Variable { get; set; }
-        public string Address { get; set; }
-        public object Value { get; set; }
 
-        public ExecutionResult ActionResult { get; set; }
+        public string Address { get; internal set; }
+        public object Value { get; internal set; }
+
+        public string Mapping => Address.Substring(0, Address.IndexOf("."));
+        public string Variable => Address.Substring(Address.IndexOf(".") + 1 );
+
+        public ExecutionResult ActionResult { get; internal set; }
     }
 }
