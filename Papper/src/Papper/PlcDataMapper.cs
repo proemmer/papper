@@ -148,7 +148,7 @@ namespace Papper
         /// </summary>
         /// <param name="vars"></param>
         /// <returns>return a dictionary with all variables and the read value</returns>
-        public async Task<PlcReadResult[]> ReadAsync(params PlcReference[] vars)
+        public async Task<PlcReadResult[]> ReadAsync(params PlcReadReference[] vars)
         {
             // determine executions
             var executions = DetermineExecutions(vars);
