@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Papper.Types;
 
-namespace Papper.Interfaces
+namespace Papper.Internal
 {
     internal delegate bool VisitNode(ITreeNode node);
 

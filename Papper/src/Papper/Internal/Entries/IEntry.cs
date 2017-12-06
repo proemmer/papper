@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Papper.Entries
+namespace Papper.Internal
 {
     internal interface IEntry
     {

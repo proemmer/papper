@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using Papper.Helper;
+using Papper.Internal;
 
 namespace Papper.Types
 {
@@ -13,18 +13,18 @@ namespace Papper.Types
             AllowOddByteOffsetInArray = true;
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, byte[] data)
         {
-            if (plcObjectBinding.Data == null || !plcObjectBinding.Data.Any())
-                return default(char);
+            if (data == null || !data.Any())
+                return default;
 
-            return Convert.ToChar(plcObjectBinding.Data[plcObjectBinding.Offset]);
+            return Convert.ToChar(data[plcObjectBinding.Offset]);
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, byte[] data)
         {
             var s = value as string;
-            plcObjectBinding.Data[plcObjectBinding.Offset] = s != null ? Convert.ToByte(s.FirstOrDefault()) : Convert.ToByte(value);
+            data[plcObjectBinding.Offset] = s != null ? Convert.ToByte(s.FirstOrDefault()) : Convert.ToByte(value);
         }
     }
 }

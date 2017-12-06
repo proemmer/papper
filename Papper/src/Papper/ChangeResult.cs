@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Papper
+﻿namespace Papper
 {
     public struct ChangeResult
     {

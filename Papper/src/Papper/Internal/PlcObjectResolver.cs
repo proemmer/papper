@@ -1,7 +1,4 @@
 ﻿using Papper.Attributes;
-using Papper.Common;
-using Papper.Helper;
-using Papper.Interfaces;
 using Papper.Types;
 using System;
 using System.Collections.Generic;
@@ -10,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace Papper
+namespace Papper.Internal
 {
     internal static class PlcObjectResolver
     {

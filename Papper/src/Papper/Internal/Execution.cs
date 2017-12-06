@@ -1,16 +1,15 @@
-﻿using Papper.Helper;
+﻿using Papper.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Papper
+namespace Papper.Internal
 {
     /// <summary>
     /// Holds the execution operaton
     /// </summary>
     internal class Execution
     {
-        private DataPack _pack;
         private DateTime _changeDetected = DateTime.MaxValue;
         public PlcRawData PlcRawData { get; private set; }
         public IEnumerable<Partiton> Partitions { get; private set; }
@@ -19,7 +18,6 @@ namespace Papper
         public ExecutionResult ExecutionResult { get; private set; }
 
         public DateTime LastChange => _changeDetected;
-
 
         public Execution(PlcRawData plcRawData, Dictionary<string, PlcObjectBinding> bindings, int validationTimeMS)
         {
@@ -34,22 +32,23 @@ namespace Papper
         {
             if (pack.ExecutionResult == ExecutionResult.Ok)
             {
-                if(_pack == null || _pack.Data == null || !_pack.Data.SequenceEqual(pack.Data))
+                if(PlcRawData.ReadDataCache == null || !PlcRawData.ReadDataCache.SequenceEqual(pack.Data))
                 {
-                    _changeDetected = DateTime.Now;  // TODO: Handle Bit
+                    _changeDetected = DateTime.Now; // We detected a change in this data area -> bindungs have to thes the psoition by themselves.
                 }
-                _pack = pack;
-                PlcRawData.Data = pack.Data;
+                PlcRawData.ReadDataCache = pack.Data;
                 PlcRawData.LastUpdate = DateTime.Now;
             }
             ExecutionResult = pack.ExecutionResult;
             return this;
         }
 
+        /// <summary>
+        /// After a write we can invalidate the data area, so the subscriber reads befor the validation time is over
+        /// </summary>
         public void Invalidate()
         {
             PlcRawData.LastUpdate = _changeDetected = DateTime.Now;
-
         }
 
     }

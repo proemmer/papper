@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Papper.Optimizer
+namespace Papper.Internal
 {
     public enum OptimizerType
     {

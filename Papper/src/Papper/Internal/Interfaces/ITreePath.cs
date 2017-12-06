@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Papper.Interfaces
+namespace Papper.Internal
 {
     internal interface ITreePath
     {

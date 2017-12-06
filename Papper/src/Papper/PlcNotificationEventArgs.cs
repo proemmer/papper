@@ -3,35 +3,26 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Papper
 {
-    public class PlcNotificationEventArgs : EventArgs, IEnumerable<KeyValuePair<string, object>>
+    public class PlcNotificationEventArgs : EventArgs, IEnumerable<PlcReadResult>
     {
-
-        private readonly string _from;
-        private readonly Dictionary<string, object> _changedItems;
-        public PlcNotificationEventArgs(string from, Dictionary<string, object> changedItems)
+        private readonly PlcReadResult[] _changedItems;
+        public PlcNotificationEventArgs(PlcReadResult[] changedItems)
         {
-            _from = from;
             _changedItems = changedItems;
         }
 
-        /// <summary>
-        /// Mapping name
-        /// </summary>
-        /// <returns></returns>
-        public string From { get { return _from; } }
 
         /// <summary>
         /// Indexed Value access
         /// </summary>
-        /// <param name="name"></param>
+        /// <param name="name">[Mapping].[Variable]</param>
         /// <returns></returns>
         public object this[string name]
         {
-            get { return _changedItems[name]; }
+            get { return _changedItems.FirstOrDefault(x => x.Address == name).Value; }
         }
 
         /// <summary>
@@ -63,12 +54,13 @@ namespace Papper
         ///       ],
         ///    }</param>
         /// <returns></returns>
-        public dynamic ToObject(bool resolveDoubleUsedValues = true)
+        public dynamic ToObject(string mapping = "*", bool resolveDoubleUsedValues = true)
         {
             var item = new ExpandoObject();
-            foreach (var items in _changedItems)
+            var asterix = mapping == "*";
+            foreach (var items in _changedItems.Where(i => asterix || i.Mapping == mapping))
             {
-                var levels = items.Key.Split('.');
+                var levels = asterix ? items.Address.Split('.') : items.Variable.Split('.');
                 var levelCount = levels.Length;
                 var parent = item;
                 foreach (var level in levels)
@@ -164,16 +156,16 @@ namespace Papper
         /// <returns></returns>
         public int FieldCount
         {
-            get { return _changedItems.Count; }
+            get { return _changedItems.Length; }
         }
 
         /// <summary>
         /// Enumerator of changed fields
         /// </summary>
         /// <returns></returns>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+        public IEnumerator<PlcReadResult> GetEnumerator()
         {
-            return ((IEnumerable<KeyValuePair<string, object>>)_changedItems).GetEnumerator();
+            return _changedItems.Cast<PlcReadResult>().GetEnumerator();
         }
 
         /// <summary>
@@ -200,8 +192,7 @@ namespace Papper
             }
             else
             {
-                var dictionary = parent as IDictionary<string, object>;
-                if (dictionary != null)
+                if (parent is IDictionary<string, object> dictionary)
                     dictionary[name] = value;
             }
         }
@@ -214,8 +205,7 @@ namespace Papper
         /// <returns></returns>
         private static dynamic GetPropertyValue(dynamic parent, string name)
         {
-            var dictionary = parent as IDictionary<string, object>;
-            if (dictionary != null && dictionary.TryGetValue(name, out object ret))
+            if (parent is IDictionary<string, object> dictionary && dictionary.TryGetValue(name, out object ret))
                 return ret;
             return null;
         }

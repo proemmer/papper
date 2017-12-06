@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Papper.Helper
+namespace Papper.Internal
 {
     internal class Partiton
     {

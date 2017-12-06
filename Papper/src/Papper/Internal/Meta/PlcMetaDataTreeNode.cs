@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Papper.Interfaces;
+using Papper.Internal;
 
-namespace Papper.Common
+namespace Papper.Internal
 {
     internal class PlcMetaDataTreeNode : PlcMetaDataBaseTreeNode
     {

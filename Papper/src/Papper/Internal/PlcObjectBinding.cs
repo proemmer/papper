@@ -1,7 +1,7 @@
 ﻿using Papper.Types;
 using System;
 
-namespace Papper.Helper
+namespace Papper.Internal
 {
     internal class PlcObjectBinding
     {
@@ -24,7 +24,7 @@ namespace Papper.Helper
 
         public byte[] Data
         {
-            get { return _rawData.Data; }
+            get { return _rawData.ReadDataCache; }
         }
 
         public DateTime LastUpdate
@@ -45,14 +45,14 @@ namespace Papper.Helper
         public int Offset { get; private set; }
         public int Size { get { return _metaData.Size.Bytes; } }
 
-        public object ConvertFromRaw()
+        public object ConvertFromRaw(byte[] data)
         {
-            return _metaData.ConvertFromRaw(this);
+            return _metaData.ConvertFromRaw(this, data);
         }
 
-        public void ConvertToRaw(object obj)
+        public void ConvertToRaw(object obj, byte[] data)
         {
-            _metaData.ConvertToRaw(obj, this);
+            _metaData.ConvertToRaw(obj, this, data);
         }
 
         public Type GetMetaType()

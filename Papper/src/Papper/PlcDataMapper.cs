@@ -1,8 +1,5 @@
 ﻿using Papper.Attributes;
-using Papper.Common;
-using Papper.Entries;
-using Papper.Helper;
-using Papper.Optimizer;
+using Papper.Internal;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -230,7 +227,7 @@ namespace Papper
                                                        .Select(b => new PlcReadResult
                                                        {
                                                            Address = b.Key,
-                                                           Value = b.Value?.ConvertFromRaw(),
+                                                           Value = b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache),  // TODO: Change
                                                            ActionResult = group.Key
                                                        })).ToArray();
         }
@@ -304,16 +301,14 @@ namespace Papper
                 {
                     if (!binding.Value.MetaData.IsReadOnly)
                     {
-                        lock (binding.Value.RawData)
+                        // temporary workaround
+                        var key = binding.Key.Substring(binding.Key.IndexOf(".") + 1);
+                        var buffer = new byte[binding.Value.RawData.MemoryAllocationSize];  // TODO create a reusable buffer!!!
+                        binding.Value.ConvertToRaw(values[key], buffer);
+                        if (!Write(binding.Value, buffer))
                         {
-                            // temporary workaround
-                            var key = binding.Key.Substring(binding.Key.IndexOf(".") + 1);
-                            binding.Value.ConvertToRaw(values[key]);
-                            if (!Write(binding.Value))
-                            {
-                                Debug.WriteLine($"Error writing {key}");
-                                result = false;
-                            }
+                            Debug.WriteLine($"Error writing {key}");
+                            result = false;
                         }
                     }
                     else
@@ -326,53 +321,53 @@ namespace Papper
             return result;
         }
 
-        /// <summary>
-        /// Write values to a given address
-        /// </summary>
-        /// <param name="to"></param>
-        /// <param name="values"></param>
-        /// <returns></returns>
-        public bool WriteAbs(string to, Dictionary<string, object> values)
-        {
+        ///// <summary>
+        ///// Write values to a given address
+        ///// </summary>
+        ///// <param name="to"></param>
+        ///// <param name="values"></param>
+        ///// <returns></returns>
+        //public bool WriteAbs(string to, Dictionary<string, object> values)
+        //{
             
-            IEntry entry;
-            var result = true;
-            var key = $"$ABSSYMBOLS$_{to}";
-            using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
-            {
-                if (!_mappings.TryGetValue(key, out entry))
-                {
-                    entry = new RawEntry(this, to, ReadDataBlockSize, 0);
-                    using (upgradeableGuard.UpgradeToWriterLock())
-                        _mappings.TryAdd(key, entry);
-                }
-            }
+        //    IEntry entry;
+        //    var result = true;
+        //    var key = $"$ABSSYMBOLS$_{to}";
+        //    using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
+        //    {
+        //        if (!_mappings.TryGetValue(key, out entry))
+        //        {
+        //            entry = new RawEntry(this, to, ReadDataBlockSize, 0);
+        //            using (upgradeableGuard.UpgradeToWriterLock())
+        //                _mappings.TryAdd(key, entry);
+        //        }
+        //    }
 
-            if (entry != null)
-            {
-                foreach (var execution in entry.GetOperations(values.Keys))
-                {
-                    foreach (var binding in execution.Bindings)
-                    {
-                        if (!binding.Value.MetaData.IsReadOnly)
-                        {
-                            lock (binding.Value.RawData)
-                            {
-                                binding.Value.ConvertToRaw(values[binding.Key]);
-                                if (!Write(binding.Value))
-                                {
-                                    Debug.WriteLine($"Error writing {binding.Key}");
-                                    result = false;
-                                }
-                            }
-                        }
-                        else
-                            throw new UnauthorizedAccessException($"You could not write the variable {binding.Key} because you have only read access to it!");
-                    }
-                }
-            }
-            return result;
-        }
+        //    if (entry != null)
+        //    {
+        //        foreach (var execution in entry.GetOperations(values.Keys))
+        //        {
+        //            foreach (var binding in execution.Bindings)
+        //            {
+        //                if (!binding.Value.MetaData.IsReadOnly)
+        //                {
+        //                    lock (binding.Value.RawData)
+        //                    {
+        //                        binding.Value.ConvertToRaw(values[binding.Key], binding.Value.RawData.ReadDataCache);
+        //                        if (!Write(binding.Value))
+        //                        {
+        //                            Debug.WriteLine($"Error writing {binding.Key}");
+        //                            result = false;
+        //                        }
+        //                    }
+        //                }
+        //                else
+        //                    throw new UnauthorizedAccessException($"You could not write the variable {binding.Key} because you have only read access to it!");
+        //            }
+        //        }
+        //    }
+        //    return result;
+        //}
 
         /// <summary>
         /// Return address data of the given variable
@@ -406,25 +401,22 @@ namespace Papper
 
         #region internal read write operations
 
-        private bool Write(PlcObjectBinding binding)
+        private bool Write(PlcObjectBinding binding, byte[] data)
         {
             if (_onWrite == null)
                 throw new NullReferenceException("The event handler for the write method is not registered.");
 
-            lock (binding.RawData)
-            {
-                var rawData = binding.RawData;
-                var offset = rawData.Offset + binding.Offset;
-                if (binding.Size != 0)
-                {
-                    var size = binding.Size;
-                    var data = rawData.Data.SubArray(binding.Offset, size);
-                    return _onWrite(rawData.Selector, offset, data);
-                }
 
-                var bitData = rawData.Data.SubArray(binding.Offset,1);
-                return _onWrite(rawData.Selector, offset, bitData, Converter.SetBit(0, binding.MetaData.Offset.Bits, true));
+            var rawData = binding.RawData;
+            var offset = rawData.Offset + binding.Offset;
+            if (binding.Size != 0)
+            {
+                var size = binding.Size;
+                return _onWrite(rawData.Selector, offset, data.SubArray(binding.Offset, size));
             }
+
+            return _onWrite(rawData.Selector, offset, data.SubArray(binding.Offset, 1), Converter.SetBit(0, binding.MetaData.Offset.Bits, true));
+
         }
 
         #endregion

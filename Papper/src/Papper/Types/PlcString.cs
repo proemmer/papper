@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
-using Papper.Helper;
+using Papper.Internal;
 
 namespace Papper.Types
 {
@@ -32,28 +32,28 @@ namespace Papper.Types
             StringLength = DefaultStringLength;
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, byte[] data)
         {
-            if (plcObjectBinding.Data == null || !plcObjectBinding.Data.Any())
+            if (data == null || !data.Any())
                 return string.Empty;
 
-            //var subset = plcObjectBinding.Data.Skip(plcObjectBinding.Offset).Take(Size.Bytes).ToArray();
+            //var subset = data.Skip(plcObjectBinding.Offset).Take(Size.Bytes).ToArray();
             //var maxLength = subset.Take(1).ToArray().GetSwap<byte>();
             //var curLength = subset.Skip(1).Take(1).ToArray().GetSwap<byte>();
             //var take = Math.Min(maxLength, curLength);
             //return Encoding.Default.GetString(subset.Skip(2).Take(take).ToArray());
 
-            var maxLength = plcObjectBinding.Data.GetSwap<byte>(plcObjectBinding.Offset);
-            var curLength = plcObjectBinding.Data.GetSwap<byte>(plcObjectBinding.Offset+1);
+            var maxLength = data.GetSwap<byte>(plcObjectBinding.Offset);
+            var curLength = data.GetSwap<byte>(plcObjectBinding.Offset+1);
             var take = Math.Min(Math.Min(maxLength, curLength), Size.Bytes-2);
-            return Encoding.ASCII.GetString(plcObjectBinding.Data, plcObjectBinding.Offset + 2,take);
+            return Encoding.ASCII.GetString(data, plcObjectBinding.Offset + 2,take);
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, byte [] data)
         {
             var maxLength = Convert.ToByte(Size.Bytes - 2);
             var i = plcObjectBinding.Offset;
-            plcObjectBinding.Data[i++] = maxLength.SetSwap()[0];
+            data[i++] = maxLength.SetSwap()[0];
             var fill = string.Empty;
             if (value != null)
             {
@@ -62,17 +62,17 @@ namespace Papper.Types
                 var take = Math.Min(maxLength, curLength);
                 fill = str.Substring(0, take);
 
-                plcObjectBinding.Data[i++] = take.SetSwap()[0];
+                data[i++] = take.SetSwap()[0];
                 foreach (var c in fill)
-                    plcObjectBinding.Data[i++] = Convert.ToByte(c);
+                    data[i++] = Convert.ToByte(c);
             }
             else
             {
-                plcObjectBinding.Data[i++] = 0;  //currentLength
+                data[i++] = 0;  //currentLength
             }
 
             for (var j = 0; j < (maxLength - fill.Length); j++)
-                plcObjectBinding.Data[i + j] = _defaultFillByte;
+                data[i + j] = _defaultFillByte;
 
         }
 

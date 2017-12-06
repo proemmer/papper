@@ -1,9 +1,7 @@
-﻿using Papper.Entries;
-using Papper.Helper;
+﻿using Papper.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Papper
@@ -16,7 +14,7 @@ namespace Papper
         private List<Execution> _executions;
         private bool _modified = true;
         private Dictionary<string, LruState> _states = new Dictionary<string, LruState>();
-        private DateTime _lastRun = DateTime.MinValue.AddSeconds(1);
+        private DateTime _lastRun = DateTime.MinValue;
 
         /// <summary>
         /// Provides read access to the watch task.
@@ -71,7 +69,7 @@ namespace Papper
                     var needUpdate = _mapper.UpdateableItems(_executions);
                     
                     // read outdated
-                    await _mapper.ReadFromPlc(needUpdate);
+                    await _mapper.ReadFromPlc(needUpdate); // Update the read cache;
 
                     var detect = DateTime.Now;
                     var readRes = _mapper.CreatePlcReadResults(needUpdate.Keys, needUpdate, _lastRun, (x) => FilterChanged(detect, x));

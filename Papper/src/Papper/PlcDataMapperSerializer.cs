@@ -1,5 +1,4 @@
-﻿using Papper.Common;
-using Papper.Helper;
+﻿using Papper.Internal;
 using System;
 
 namespace Papper
@@ -17,9 +16,9 @@ namespace Papper
         public byte[] Serialize<T>(T data)
         {
             var binding = GetTypeForConversion(typeof(T));
-            binding.RawData.Data = new byte[binding.Size];
-            binding.ConvertToRaw(data);
-            return binding.RawData.Data;
+            var buffer = new byte[binding.RawData.MemoryAllocationSize];  // TODO handle a reusable buffer
+            binding.ConvertToRaw(data, buffer);
+            return buffer;
         }
 
         /// <summary>
@@ -33,8 +32,7 @@ namespace Papper
             var binding = GetTypeForConversion(typeof(T));
             if (data.Length < binding.Size)
                 throw new ArgumentOutOfRangeException($"{nameof(data)}");
-            binding.RawData.Data = data;
-            return (T)binding.ConvertFromRaw();
+            return (T)binding.ConvertFromRaw(data);
         }
 
 

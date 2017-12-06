@@ -1,4 +1,4 @@
-﻿namespace Papper.Interfaces
+﻿namespace Papper.Internal
 {
     internal interface ITree
     {

@@ -1,5 +1,5 @@
 ﻿using System.Linq;
-using Papper.Helper;
+using Papper.Internal;
 using System;
 
 namespace Papper.Types
@@ -13,21 +13,21 @@ namespace Papper.Types
             AllowOddByteOffsetInArray = true;
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, byte[] data)
         {
-            if (plcObjectBinding.Data == null || !plcObjectBinding.Data.Any())
-                return default(bool);
+            if (data == null || !data.Any())
+                return default;
 
             var baseOffset = plcObjectBinding.Offset + (plcObjectBinding.MetaData.Offset.Bits) / 8;
             var bit = plcObjectBinding.Offset + plcObjectBinding.MetaData.Offset.Bits - baseOffset;
-            return plcObjectBinding.Data[baseOffset].GetBit(bit);
+            return data[baseOffset].GetBit(bit);
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, byte[] data)
         {
             var baseOffset = plcObjectBinding.Offset + (plcObjectBinding.MetaData.Offset.Bits) / 8;
             var bit = plcObjectBinding.Offset + plcObjectBinding.MetaData.Offset.Bits - baseOffset;
-            plcObjectBinding.Data[baseOffset] = plcObjectBinding.Data[baseOffset].SetBit(bit, Convert.ToBoolean(value));
+            data[baseOffset] = data[baseOffset].SetBit(bit, Convert.ToBoolean(value));
         }
 
         public void AssigneOffsetFrom(int bitoffset)

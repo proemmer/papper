@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading;
 
-namespace Papper.Helper
+namespace Papper.Internal
 {
-    public class ReaderGuard : IDisposable
+    internal class ReaderGuard : IDisposable
     {
         private readonly ReaderWriterLockSlim _readerWriterLock;
         public ReaderGuard(ReaderWriterLockSlim readerWriterLock)
@@ -18,7 +18,7 @@ namespace Papper.Helper
     }
 
 
-    public class WriterGuard : IDisposable
+    internal class WriterGuard : IDisposable
     {
         private ReaderWriterLockSlim _readerWriterLock;
         private bool IsDisposed { get { return _readerWriterLock == null; } }
@@ -37,7 +37,7 @@ namespace Papper.Helper
     }
 
 
-    public class UpgradeableGuard : IDisposable
+    internal class UpgradeableGuard : IDisposable
     {
 
         private class UpgradedGuard : IDisposable

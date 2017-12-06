@@ -182,7 +182,7 @@ namespace UnitTestSuit
         [Fact]
         public void TestStructuralAccess()
         {
-            var mapping = "DB_Safety";
+            var mapping = "DB_Safety2";
             var header = new UDT_SafeMotionHeader
             {
                 Generated = Normalize(DateTime.Now),
@@ -217,6 +217,7 @@ namespace UnitTestSuit
         [Fact]
         public void TestDataChange()
         {
+            var sleepTime = 10000;
             var mapping = "DB_Safety";
             var intiState = true;
             var originData = new Dictionary<string, object> {
@@ -227,7 +228,7 @@ namespace UnitTestSuit
             var writeData = new Dictionary<string, object> {
                     { "SafeMotion.Slots[15].SlotId", (byte)3},
                     { "SafeMotion.Slots[15].HmiId", (UInt32)4},
-                    { "SafeMotion.Slots[15].Commands.TakeoverPermitted", true },
+                    { "SafeMotion.Slots[15].Commands.TakeoverPermitted", false },
                 };
             var are = new AutoResetEvent(false);
 
@@ -240,18 +241,31 @@ namespace UnitTestSuit
                    while(!subscription.Watching.IsCompleted)
                    {
                        var res = await subscription.DetectChangesAsync();
-                       foreach (var item in res.Results)
-                       {
-                           try
-                           {
-                               if (!intiState)
-                                   Assert.Equal(writeData[item.Variable], item.Value);
-                               else
-                                   Assert.Equal(originData[item.Variable], item.Value);
-                           }
-                           catch(Exception ex)
-                           {
 
+                       if (!res.IsCompleted)
+                       {
+                           if (!intiState)
+                           {
+                               Assert.Equal(2, res.Results.Length);
+                           }
+                           else
+                           {
+                               Assert.Equal(3, res.Results.Length);
+                           }
+
+                           foreach (var item in res.Results)
+                           {
+                               try
+                               {
+                                   if (!intiState)
+                                       Assert.Equal(writeData[item.Variable], item.Value);
+                                   else
+                                       Assert.Equal(originData[item.Variable], item.Value);
+                               }
+                               catch (Exception ex)
+                               {
+
+                               }
                            }
                        }
                        are.Set();
@@ -259,15 +273,15 @@ namespace UnitTestSuit
                });
 
                 //waiting for initialize
-                Assert.True(are.WaitOne(10000));
+                Assert.True(are.WaitOne(sleepTime));
                 intiState = false;
                 Assert.True(_papper.Write(mapping, writeData));
 
                 //waiting for write update
-                Assert.True(are.WaitOne(-1));
+                Assert.True(are.WaitOne(sleepTime));
 
                 //test if data change only occurred if data changed
-                Assert.False(are.WaitOne(10000));
+                Assert.False(are.WaitOne(sleepTime));
 
             }
         }
@@ -275,8 +289,6 @@ namespace UnitTestSuit
         [Fact]
         public void PerformRawDataChange()
         {
-            
-            var area = "DB15";
             var intiState = true;
             var originData = new Dictionary<string, object> {
                     { "W88", (UInt16)0},
@@ -292,9 +304,9 @@ namespace UnitTestSuit
                 foreach (var item in e)
                 {
                     if(!intiState)
-                        Assert.Equal(writeData[item.Key], item.Value);
+                        Assert.Equal(writeData[item.Variable], item.Value);
                     else
-                        Assert.Equal(originData[item.Key], item.Value);
+                        Assert.Equal(originData[item.Variable], item.Value);
                 }
                 are.Set();
             };
@@ -385,7 +397,7 @@ namespace UnitTestSuit
         private void Test<T>(string mapping, Dictionary<string, object> accessDict, T defaultValue)
         {
             //Initial read to ensure all are false
-            var result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult(); ;
+            var result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
             Assert.Equal(accessDict.Count, result.Length);
             foreach (var item in result)
                 Assert.Equal(defaultValue, (T)item.Value);
@@ -394,10 +406,10 @@ namespace UnitTestSuit
             Assert.True(_papper.Write(mapping, accessDict));
 
             //Second read to ensure correct written
-            result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult(); ;
+            result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult(); 
             Assert.Equal(accessDict.Count, result.Length);
             foreach (var item in result)
-                Assert.Equal((T)accessDict[item.Address], (T)item.Value);
+                Assert.Equal((T)accessDict[item.Variable], (T)item.Value);
         }
 
         /// <summary>

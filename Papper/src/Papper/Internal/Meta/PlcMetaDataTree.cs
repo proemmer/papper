@@ -1,6 +1,6 @@
-﻿using Papper.Interfaces;
+﻿using Papper.Internal;
 
-namespace Papper.Common
+namespace Papper.Internal
 {
     internal class PlcMetaDataTree : ITree
     {

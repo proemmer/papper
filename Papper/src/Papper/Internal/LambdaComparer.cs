@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Papper.Helper
+namespace Papper.Internal
 {
     //Use: new LambdaComparer<LogFileConfigurator>((p1, p2) => p1.MachineName == p2.MachineName)).
     //     new LambdaComparer<LogFileConfigurator>((p1, p2) => p1.MachineName.Length.CompareTo(p2.MachineName.Length))).

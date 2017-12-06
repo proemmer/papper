@@ -1,11 +1,9 @@
 ﻿using Papper.Attributes;
-using Papper.Common;
-using Papper.Interfaces;
 using Papper.Types;
 using System;
 using System.Collections.Generic;
 
-namespace Papper.Entries
+namespace Papper.Internal
 {
 
     internal class MappingEntry : Entry

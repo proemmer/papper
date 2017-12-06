@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Papper.Types;
 
-namespace Papper.Helper
+namespace Papper.Internal
 {
     internal class PlcRawData
     {
@@ -15,18 +15,39 @@ namespace Papper.Helper
         private Dictionary<int,Partiton> Partitons { get; set; }
         public string Selector { get; set; }
         public int Offset { get; set; }
-        public int Size { get; set; }
-        
+        public int Size {
+            get
+            {
+                return _size;
+            }
+            set
+            {
+                _size = value;
+                _allocation = CalcRawDataSize(value);
+            }
+        }
+
+        private int _size;
+        private int _allocation;
+        public int MemoryAllocationSize => _allocation;
+
+        private int CalcRawDataSize(int size)
+        {
+            size = size > 0 ? size : 2;
+            if (size % 2 != 0)
+                size++;
+            return size;
+        }
 
         public PlcRawData(int readDataBlockSize)
         {
-            _readDataBlockSize = readDataBlockSize;
+            _readDataBlockSize = _allocation = readDataBlockSize;
             _partitionSize = _readDataBlockSize;
             References = new Dictionary<string, Tuple<int, PlcObject>>();
             Partitons = new Dictionary<int, Partiton>();
         }
 
-        public byte[] Data
+        public byte[] ReadDataCache
         {
             get { return _data; }
             set
@@ -80,10 +101,10 @@ namespace Papper.Helper
 
         public IList<Partiton> GetPartitonsByOffset(int offset, int size)
         {
-            if (Data.Length > _partitionSize && size != Data.Length)
+            if (ReadDataCache != null && ReadDataCache.Length > _partitionSize && size != ReadDataCache.Length)
             {
                 var partitions = new List<Partiton>();
-                for (var i = offset; i <= Math.Min(Data.Length, offset+size); i+= _partitionSize)
+                for (var i = offset; i <= Math.Min(ReadDataCache.Length, offset+size); i+= _partitionSize)
                 {
                     var partitionId = i / _partitionSize;
                     if (Partitons.TryGetValue(partitionId, out Partiton partiton))
@@ -97,8 +118,8 @@ namespace Papper.Helper
 
         private void CreatePartitions()
         {
-            var length = Data.Length;
-            var numberOfPartitons = Data.Length/ _partitionSize;
+            var length = ReadDataCache.Length;
+            var numberOfPartitons = ReadDataCache.Length/ _partitionSize;
             if ((length % _partitionSize) > 0)
                 numberOfPartitons++;
 

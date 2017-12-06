@@ -2,9 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Papper.Helper;
-using Papper.Interfaces;
-using Papper.Common;
+using Papper.Internal;
 using System.Text;
 using System.Dynamic;
 
@@ -84,39 +82,39 @@ namespace Papper.Types
             To = to;
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, byte[] data)
         {
             if (ArrayType is PlcByte)
-                return InternalConvert(plcObjectBinding, new byte());
+                return InternalConvert(plcObjectBinding, new byte(), data);
             if (ArrayType is PlcString)
-                return InternalConvert(plcObjectBinding, string.Empty);
+                return InternalConvert(plcObjectBinding, string.Empty, data);
             if (ArrayType is PlcInt)
-                return InternalConvert(plcObjectBinding, new Int16());
+                return InternalConvert(plcObjectBinding, new Int16(), data);
             if (ArrayType is PlcBool)
-                return InternalConvert(plcObjectBinding, new bool());
+                return InternalConvert(plcObjectBinding, new bool(), data);
             if (ArrayType is PlcDInt)
-                return InternalConvert(plcObjectBinding, new Int32());
+                return InternalConvert(plcObjectBinding, new Int32(), data);
             if (ArrayType is PlcWord)
-                return InternalConvert(plcObjectBinding, new UInt16());
+                return InternalConvert(plcObjectBinding, new UInt16(), data);
             if (ArrayType is PlcDWord)
-                return InternalConvert(plcObjectBinding, new UInt32());
+                return InternalConvert(plcObjectBinding, new UInt32(), data);
             if (ArrayType is PlcDate || ArrayType is PlcDateTime)
-                return InternalConvert(plcObjectBinding, new DateTime());
+                return InternalConvert(plcObjectBinding, new DateTime(), data);
             if (ArrayType is PlcS5Time || ArrayType is PlcTime || ArrayType is PlcTimeOfDay)
-                return InternalConvert(plcObjectBinding, new TimeSpan());
+                return InternalConvert(plcObjectBinding, new TimeSpan(), data);
             if (ArrayType is PlcReal)
-                return InternalConvert(plcObjectBinding, new Single());
+                return InternalConvert(plcObjectBinding, new Single(), data);
             if (ArrayType is PlcChar)
-                return InternalConvert(plcObjectBinding, new char());
+                return InternalConvert(plcObjectBinding, new char(), data);
             if (ArrayType is PlcArray)
-                return ArrayType.ConvertFromRaw(plcObjectBinding);
+                return ArrayType.ConvertFromRaw(plcObjectBinding, data);
             if (plcObjectBinding.FullType)
-                return InternalConvert(plcObjectBinding, Activator.CreateInstance(plcObjectBinding.MetaData.ElemenType), true, plcObjectBinding.MetaData.ElemenType);
-            return InternalConvert(plcObjectBinding, new ExpandoObject());
+                return InternalConvert(plcObjectBinding, Activator.CreateInstance(plcObjectBinding.MetaData.ElemenType), data, true, plcObjectBinding.MetaData.ElemenType);
+            return InternalConvert(plcObjectBinding, new ExpandoObject(), data);
 
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, byte[] data)
         {
             var list = value as IEnumerable;
 
@@ -130,12 +128,12 @@ namespace Papper.Types
                 if (ArrayType is PlcByte &&  value is byte[])
                 {
                     var byteArray = value as byte[];
-                    byteArray.CopyTo(plcObjectBinding.RawData.Data, plcObjectBinding.Offset);
+                    byteArray.CopyTo(data, plcObjectBinding.Offset);
                 }
                 else if (ArrayType is PlcChar && value is char[])
                 {
                     var charArray = value as char[];
-                    Encoding.ASCII.GetBytes(charArray).CopyTo(plcObjectBinding.RawData.Data, plcObjectBinding.Offset);
+                    Encoding.ASCII.GetBytes(charArray).CopyTo(data, plcObjectBinding.Offset);
                 }
                 else
                 {
@@ -148,7 +146,7 @@ namespace Papper.Types
                             if (child == null)
                                 throw new Exception("Array error");
                             var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + (child.Size.Bytes * i), plcObjectBinding.ValidationTimeInMs);
-                            ArrayType.ConvertToRaw(enumerator.Current, binding);
+                            ArrayType.ConvertToRaw(enumerator.Current, binding, data);
                         }
                         else
                         {
@@ -168,19 +166,19 @@ namespace Papper.Types
         /// <param name="plcObjectBinding"></param>
         /// <param name="type">instance of target type</param>
         /// <returns></returns>
-        private object InternalConvert<T>(PlcObjectBinding plcObjectBinding, T type, bool fully = false, Type t = null)
+        private object InternalConvert<T>(PlcObjectBinding plcObjectBinding, T type, byte[] data, bool fully = false, Type t = null)
         {
             
-            if (plcObjectBinding.Data != null && plcObjectBinding.Data.Any())
+            if (data != null && data.Any())
             {
                 //special handling of byte and char, because of performance (specially with big data)
                 if (type is byte)
                 {
-                    return plcObjectBinding.RawData.Data.SubArray(plcObjectBinding.Offset, ArrayLength);
+                    return data.SubArray(plcObjectBinding.Offset, ArrayLength);
                 }
                 else if(type is char)
                 {
-                    return Encoding.ASCII.GetChars(plcObjectBinding.RawData.Data.SubArray(plcObjectBinding.Offset, ArrayLength));
+                    return Encoding.ASCII.GetChars(data.SubArray(plcObjectBinding.Offset, ArrayLength));
                 }
                 else if (fully && t != null)
                 {
@@ -196,7 +194,7 @@ namespace Papper.Types
                         if (child == null)
                             throw new Exception("Array error");
                         var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + ((idx - From) * GetElementSizeForOffset()), plcObjectBinding.ValidationTimeInMs, fully);
-                        list.SetValue(((T)ArrayType.ConvertFromRaw(binding)),i);
+                        list.SetValue(((T)ArrayType.ConvertFromRaw(binding, data)),i);
                         idx++;
                     }
                     return list;
@@ -211,7 +209,7 @@ namespace Papper.Types
                         if (child == null)
                             throw new Exception("Array error");
                         var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + ((idx - From) * GetElementSizeForOffset()), plcObjectBinding.ValidationTimeInMs, fully);
-                        list[i] = ((T)ArrayType.ConvertFromRaw(binding));
+                        list[i] = ((T)ArrayType.ConvertFromRaw(binding, data));
                         idx++;
                     }
                     return list;

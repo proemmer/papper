@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using Papper.Helper;
+using Papper.Internal;
 using Papper.Types;
 
-namespace Papper.Optimizer
+namespace Papper.Internal
 {
     internal interface IReadOperationOptimizer
     {

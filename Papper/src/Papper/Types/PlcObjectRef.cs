@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Papper.Helper;
-using Papper.Interfaces;
+using Papper.Internal;
 
 namespace Papper.Types
 {
@@ -27,14 +26,14 @@ namespace Papper.Types
             _referencedObject = reference;
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, byte[] data)
         {
-            return _referencedObject.ConvertFromRaw(plcObjectBinding);
+            return _referencedObject.ConvertFromRaw(plcObjectBinding, data);
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, byte[] data)
         {
-            _referencedObject.ConvertToRaw(value, plcObjectBinding);
+            _referencedObject.ConvertToRaw(value, plcObjectBinding, data);
         }
 
         public override IEnumerable<ITreeNode> Childs

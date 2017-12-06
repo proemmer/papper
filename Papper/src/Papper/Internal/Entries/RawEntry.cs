@@ -1,10 +1,9 @@
-﻿using Papper.Common;
-using Papper.Interfaces;
+﻿using Papper.Internal;
 using Papper.Types;
 using System;
 using System.Collections.Generic;
 
-namespace Papper.Entries
+namespace Papper.Internal
 {
     internal class RawEntry : Entry
     {

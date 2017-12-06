@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Papper.Entries
+namespace Papper.Internal
 {
     internal class LruState
     {

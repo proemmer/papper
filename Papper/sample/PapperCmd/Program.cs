@@ -220,9 +220,8 @@ namespace PapperCmd
             var are = new AutoResetEvent(false);
             OnChangeEventHandler callback = (s, e) =>
             {
-                Console.WriteLine($"On DataChanged :{e.From}:");
                 foreach (var item in e)
-                    Console.WriteLine($"DataChanged detected:{e.From}: {item.Key} = {item.Value}");
+                    Console.WriteLine($"DataChanged detected: {item.Address} = {item.Value}");
                 are.Set();
             };
             //papper.Subscribe("DB_Safety", callback);
@@ -264,9 +263,8 @@ namespace PapperCmd
             var are = new AutoResetEvent(false);
             OnChangeEventHandler callback = (s, e) =>
             {
-                Console.WriteLine($"On DataChanged :{e.From}:");
                 foreach (var item in e)
-                    Console.WriteLine($"DataChanged detected:{e.From}: {item.Key} = {item.Value}");
+                    Console.WriteLine($"DataChanged detected:{item.Address} = {item.Value}");
                 are.Set();
             };
             //papper.SubscribeRawDataChanges("DB15", callback);

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using Papper.Helper;
+using Papper.Internal;
 
 namespace Papper.Types
 {
@@ -12,21 +12,21 @@ namespace Papper.Types
             Size = new PlcSize { Bytes = 4 };
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, byte[] data)
         {
-            if (plcObjectBinding.Data == null || !plcObjectBinding.Data.Any())
+            if (data == null || !data.Any())
             {
                 return TimeSpan.MinValue;
             }
-            return new TimeSpan(plcObjectBinding.Data.GetSwap<int>(plcObjectBinding.Offset) * 10000);  // Is this really correct?
+            return new TimeSpan(data.GetSwap<int>(plcObjectBinding.Offset) * 10000);  // Is this really correct?
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, byte[] data)
         {
             var time = (TimeSpan)value;
             var subset = Convert.ToInt32(time.TotalMilliseconds).SetSwap();
             for (var i = 0; i < subset.Length; i++)
-                plcObjectBinding.Data[plcObjectBinding.Offset + i] = subset[i];
+                data[plcObjectBinding.Offset + i] = subset[i];
         }
     }
 }
