@@ -1,4 +1,5 @@
 ﻿using Papper;
+using Papper.Notification;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -33,6 +34,8 @@ namespace UnitTestSuit
             var vars = _papper.GetVariablesOf(nameof(DB_Safety));
             Assert.Equal(4596, vars.Count());
         }
+
+
 
         [Fact]
         public void BitAccessTest()
@@ -203,10 +206,10 @@ namespace UnitTestSuit
                     { "SafeMotion.Header", header},
                 };
 
-            var result = _papper.ReadAsync(accessDict.Keys.Select( variable => PlcReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult(); 
+            var result = _papper.ReadAsync(accessDict.Keys.Select( variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult(); 
             Assert.Equal(accessDict.Count, result.Length);
-            Assert.True(_papper.Write(mapping, accessDict));
-            var result2 = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult(); 
+            _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, accessDict.ToArray()).ToArray()).GetAwaiter().GetResult();
+            var result2 = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult(); 
             Assert.Equal(accessDict.Count, result2.Length);
             Assert.False(AreDataEqual(result, result2));
 
@@ -235,7 +238,7 @@ namespace UnitTestSuit
 
             using (var subscription = _papper.CreateSubscribe())
             {
-                subscription.AddItems(originData.Keys.Select(variable => PlcReference.FromAddress($"{mapping}.{variable}")).ToArray());
+                subscription.AddItems(originData.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray());
                 var t = Task.Run(async () =>
                {
                    while(!subscription.Watching.IsCompleted)
@@ -275,7 +278,7 @@ namespace UnitTestSuit
                 //waiting for initialize
                 Assert.True(are.WaitOne(sleepTime));
                 intiState = false;
-                Assert.True(_papper.Write(mapping, writeData));
+                _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, writeData.ToArray()).ToArray()).GetAwaiter().GetResult();
 
                 //waiting for write update
                 Assert.True(are.WaitOne(sleepTime));
@@ -310,22 +313,21 @@ namespace UnitTestSuit
                 }
                 are.Set();
             };
-            //Assert.True(_papper.SubscribeRawDataChanges(area, callback));
-            //Assert.True(_papper.SetRawActiveState(true, area, writeData.Keys.ToArray()));
+            var subscription = _papper.SubscribeDataChanges(callback, writeData.Keys.Select(variable => PlcReadReference.FromAddress($"DB15.{variable}")).ToArray());
 
-            ////waiting for initialize
-            //Assert.True(are.WaitOne(5000));
-            //intiState = false;
-            //Assert.True(_papper.WriteAbs(area, writeData));
 
-            ////waiting for write update
-            //Assert.True(are.WaitOne(5000));
+            //waiting for initialize
+            Assert.True(are.WaitOne(5000));
+            intiState = false;
+            _papper.WriteAsync(PlcWriteReference.FromRoot("DB15", writeData.ToArray()).ToArray()).GetAwaiter().GetResult();
 
-            ////test if data change only occurred if data changed
-            //Assert.False(are.WaitOne(5000));
+            //waiting for write update
+            Assert.True(are.WaitOne(5000));
 
-            //Assert.True(_papper.SetRawActiveState(false, area, writeData.Keys.ToArray()));
-            //Assert.True(_papper.UnsubscribeRawDataChanges(area, callback));
+            //test if data change only occurred if data changed
+            Assert.False(are.WaitOne(5000));
+
+            subscription.Dispose();
         }
 
         [Fact]
@@ -386,7 +388,7 @@ namespace UnitTestSuit
                 };
 
 
-            var result = _papper.ReadAsync(PlcReference.FromRoot(mapping, accessDict.Keys.ToArray()).ToArray()).GetAwaiter().GetResult(); ;
+            var result = _papper.ReadAsync(PlcReadReference.FromRoot(mapping, accessDict.Keys.ToArray()).ToArray()).GetAwaiter().GetResult(); ;
             Assert.Empty(result);
         }
 
@@ -397,16 +399,16 @@ namespace UnitTestSuit
         private void Test<T>(string mapping, Dictionary<string, object> accessDict, T defaultValue)
         {
             //Initial read to ensure all are false
-            var result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
+            var result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
             Assert.Equal(accessDict.Count, result.Length);
             foreach (var item in result)
                 Assert.Equal(defaultValue, (T)item.Value);
 
             //Write the value
-            Assert.True(_papper.Write(mapping, accessDict));
+            _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, accessDict.ToArray()).ToArray()).GetAwaiter().GetResult();
 
             //Second read to ensure correct written
-            result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult(); 
+            result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult(); 
             Assert.Equal(accessDict.Count, result.Length);
             foreach (var item in result)
                 Assert.Equal((T)accessDict[item.Variable], (T)item.Value);
@@ -442,29 +444,29 @@ namespace UnitTestSuit
             await Task.CompletedTask;
         }
 
-        private static bool Papper_OnWrite(string selector, int offset, byte[] data, byte bitMask = 0)
+        private async Task Papper_OnWrite(IEnumerable<DataPack> reads)
         {
-            try
+            var result = reads.ToList();
+            foreach (var item in result)
             {
-                var length = data.Length;
-                if (bitMask == 0)
+                if (item.BitMask == 0)
                 {
-                    Console.WriteLine($"OnWrite: selector:{selector}; offset:{offset}; length:{length}");
-                    Array.Copy(data, 0, MockPlc.GetPlcEntry(selector, offset + length).Data, offset, length);
+                    Console.WriteLine($"OnWrite: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
+                    Array.Copy(item.Data, 0, MockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length).Data, item.Offset, item.Length);
                 }
                 else
                 {
-                    foreach (var item in data)
+                    foreach (var bItem in item.Data)
                     {
-                        var bm = bitMask;
+                        var bm = item.BitMask;
                         for (var i = 0; i < 8; i++)
                         {
                             var bit = bm.GetBit(i);
                             if (bit)
                             {
-                                Console.WriteLine($"OnWriteBit: selector:{selector}; offset:{offset + 1};");
-                                var b = MockPlc.GetPlcEntry(selector, offset + 1).Data[offset];
-                                MockPlc.GetPlcEntry(selector, offset + 1).Data[offset] = b.SetBit(i, item.GetBit(i));
+                                var b = MockPlc.GetPlcEntry(item.Selector, item.Offset + 1).Data[item.Offset];
+                                MockPlc.GetPlcEntry(item.Selector, item.Offset + 1).Data[item.Offset] = b.SetBit(i, bItem.GetBit(i));
+                                item.ExecutionResult = ExecutionResult.Ok;
                                 bm = bm.SetBit(i, false);
                                 if (bm == 0)
                                     break;
@@ -472,13 +474,48 @@ namespace UnitTestSuit
                         }
                     }
                 }
-                return true;
             }
-            catch (Exception)
-            {
-                return false;
-            }
+            await Task.CompletedTask;
         }
+
+
+        //private static bool Papper_OnWrite(string selector, int offset, byte[] data, byte bitMask = 0)
+        //{
+        //    try
+        //    {
+        //        var length = data.Length;
+        //        if (bitMask == 0)
+        //        {
+        //            Console.WriteLine($"OnWrite: selector:{selector}; offset:{offset}; length:{length}");
+        //            Array.Copy(data, 0, MockPlc.GetPlcEntry(selector, offset + length).Data, offset, length);
+        //        }
+        //        else
+        //        {
+        //            foreach (var item in data)
+        //            {
+        //                var bm = bitMask;
+        //                for (var i = 0; i < 8; i++)
+        //                {
+        //                    var bit = bm.GetBit(i);
+        //                    if (bit)
+        //                    {
+        //                        Console.WriteLine($"OnWriteBit: selector:{selector}; offset:{offset + 1};");
+        //                        var b = MockPlc.GetPlcEntry(selector, offset + 1).Data[offset];
+        //                        MockPlc.GetPlcEntry(selector, offset + 1).Data[offset] = b.SetBit(i, item.GetBit(i));
+        //                        bm = bm.SetBit(i, false);
+        //                        if (bm == 0)
+        //                            break;
+        //                    }
+        //                }
+        //            }
+        //        }
+        //        return true;
+        //    }
+        //    catch (Exception)
+        //    {
+        //        return false;
+        //    }
+        //}
 
         private static ExpandoObject ToExpando<T>(T instance)
         {

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Papper
@@ -9,6 +10,7 @@ namespace Papper
     public class Subscription : IDisposable
     {
         private readonly TaskCompletionSource<object> _watchingTcs = new TaskCompletionSource<object>();
+        private CancellationTokenSource _cts;
         private PlcDataMapper _mapper;
         private List<PlcReference> _variables = new List<PlcReference>();
         private List<Execution> _executions;
@@ -33,7 +35,13 @@ namespace Papper
 
         public void Dispose()
         {
+            _watchingTcs.SetResult(null);
             _mapper.RemoveSubscription(this);
+        }
+
+        public void CancelCurrentDetection()
+        {
+            _cts?.Cancel();
         }
 
         public void AddItems(params PlcReference[] vars)
@@ -57,9 +65,16 @@ namespace Papper
         {
             try
             {
+                _cts = new CancellationTokenSource();
                 while (!Watching.IsCompleted)
                 {
-                    if(_modified)
+
+                    if (_cts.IsCancellationRequested)
+                    {
+                        return new ChangeResult(null, true, Watching.IsCompleted);
+                    }
+
+                    if (_modified)
                     {
                         _executions = _mapper.DetermineExecutions(_variables);
                         _modified = false;
@@ -79,7 +94,12 @@ namespace Papper
                         return new ChangeResult(readRes, Watching.IsCanceled, Watching.IsCompleted);
                     }
 
-                    await Task.Delay(Interval);
+                    if (_cts.IsCancellationRequested)
+                    {
+                        return new ChangeResult(null, true, Watching.IsCompleted);
+                    }
+
+                    await Task.Delay(Interval, _cts.Token);
                 }
             }
             catch(Exception)
