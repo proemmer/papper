@@ -39,7 +39,7 @@ namespace Papper
         }
 
 
-        public static IEnumerable<PlcReference> FromRoot(string root, params string[] variables)
+        public static IEnumerable<PlcReadReference> FromRoot(string root, params string[] variables)
         {
             foreach (var variable in variables)
             {
