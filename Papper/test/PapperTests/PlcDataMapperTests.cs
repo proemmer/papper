@@ -236,7 +236,7 @@ namespace UnitTestSuit
             var are = new AutoResetEvent(false);
 
 
-            using (var subscription = _papper.CreateSubscribe())
+            using (var subscription = _papper.CreateSubscription())
             {
                 subscription.AddItems(originData.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray());
                 var t = Task.Run(async () =>

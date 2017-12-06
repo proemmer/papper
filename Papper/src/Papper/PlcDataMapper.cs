@@ -28,22 +28,11 @@ namespace Papper
         /// <returns></returns>
         public delegate Task WriteOperation(IEnumerable<DataPack> reads);
 
-        /// <summary>
-        /// his delegate is used to invoke the write operations.
-        /// </summary>
-        /// <param name="selector">Selector from the MappingAttribute</param>
-        /// <param name="offset">Offset in byte to the first byte to write</param>
-        /// <param name="data"></param>
-        /// <param name="mask">bit mask, all bits with true will be written </param>
-        /// <returns></returns>
-        public delegate bool WriteOperation1(string selector, int offset, byte[] data, byte bitMask = 0);
 
         #endregion
 
         #region Fields
         private HashSet<Subscription> _subscriptions = new HashSet<Subscription>();
-        internal enum ReadResult { Successfully, Failed, UseCache }
-        private const string ADDRESS_PREFIX = "$ABSSYMBOLS$_";
         private const int PduSizeDefault = 480;
         private const int ReadDataHeaderLength = 18;
         private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
@@ -221,17 +210,6 @@ namespace Papper
         }
 
 
-        private byte[] GetOrCreateBufferAndApplyValue(PlcObjectBinding binding, Dictionary<PlcRawData, byte[]> dict, object value)
-        {
-            if(!dict.TryGetValue(binding.RawData, out var buffer))
-            {
-                buffer = new byte[binding.RawData.MemoryAllocationSize];
-                dict.Add(binding.RawData, buffer);
-            }
-            binding.ConvertToRaw(value, buffer);
-            return buffer;
-        }
-        
         
         /// <summary>
         /// Return address data of the given variable
@@ -267,7 +245,7 @@ namespace Papper
         /// Create a Subscription to watch data changes
         /// </summary>
         /// <returns></returns>
-        public Subscription CreateSubscribe()
+        public Subscription CreateSubscription()
         {
             var sub = new Subscription(this);
             _subscriptions.Add(sub);
@@ -373,6 +351,18 @@ namespace Papper
             }
 
             return false;
+        }
+
+
+        private byte[] GetOrCreateBufferAndApplyValue(PlcObjectBinding binding, Dictionary<PlcRawData, byte[]> dict, object value)
+        {
+            if (!dict.TryGetValue(binding.RawData, out var buffer))
+            {
+                buffer = new byte[binding.RawData.MemoryAllocationSize];
+                dict.Add(binding.RawData, buffer);
+            }
+            binding.ConvertToRaw(value, buffer);
+            return buffer;
         }
 
 
