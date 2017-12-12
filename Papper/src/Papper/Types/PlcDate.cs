@@ -12,20 +12,16 @@ namespace Papper.Types
             Size = new PlcSize { Bytes = 2 };
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, byte[] data)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             var date = new DateTime(1990, 1, 1);
-            if (data == null || !data.Any())
-            {
+            if (data.IsEmpty)
                 return date;
-            }
-            //var subset = data.Skip(plcObjectBinding.Offset).Take(Size.Bytes).ToArray();
-            //return date.AddDays(subset.GetSwap<ushort>()) ;
-
+           
             return date.AddDays(data.GetSwap<ushort>(plcObjectBinding.Offset));
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, byte[] data)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             var dateVal = (DateTime)value;
             var date = new DateTime(1990, 1, 1);

@@ -26,12 +26,12 @@ namespace Papper.Types
             _referencedObject = reference;
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, byte[] data)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             return _referencedObject.ConvertFromRaw(plcObjectBinding, data);
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, byte[] data)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             _referencedObject.ConvertToRaw(value, plcObjectBinding, data);
         }

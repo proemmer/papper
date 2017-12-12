@@ -95,10 +95,10 @@ namespace Papper
         /// <param name="buffer"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        public static T GetSwap<T>(this IEnumerable<byte> buffer, int offset = 0)
-        {
-            return buffer.Skip(offset).Take(sizeof(Single)).ToArray().GetSwap<T>();
-        }
+        //public static T GetSwap<T>(this Span<byte> buffer, int offset = 0)
+        //{
+        //    return buffer.Slice(offset, sizeof(Single)).ToArray().GetSwap<T>();
+        //}
 
         /// <summary>
         /// Extract a numeric value from an byte array with swapped bytes
@@ -107,17 +107,16 @@ namespace Papper
         /// <param name="buffer"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        public static T GetSwap<T>(this byte[] buffer, int offset = 0)
+        public static T GetSwap<T>(this Span<byte> buffer, int offset = 0)
         {
             object value = default(T);
-
             if (value is UInt32)
             {
-                value = SwapDWord(BitConverter.ToUInt32(buffer, offset));
+                value = SwapDWord(BitConverter.ToUInt32(buffer.ToArray(), offset));
             }
             else if (value is Int32)
             {
-                value = SwapDInt(BitConverter.ToInt32(buffer, offset));
+                value = SwapDInt(BitConverter.ToInt32(buffer.ToArray(), offset));
             }
             else if (value is byte)
             {
@@ -125,15 +124,15 @@ namespace Papper
             }
             else if (value is UInt16)
             {
-                value = SwapWord(BitConverter.ToUInt16(buffer, offset));
+                value = SwapWord(BitConverter.ToUInt16(buffer.ToArray(), offset));
             }
             else if (value is Int16)
             {
-                value = SwapInt(BitConverter.ToInt16(buffer, offset));
+                value = SwapInt(BitConverter.ToInt16(buffer.ToArray(), offset));
             }
             else if (value is Single)
             {
-                value = SwapSingle(BitConverter.ToSingle(buffer, offset));
+                value = SwapSingle(BitConverter.ToSingle(buffer.ToArray(), offset));
             }
 
             return (T)value;
@@ -431,7 +430,7 @@ namespace Papper
         /// <param name="b"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        public static int GetBcdWord(this byte[] b, int offset = 0)
+        public static int GetBcdWord(this Span<byte> b, int offset = 0)
         {
             int bt1 = b[offset];
             int bt2 = b[offset + 1];
@@ -472,7 +471,7 @@ namespace Papper
             return b;
         }
 
-        public static int GetBcdDWord(this byte[] b, int offset = 0)
+        public static int GetBcdDWord(this Span<byte> b, int offset = 0)
         {
             int bt1 = b[offset];
             int bt2 = b[offset + 1];

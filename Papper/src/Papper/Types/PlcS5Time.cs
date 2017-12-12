@@ -12,14 +12,12 @@ namespace Papper.Types
             Size = new PlcSize { Bytes = 2 };
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, byte[] data)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            if (data == null || !data.Any())
+            if (data.IsEmpty)
             {
                 return TimeSpan.MinValue;
             }
-            var subset = data.Skip(plcObjectBinding.Offset).Take(Size.Bytes).ToArray();
-
             var w1 = data[plcObjectBinding.Offset + 1].GetBcdByte();
             var idx0Value = data[plcObjectBinding.Offset];
             var w2 = ((idx0Value & 0x0f));
@@ -44,7 +42,7 @@ namespace Papper.Types
             return new TimeSpan(number);  // Is this really correct?
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, byte[] data)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             var time = (TimeSpan)value;
             byte valueBase;

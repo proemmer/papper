@@ -42,7 +42,7 @@ namespace Papper.Types
             _structType = structType ?? throw new ArgumentNullException(nameof(structType));
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, byte[] data)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             if (!plcObjectBinding.FullType || _structType == null)
             {
@@ -67,7 +67,7 @@ namespace Papper.Types
             }
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, byte [] data)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             if (value != null)
             {

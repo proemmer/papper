@@ -12,9 +12,9 @@ namespace Papper.Types
             Size = new PlcSize {Bytes = 8};
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, byte[] data)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            if (data == null || !data.Any())
+            if (data.IsEmpty)
                 return new DateTime(1900, 01, 01, 00, 00, 00);
             
             int bt = data[plcObjectBinding.Offset];
@@ -65,7 +65,7 @@ namespace Papper.Types
             }
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, byte[] data)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             var dateTime = (DateTime) value;
 

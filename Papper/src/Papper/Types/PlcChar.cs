@@ -13,15 +13,15 @@ namespace Papper.Types
             AllowOddByteOffsetInArray = true;
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, byte[] data)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            if (data == null || !data.Any())
+            if (data.IsEmpty)
                 return default;
 
             return Convert.ToChar(data[plcObjectBinding.Offset]);
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, byte[] data)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             var s = value as string;
             data[plcObjectBinding.Offset] = s != null ? Convert.ToByte(s.FirstOrDefault()) : Convert.ToByte(value);

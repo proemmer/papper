@@ -399,7 +399,8 @@ namespace UnitTestSuit
         private void Test<T>(string mapping, Dictionary<string, object> accessDict, T defaultValue)
         {
             //Initial read to ensure all are false
-            var result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
+            var toRead = accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray();
+            var result = _papper.ReadAsync(toRead).GetAwaiter().GetResult();
             Assert.Equal(accessDict.Count, result.Length);
             foreach (var item in result)
                 Assert.Equal(defaultValue, (T)item.Value);

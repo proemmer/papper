@@ -12,14 +12,14 @@ namespace Papper.Types
             Size = new PlcSize { Bytes = 4 };
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, byte[] data)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            if (data == null || !data.Any())
+            if (data.IsEmpty)
                 return default;
             return data.GetSwap<UInt32>(plcObjectBinding.Offset);
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, byte[] data)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             var subset = Convert.ToUInt32(value).SetSwap();
             for (var i = 0; i < subset.Length; i++)

@@ -82,7 +82,7 @@ namespace Papper.Types
             To = to;
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, byte[] data)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             if (ArrayType is PlcByte)
                 return InternalConvert(plcObjectBinding, new byte(), data);
@@ -114,7 +114,7 @@ namespace Papper.Types
 
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, byte[] data)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             var list = value as IEnumerable;
 
@@ -128,12 +128,12 @@ namespace Papper.Types
                 if (ArrayType is PlcByte &&  value is byte[])
                 {
                     var byteArray = value as byte[];
-                    byteArray.CopyTo(data, plcObjectBinding.Offset);
+                    byteArray.CopyTo(data.Slice(plcObjectBinding.Offset, byteArray.Length));
                 }
                 else if (ArrayType is PlcChar && value is char[])
                 {
                     var charArray = value as char[];
-                    Encoding.ASCII.GetBytes(charArray).CopyTo(data, plcObjectBinding.Offset);
+                    Encoding.ASCII.GetBytes(charArray).CopyTo(data.Slice(plcObjectBinding.Offset, charArray.Length));
                 }
                 else
                 {
@@ -166,19 +166,20 @@ namespace Papper.Types
         /// <param name="plcObjectBinding"></param>
         /// <param name="type">instance of target type</param>
         /// <returns></returns>
-        private object InternalConvert<T>(PlcObjectBinding plcObjectBinding, T type, byte[] data, bool fully = false, Type t = null)
+        private object InternalConvert<T>(PlcObjectBinding plcObjectBinding, T type, Span<byte> data, bool fully = false, Type t = null)
         {
             
-            if (data != null && data.Any())
+            if (!data.IsEmpty)
             {
                 //special handling of byte and char, because of performance (specially with big data)
                 if (type is byte)
                 {
-                    return data.SubArray(plcObjectBinding.Offset, ArrayLength);
+                    return data.Slice(plcObjectBinding.Offset, ArrayLength).ToArray();
                 }
                 else if(type is char)
                 {
-                    return Encoding.ASCII.GetChars(data.SubArray(plcObjectBinding.Offset, ArrayLength));
+                    var d = data.Slice(plcObjectBinding.Offset, ArrayLength).ToArray();
+                    return Encoding.ASCII.GetChars(d);
                 }
                 else if (fully && t != null)
                 {

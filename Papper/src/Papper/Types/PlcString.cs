@@ -32,9 +32,9 @@ namespace Papper.Types
             StringLength = DefaultStringLength;
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, byte[] data)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            if (data == null || !data.Any())
+            if (data.IsEmpty)
                 return string.Empty;
 
             //var subset = data.Skip(plcObjectBinding.Offset).Take(Size.Bytes).ToArray();
@@ -46,10 +46,10 @@ namespace Papper.Types
             var maxLength = data.GetSwap<byte>(plcObjectBinding.Offset);
             var curLength = data.GetSwap<byte>(plcObjectBinding.Offset+1);
             var take = Math.Min(Math.Min(maxLength, curLength), Size.Bytes-2);
-            return Encoding.ASCII.GetString(data, plcObjectBinding.Offset + 2,take);
+            return Encoding.ASCII.GetString(data.ToArray(), plcObjectBinding.Offset + 2,take);
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, byte [] data)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             var maxLength = Convert.ToByte(Size.Bytes - 2);
             var i = plcObjectBinding.Offset;
