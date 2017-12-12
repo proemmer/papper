@@ -202,11 +202,7 @@ namespace Papper
 
             executions.ForEach(exec => exec.Invalidate());
 
-            return prepared.Select(x => new PlcWriteResult
-                                        {
-                                            Address = x.Key,
-                                            ActionResult = x.Value.ExecutionResult
-                                        }).ToArray();
+            return prepared.Select(x => new PlcWriteResult(x.Key, x.Value.ExecutionResult)).ToArray();
         }
 
 
@@ -300,12 +296,10 @@ namespace Papper
                              .Where(exec => changedAfter == null || exec.LastChange > changedAfter) // filter by data area
                              .GroupBy(exec => exec.ExecutionResult) // Group by execution result
                              .SelectMany(group => filter(group.SelectMany(g => g.Bindings))
-                                                       .Select(b => new PlcReadResult
-                                                       {
-                                                           Address = b.Key,
-                                                           Value = b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache),  // TODO: Change
-                                                           ActionResult = group.Key
-                                                       })).ToArray();
+                                                       .Select(b => new PlcReadResult(b.Key, 
+                                                                                      b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache), 
+                                                                                      group.Key)
+                                                       )).ToArray();
         }
 
         internal Dictionary<Execution, DataPack> UpdateableItems(List<Execution> executions, bool onlyOutdated = true)

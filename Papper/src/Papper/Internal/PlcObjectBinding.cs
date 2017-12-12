@@ -45,12 +45,12 @@ namespace Papper.Internal
         public int Offset { get; private set; }
         public int Size { get { return _metaData.Size.Bytes; } }
 
-        public object ConvertFromRaw(byte[] data)
+        public object ConvertFromRaw(Span<byte> data)
         {
             return _metaData.ConvertFromRaw(this, data);
         }
 
-        public void ConvertToRaw(object obj, byte[] data)
+        public void ConvertToRaw(object obj, Span<byte> data)
         {
             _metaData.ConvertToRaw(obj, this, data);
         }

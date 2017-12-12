@@ -2,11 +2,24 @@
 {
     public struct PlcWriteResult
     {
-        public string Address { get; internal set; }
+        private string _address;
+        private ExecutionResult _executionResult;
+        private int _dot;
 
-        public string Mapping => Address.Substring(0, Address.IndexOf("."));
-        public string Variable => Address.Substring(Address.IndexOf(".") + 1);
+        public PlcWriteResult(string address, ExecutionResult executionResult)
+        {
+            _address = address;
+            _executionResult = executionResult;
+            _dot = address.IndexOf(".");
+        }
 
-        public ExecutionResult ActionResult { get; internal set; }
+        public string Address => _address;
+
+        public ExecutionResult ActionResult => _executionResult;
+
+        public string Mapping => Address.Substring(0, _dot);
+
+        public string Variable => Address.Substring(_dot + 1);
+
     }
 }

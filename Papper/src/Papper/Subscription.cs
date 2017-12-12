@@ -1,7 +1,6 @@
 ﻿using Papper.Internal;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,7 +14,7 @@ namespace Papper
         private List<PlcReadReference> _variables = new List<PlcReadReference>();
         private List<Execution> _executions;
         private bool _modified = true;
-        private Dictionary<string, LruState> _states = new Dictionary<string, LruState>();
+        private LruCache _lruCache = new LruCache(); 
         private DateTime _lastRun = DateTime.MinValue;
 
         /// <summary>
@@ -116,25 +115,18 @@ namespace Papper
             foreach (var binding in all)
             {
                 var size = binding.Value.Size == 0 ? 1 : binding.Value.Size;
-                if (!_states.TryGetValue(binding.Key, out LruState saved) ||
+                if (!_lruCache.TryGetValue(binding.Key, out LruState saved) ||
                     (binding.Value.Size == 0
                         ? binding.Value.Data[binding.Value.Offset].GetBit(binding.Value.MetaData.Offset.Bits) != saved.Data[0].GetBit(binding.Value.MetaData.Offset.Bits)
                         : !binding.Value.Data.SequenceEqual(binding.Value.Offset, saved.Data, 0, size)))
                 {
                     result.Add(binding);
                     if (saved == null)
-                    {
-                        saved = new LruState(size);
-                        _states.Add(binding.Key, saved);
-                    }
+                        saved = _lruCache.Create(binding.Key, size);
                 }
-                if (saved != null)
-                    saved.LastUsage = detect;
+                _lruCache.Update(saved, detect);
             }
-
-            //Remove unused states
-            foreach (var state in _states.Where(x => x.Value.LastUsage < detect).ToList())
-                _states.Remove(state.Key);
+            _lruCache.RemoveUnused(detect);
 
             return result;
         }

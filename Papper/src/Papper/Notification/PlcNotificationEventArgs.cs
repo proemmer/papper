@@ -81,7 +81,7 @@ namespace Papper.Notification
         {
             var item = new ExpandoObject();
             var asterix = mapping == "*";
-            foreach (var items in _changedItems.Where(i => asterix || i.Mapping == mapping))
+            foreach (var items in _changedItems.Where(i => asterix || i.IsPartOfMapping(mapping)))
             {
                 var levels = asterix ? items.Address.Split('.') : items.Variable.Split('.');
                 var levelCount = levels.Length;

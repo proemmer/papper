@@ -5,7 +5,7 @@ namespace Papper
     /// <summary>
     /// Represent a plc address
     /// </summary>
-    public class PlcItemAddress
+    public struct PlcItemAddress
     {
         /// <summary>
         /// Selector is e.g.  DB100,  FB,...
