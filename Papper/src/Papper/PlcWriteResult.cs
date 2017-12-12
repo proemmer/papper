@@ -1,6 +1,6 @@
 ﻿namespace Papper
 {
-    public class PlcWriteResult
+    public struct PlcWriteResult
     {
         public string Address { get; internal set; }
 

@@ -12,7 +12,7 @@ namespace Papper
         private readonly TaskCompletionSource<object> _watchingTcs = new TaskCompletionSource<object>();
         private CancellationTokenSource _cts;
         private PlcDataMapper _mapper;
-        private List<PlcReference> _variables = new List<PlcReference>();
+        private List<PlcReadReference> _variables = new List<PlcReadReference>();
         private List<Execution> _executions;
         private bool _modified = true;
         private Dictionary<string, LruState> _states = new Dictionary<string, LruState>();
@@ -44,13 +44,13 @@ namespace Papper
             _cts?.Cancel();
         }
 
-        public void AddItems(params PlcReference[] vars)
+        public void AddItems(params PlcReadReference[] vars)
         {
             _variables.AddRange(vars);
             _modified = true;
         }
 
-        public void RemoveItems(params PlcReference[] vars)
+        public void RemoveItems(params PlcReadReference[] vars)
         {
             var modified = false;
             foreach (var item in vars)

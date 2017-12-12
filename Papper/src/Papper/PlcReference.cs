@@ -2,7 +2,7 @@
 
 namespace Papper
 {
-    public abstract class PlcReference
+    public interface IPlcReference
     {
         /// <summary>
         /// The main mapping.
@@ -14,14 +14,17 @@ namespace Papper
         /// CT: Counter Area
         /// DB: DataBlock Area
         /// </summary>
-        public string Mapping { get; protected set; }
-        public string Variable { get; protected set; }
+        string Mapping { get;  }
+        string Variable { get;  }
 
 
     }
 
-    public class PlcReadReference : PlcReference
+    public struct PlcReadReference : IPlcReference
     {
+        public string Mapping { get; internal set; }
+        public string Variable { get; internal set; }
+
         /// <summary>
         /// 
         /// </summary>
@@ -48,9 +51,10 @@ namespace Papper
         }
     }
 
-    public class PlcWriteReference : PlcReference
+    public struct PlcWriteReference : IPlcReference
     {
-
+        public string Mapping { get; internal set; }
+        public string Variable { get; internal set; }
         public object Value { get; private set; }
 
         /// <summary>

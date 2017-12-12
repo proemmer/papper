@@ -208,7 +208,11 @@ namespace UnitTestSuit
 
             var result = _papper.ReadAsync(accessDict.Keys.Select( variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult(); 
             Assert.Equal(accessDict.Count, result.Length);
-            _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, accessDict.ToArray()).ToArray()).GetAwaiter().GetResult();
+            var writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, accessDict.ToArray()).ToArray()).GetAwaiter().GetResult();
+            foreach (var item in writeResults)
+            {
+                Assert.Equal(ExecutionResult.Ok, item.ActionResult);
+            }
             var result2 = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult(); 
             Assert.Equal(accessDict.Count, result2.Length);
             Assert.False(AreDataEqual(result, result2));
@@ -278,8 +282,11 @@ namespace UnitTestSuit
                 //waiting for initialize
                 Assert.True(are.WaitOne(sleepTime));
                 intiState = false;
-                _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, writeData.ToArray()).ToArray()).GetAwaiter().GetResult();
-
+                var writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, writeData.ToArray()).ToArray()).GetAwaiter().GetResult();
+                foreach (var item in writeResults)
+                {
+                    Assert.Equal(ExecutionResult.Ok, item.ActionResult);
+                }
                 //waiting for write update
                 Assert.True(are.WaitOne(sleepTime));
 
@@ -319,7 +326,11 @@ namespace UnitTestSuit
             //waiting for initialize
             Assert.True(are.WaitOne(5000));
             intiState = false;
-            _papper.WriteAsync(PlcWriteReference.FromRoot("DB15", writeData.ToArray()).ToArray()).GetAwaiter().GetResult();
+            var writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot("DB15", writeData.ToArray()).ToArray()).GetAwaiter().GetResult();
+            foreach (var item in writeResults)
+            {
+                Assert.Equal(ExecutionResult.Ok, item.ActionResult);
+            }
 
             //waiting for write update
             Assert.True(are.WaitOne(5000));
@@ -454,6 +465,7 @@ namespace UnitTestSuit
                 {
                     Console.WriteLine($"OnWrite: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
                     Array.Copy(item.Data, 0, MockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length).Data, item.Offset, item.Length);
+                    item.ExecutionResult = ExecutionResult.Ok;
                 }
                 else
                 {

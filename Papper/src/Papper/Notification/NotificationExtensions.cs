@@ -17,7 +17,7 @@ namespace Papper.Notification
         /// <param name="callback">Callback method</param>
         /// <param name="items">items to watch</param>
         /// <returns></returns>
-        public static Subscription SubscribeDataChanges(this PlcDataMapper mapper, OnChangeEventHandler callback, params PlcReference[] items)
+        public static Subscription SubscribeDataChanges(this PlcDataMapper mapper, OnChangeEventHandler callback, params PlcReadReference[] items)
         {
             var subscription = new Subscription(mapper);
             subscription.AddItems(items);

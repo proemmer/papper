@@ -274,7 +274,7 @@ namespace Papper
             await _onWrite(packs);
         }
 
-        internal List<Execution> DetermineExecutions(IEnumerable<PlcReference> vars)
+        internal List<Execution> DetermineExecutions<T>(IEnumerable<T> vars) where T: IPlcReference
         {
             return vars.GroupBy(x => x.Mapping)
                                 .Select((execution) => GetOrAddMapping(execution.Key, out IEntry entry)
@@ -298,7 +298,7 @@ namespace Papper
             }
             return executions.Select(exec => needUpdate.TryGetValue(exec, out var pack) ? exec.ApplyDataPack(pack) : exec)
                              .Where(exec => changedAfter == null || exec.LastChange > changedAfter) // filter by data area
-                             .GroupBy(exec => exec.ExecutionResult)
+                             .GroupBy(exec => exec.ExecutionResult) // Group by execution result
                              .SelectMany(group => filter(group.SelectMany(g => g.Bindings))
                                                        .Select(b => new PlcReadResult
                                                        {
