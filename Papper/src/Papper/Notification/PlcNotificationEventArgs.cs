@@ -9,11 +9,34 @@ namespace Papper.Notification
     public class PlcNotificationEventArgs : EventArgs, IEnumerable<PlcReadResult>
     {
         private readonly PlcReadResult[] _changedItems;
+        private readonly Exception _exception;
+        private readonly bool _completed;
+
         public PlcNotificationEventArgs(PlcReadResult[] changedItems)
         {
             _changedItems = changedItems;
         }
 
+        public PlcNotificationEventArgs(Exception exception)
+        {
+            _completed = true;
+            _exception = exception;
+        }
+
+        public PlcNotificationEventArgs()
+        {
+            _completed = true;
+        }
+
+        /// <summary>
+        /// If watching is completed, this value is true.
+        /// </summary>
+        public bool Completed => _completed;
+
+        /// <summary>
+        /// If an exception occured, there are no changed iems in the event arg, but there should be an exception here. 
+        /// </summary>
+        public Exception Exception => _exception;
 
         /// <summary>
         /// Indexed Value access
@@ -22,7 +45,7 @@ namespace Papper.Notification
         /// <returns></returns>
         public object this[string name]
         {
-            get { return _changedItems.FirstOrDefault(x => x.Address == name).Value; }
+            get { return _changedItems != null ? _changedItems.FirstOrDefault(x => x.Address == name).Value : null; }
         }
 
         /// <summary>
@@ -156,7 +179,7 @@ namespace Papper.Notification
         /// <returns></returns>
         public int FieldCount
         {
-            get { return _changedItems.Length; }
+            get { return _changedItems != null ? _changedItems.Length : 0; }
         }
 
         /// <summary>

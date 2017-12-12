@@ -28,9 +28,10 @@ namespace Papper
 
 
 
-        public Subscription(PlcDataMapper mapper)
+        public Subscription(PlcDataMapper mapper, PlcReadReference[] vars = null)
         {
             _mapper = mapper;
+            if(vars != null) AddItems(vars);
         }
 
         public void Dispose()

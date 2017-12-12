@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Papper.Notification
@@ -19,8 +17,7 @@ namespace Papper.Notification
         /// <returns></returns>
         public static Subscription SubscribeDataChanges(this PlcDataMapper mapper, OnChangeEventHandler callback, params PlcReadReference[] items)
         {
-            var subscription = new Subscription(mapper);
-            subscription.AddItems(items);
+            var subscription = new Subscription(mapper, items);
             RunWatchTask(subscription, callback);
             return subscription;
         }
@@ -63,10 +60,19 @@ namespace Papper.Notification
                         {
                             callback(subscription, new PlcNotificationEventArgs(result.Results));
                         }
+                        else
+                        {
+                            // is cancelled or completed, so set whatching is compleded now!
+                            callback(subscription, new PlcNotificationEventArgs());
+                            return;
+                        }
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
                         // todo
+                        subscription.CancelCurrentDetection();
+                        callback(subscription, new PlcNotificationEventArgs(ex));
+                        return;
                     }
                 }
 
