@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Papper.Internal
 {
-    internal class LruCache
+    internal class LruCache : IDisposable
     {
         private Dictionary<string, LruState> _states = new Dictionary<string, LruState>();
-
-
 
         public bool TryGetValue(string key, out LruState state)
         {
@@ -30,9 +27,16 @@ namespace Papper.Internal
 
         public void RemoveUnused(DateTime detect)
         {
-            //Remove unused states
-            foreach (var state in _states.Where(x => x.Value.LastUsage < detect).ToList())
-                _states.Remove(state.Key);
+            _states.Where(x => x.Value.LastUsage < detect).ToList()
+                   .Where(state => _states.Remove(state.Key)).ToList()
+                   .ForEach(state => state.Value.Dispose());
+        }
+
+        public void Dispose()
+        {
+            _states.ToList()
+                   .Where(state => _states.Remove(state.Key)).ToList()
+                   .ForEach(state => state.Value.Dispose());
         }
     }
 }

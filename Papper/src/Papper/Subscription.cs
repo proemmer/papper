@@ -9,12 +9,13 @@ namespace Papper
     public class Subscription : IDisposable
     {
         private readonly TaskCompletionSource<object> _watchingTcs = new TaskCompletionSource<object>();
+        private readonly PlcDataMapper _mapper;
+        private readonly LruCache _lruCache = new LruCache();
+        private readonly List<PlcReadReference> _variables = new List<PlcReadReference>();
+
         private CancellationTokenSource _cts;
-        private PlcDataMapper _mapper;
-        private List<PlcReadReference> _variables = new List<PlcReadReference>();
         private List<Execution> _executions;
         private bool _modified = true;
-        private LruCache _lruCache = new LruCache(); 
         private DateTime _lastRun = DateTime.MinValue;
 
         /// <summary>
@@ -37,6 +38,7 @@ namespace Papper
         {
             _watchingTcs.SetResult(null);
             _mapper.RemoveSubscription(this);
+            _lruCache.Dispose();
         }
 
         public void CancelCurrentDetection()
@@ -114,11 +116,12 @@ namespace Papper
             var result = new List<KeyValuePair<string, PlcObjectBinding>>();
             foreach (var binding in all)
             {
-                var size = binding.Value.Size == 0 ? 1 : binding.Value.Size;
+                var objBinding = binding.Value;
+                var size = objBinding.Size == 0 ? 1 : objBinding.Size;
                 if (!_lruCache.TryGetValue(binding.Key, out LruState saved) ||
-                    (binding.Value.Size == 0
-                        ? binding.Value.Data[binding.Value.Offset].GetBit(binding.Value.MetaData.Offset.Bits) != saved.Data[0].GetBit(binding.Value.MetaData.Offset.Bits)
-                        : !binding.Value.Data.SequenceEqual(binding.Value.Offset, saved.Data, 0, size)))
+                    (objBinding.Size == 0
+                        ? objBinding.Data[objBinding.Offset].GetBit(objBinding.MetaData.Offset.Bits) != saved.Data[0].GetBit(objBinding.MetaData.Offset.Bits)
+                        : !objBinding.Data.SequenceEqual(objBinding.Offset, saved.Data, 0, size)))
                 {
                     result.Add(binding);
                     if (saved == null)
