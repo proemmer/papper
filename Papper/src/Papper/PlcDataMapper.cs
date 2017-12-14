@@ -1,6 +1,7 @@
 ﻿using Papper.Attributes;
 using Papper.Internal;
 using System;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -173,36 +174,55 @@ namespace Papper
         /// <returns>return true if all operations are succeeded</returns>
         public async Task<PlcWriteResult[]> WriteAsync(params PlcWriteReference[] vars)
         {
-            var values = vars.ToDictionary(x => $"{x.Mapping}.{x.Variable}", x => x.Value);
+            
+            // because we need the byte arrays only for converting, we can use the ArrayPool
             var memoryBuffer = new Dictionary<PlcRawData, byte[]>();
-            // determine executions
-            var executions = DetermineExecutions(vars);
-
-            KeyValuePair<string,DataPack> UpdatePack(string key, DataPack pack, int dataOffset)
+            try
             {
-                pack.Data = pack.Data.SubArray(dataOffset, pack.Length);
-                return new KeyValuePair<string, DataPack>(key, pack);
+                KeyValuePair<string, DataPack> UpdatePack(string key, DataPack pack, int dataOffset)
+                {
+                    pack.Data = pack.Data.SubArray(dataOffset, pack.Length);
+                    return new KeyValuePair<string, DataPack>(key, pack);
+                }
+
+                byte[] GetOrCreateBufferAndApplyValue(PlcObjectBinding binding, Dictionary<PlcRawData, byte[]> dict, object value)
+                {
+                    if (!dict.TryGetValue(binding.RawData, out var buffer))
+                    {
+                        buffer = ArrayPool<byte>.Shared.Rent(binding.RawData.MemoryAllocationSize);
+                        dict.Add(binding.RawData, buffer);
+                    }
+                    binding.ConvertToRaw(value, buffer);
+                    return buffer;
+                }
+
+                var values = vars.ToDictionary(x => $"{x.Mapping}.{x.Variable}", x => x.Value);
+                // determine executions
+                var executions = DetermineExecutions(vars);
+
+                var prepared = executions.SelectMany(execution => execution.Bindings.Where(b => !b.Value.MetaData.IsReadOnly))
+                                         .Select(x => UpdatePack(x.Key, new DataPack
+                                         {
+                                             Selector = x.Value.RawData.Selector,
+                                             Offset = x.Value.Offset + x.Value.RawData.Offset,
+                                             Length = x.Value.Size > 0 ? x.Value.Size : 1,
+                                             BitMask = x.Value.Size <= 0 ? Converter.SetBit(0, x.Value.MetaData.Offset.Bits, true) : (byte)0,
+                                             Data = GetOrCreateBufferAndApplyValue( x.Value,
+                                                                                    memoryBuffer,
+                                                                                    values[x.Key])
+                                         }, x.Value.Offset))
+                                                .ToDictionary(x => x.Key, x => x.Value);
+
+                await WriteToPlc(prepared.Values);
+
+                executions.ForEach(exec => exec.Invalidate());
+
+                return prepared.Select(x => new PlcWriteResult(x.Key, x.Value.ExecutionResult)).ToArray();
             }
-
-            var prepared = executions.SelectMany(execution => execution.Bindings.Where(b => !b.Value.MetaData.IsReadOnly))
-                                     .Select(x => UpdatePack(x.Key, new DataPack
-                                                    {
-                                                        Selector = x.Value.RawData.Selector,
-                                                        Offset = x.Value.Offset + x.Value.RawData.Offset,
-                                                        Length = x.Value.Size > 0 ? x.Value.Size : 1,
-                                                        BitMask = x.Value.Size <= 0 ? Converter.SetBit(0, x.Value.MetaData.Offset.Bits, true) : (byte)0,
-                                                        Data = GetOrCreateBufferAndApplyValue(
-                                                                                                x.Value, 
-                                                                                                memoryBuffer, 
-                                                                                                values[x.Key])
-                                                    }, x.Value.Offset))
-                                            .ToDictionary(x => x.Key, x => x.Value);
-
-            await WriteToPlc(prepared.Values);
-
-            executions.ForEach(exec => exec.Invalidate());
-
-            return prepared.Select(x => new PlcWriteResult(x.Key, x.Value.ExecutionResult)).ToArray();
+            finally
+            {
+                memoryBuffer.Values.ToList().ForEach(x => ArrayPool<byte>.Shared.Return(x));
+            }
         }
 
 
@@ -346,19 +366,6 @@ namespace Papper
 
             return false;
         }
-
-
-        private byte[] GetOrCreateBufferAndApplyValue(PlcObjectBinding binding, Dictionary<PlcRawData, byte[]> dict, object value)
-        {
-            if (!dict.TryGetValue(binding.RawData, out var buffer))
-            {
-                buffer = new byte[binding.RawData.MemoryAllocationSize];
-                dict.Add(binding.RawData, buffer);
-            }
-            binding.ConvertToRaw(value, buffer);
-            return buffer;
-        }
-
 
         #endregion
 
