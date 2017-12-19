@@ -5,17 +5,35 @@ namespace Papper.Internal
 {
     internal class LruState : IDisposable
     {
-        public DateTime LastUsage { get; set; }
+        public int ValidationTime { get; private set; }
+        public DateTime LastUsage { get; private set; }
         public byte[] Data { get; private set; }
+        
 
-        public LruState(int size)
+        public LruState(Span<byte> data, DateTime detected, int validationTime)
         {
-            Data = ArrayPool<byte>.Shared.Rent(size); ;
+            ValidationTime = validationTime;
+            Data = ArrayPool<byte>.Shared.Rent(data.Length);
+            ApplyChange(data, detected);
+        }
+
+        public void ApplyUsage(DateTime detected) => LastUsage = detected;
+
+        public void ApplyChange(Span<byte> data, DateTime detected)
+        {
+            data.CopyTo(Data);
+            LastUsage = detected;
+        }
+
+        public bool IsOutdated(DateTime currentCheckTime)
+        {
+            return LastUsage.AddMilliseconds(ValidationTime) < currentCheckTime;
         }
 
         public void Dispose()
         {
             ArrayPool<byte>.Shared.Return(Data);
         }
+
     }
 }

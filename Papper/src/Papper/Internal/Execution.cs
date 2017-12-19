@@ -34,7 +34,7 @@ namespace Papper.Internal
             {
                 if(PlcRawData.ReadDataCache == null || !PlcRawData.ReadDataCache.SequenceEqual(pack.Data))
                 {
-                    _changeDetected = DateTime.Now; // We detected a change in this data area -> bindungs have to thes the psoition by themselves.
+                    _changeDetected = DateTime.Now; // We detected a change in this data area -> bindungs have to thes the position by themselves.
                 }
                 PlcRawData.ReadDataCache = pack.Data;
                 PlcRawData.LastUpdate = DateTime.Now;

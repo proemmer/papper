@@ -224,7 +224,7 @@ namespace UnitTestSuit
         [Fact]
         public void TestDataChange()
         {
-            var sleepTime = 10000;
+            var sleepTime = 1000;
             var mapping = "DB_Safety";
             var intiState = true;
             var originData = new Dictionary<string, object> {
@@ -245,37 +245,45 @@ namespace UnitTestSuit
                 subscription.AddItems(originData.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray());
                 var t = Task.Run(async () =>
                {
-                   while(!subscription.Watching.IsCompleted)
+                   try
                    {
-                       var res = await subscription.DetectChangesAsync();
-
-                       if (!res.IsCompleted)
+                       while (!subscription.Watching.IsCompleted)
                        {
-                           if (!intiState)
-                           {
-                               Assert.Equal(2, res.Results.Length);
-                           }
-                           else
-                           {
-                               Assert.Equal(3, res.Results.Length);
-                           }
+                           var res = await subscription.DetectChangesAsync();
 
-                           foreach (var item in res.Results)
+                           if (!res.IsCompleted && !res.IsCancelled)
                            {
-                               try
+                               if (!intiState)
                                {
-                                   if (!intiState)
-                                       Assert.Equal(writeData[item.Variable], item.Value);
-                                   else
-                                       Assert.Equal(originData[item.Variable], item.Value);
+                                   Assert.Equal(2, res.Results.Length);
                                }
-                               catch (Exception ex)
+                               else
                                {
+                                   Assert.Equal(3, res.Results.Length);
+                               }
 
+                               foreach (var item in res.Results)
+                               {
+                                   try
+                                   {
+                                       if (!intiState)
+                                           Assert.Equal(writeData[item.Variable], item.Value);
+                                       else
+                                           Assert.Equal(originData[item.Variable], item.Value);
+                                   }
+                                   catch (Exception ex)
+                                   {
+
+                                   }
                                }
-                           }
+
+                               are.Set();
+                           } 
                        }
-                       are.Set();
+                   }
+                   catch(Exception ex)
+                   {
+
                    }
                });
 
