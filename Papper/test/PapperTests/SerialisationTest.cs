@@ -20,6 +20,7 @@ namespace UnitTestSuit
             };
 
             var serialized = s.Serialize(tt);
+            var size = s.SerializedByteSize<StringArrayTestMapping>();
             var deserialized = s.Deserialize<StringArrayTestMapping>(serialized);
 
             Assert.Equal(tt.TEST, deserialized.TEST);
@@ -38,7 +39,7 @@ namespace UnitTestSuit
             {
             };
 
-
+            var size = s.SerializedByteSize<PLCDataPMS>();
             var deserialized = s.Deserialize<PLCDataPMS>(data);
 
 
