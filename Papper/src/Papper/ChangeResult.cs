@@ -3,7 +3,7 @@
     public struct ChangeResult
     {
         /// <summary>
-        /// True if the currrent read was cancelled
+        /// True if the current read was canceled
         /// </summary>
         public bool IsCancelled { get; }
 

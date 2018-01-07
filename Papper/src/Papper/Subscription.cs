@@ -1,6 +1,7 @@
 ﻿using Papper.Internal;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -35,13 +36,18 @@ namespace Papper
         public int Interval { get; set; } = 1000;
 
         /// <summary>
+        /// Returns the number of subscribed
+        /// </summary>
+        public int Count => _variables.Count;
+
+        /// <summary>
         /// Create an instance of a subscription to detect plc data changes
         /// </summary>
         /// <param name="mapper">The reference to the plcDatamapper.</param>
         /// <param name="vars">The variables we should watch.</param>
         public Subscription(PlcDataMapper mapper, PlcReadReference[] vars = null)
         {
-            _mapper = mapper;
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _lock = new ReaderWriterLockSlim();
             if (vars != null) AddItems(vars);
             
@@ -90,13 +96,7 @@ namespace Papper
         {
             using (new WriterGuard(_lock))
             {
-                var modified = false;
-                foreach (var item in vars)
-                {
-                    if (_variables.Remove(item))
-                        modified = true;
-                }
-                _modified = modified;
+                _modified = vars.Select(item => _variables.Remove(item)).Any() | _modified;
             }
         }
 

@@ -305,6 +305,29 @@ namespace UnitTestSuit
         }
 
         [Fact]
+        public void AddAndRemoveSubscriptions()
+        {
+            var writeData = new Dictionary<string, object> {
+                    { "W88", (UInt16)3},
+                    { "X99_0", true  },
+                };
+            var are = new AutoResetEvent(false);
+            void callback(object s, PlcNotificationEventArgs e)
+            {
+            }
+            var items = writeData.Keys.Select(variable => PlcReadReference.FromAddress($"DB15.{variable}")).ToArray();
+
+            using (var sub = _papper.SubscribeDataChanges(callback, items))
+            {
+                Assert.Equal(2, sub.Count);
+
+                sub.RemoveItems(items.FirstOrDefault());
+
+                Assert.Equal(1, sub.Count);
+            }
+        }
+
+        [Fact]
         public void PerformRawDataChange()
         {
             var intiState = true;

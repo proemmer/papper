@@ -89,18 +89,6 @@ namespace Papper
         }
 
         /// <summary>
-        /// Extract a numeric value from an IEnumerable of byte with swapped bytes
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="buffer"></param>
-        /// <param name="offset"></param>
-        /// <returns></returns>
-        //public static T GetSwap<T>(this Span<byte> buffer, int offset = 0)
-        //{
-        //    return buffer.Slice(offset, sizeof(Single)).ToArray().GetSwap<T>();
-        //}
-
-        /// <summary>
         /// Extract a numeric value from an byte array with swapped bytes
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -264,7 +252,7 @@ namespace Papper
         }
 
         /// <summary>
-        /// Get a bit by its nummer brom a byte
+        /// Get a bit by its number from a byte
         /// </summary>
         /// <param name="data"></param>
         /// <param name="bit"></param>
@@ -362,8 +350,7 @@ namespace Papper
         /// <returns></returns>
         public static byte[] ToByteArray<T>(this T value, int maxLength)
         {
-            var str = value as string;
-            if(str != null) return Encoding.ASCII.GetBytes(str).SubArray(0, maxLength);
+            if (value is string str) return Encoding.ASCII.GetBytes(str).SubArray(0, maxLength);
             var rawdata = new byte[Marshal.SizeOf(value)];
             var handle = GCHandle.Alloc(rawdata, GCHandleType.Pinned);
             Marshal.StructureToPtr(value, handle.AddrOfPinnedObject(), false);
@@ -397,7 +384,7 @@ namespace Papper
         /// <returns></returns>
         public static int GetBcdByte(this byte b)
         {
-            //Acepted Values 00 to 99
+            //Accepted Values 00 to 99
             int bt1 = b;
             var neg = (bt1 & 0xf0) == 0xf0;
             if (neg)
@@ -416,7 +403,7 @@ namespace Papper
         {
             int b0 = 0, b1 = 0;
 
-            //setze höchstes bit == negativer wert!
+            //set highest bit == negative value!
             if (value < 0)
                 return (byte)((b1 << 4) + b0);
             b1 = (value % 100 / 10);
