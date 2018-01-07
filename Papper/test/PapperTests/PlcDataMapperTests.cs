@@ -317,17 +317,17 @@ namespace UnitTestSuit
                     { "X99_0", true  },
                 };
             var are = new AutoResetEvent(false);
-            OnChangeEventHandler callback = (s, e) =>
+            void callback(object s, PlcNotificationEventArgs e)
             {
                 foreach (var item in e)
                 {
-                    if(!intiState)
+                    if (!intiState)
                         Assert.Equal(writeData[item.Variable], item.Value);
                     else
                         Assert.Equal(originData[item.Variable], item.Value);
                 }
                 are.Set();
-            };
+            }
             var subscription = _papper.SubscribeDataChanges(callback, writeData.Keys.Select(variable => PlcReadReference.FromAddress($"DB15.{variable}")).ToArray());
 
 

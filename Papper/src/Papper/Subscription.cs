@@ -42,8 +42,9 @@ namespace Papper
         public Subscription(PlcDataMapper mapper, PlcReadReference[] vars = null)
         {
             _mapper = mapper;
-            if(vars != null) AddItems(vars);
             _lock = new ReaderWriterLockSlim();
+            if (vars != null) AddItems(vars);
+            
         }
 
         /// <summary>
