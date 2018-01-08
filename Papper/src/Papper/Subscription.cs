@@ -20,6 +20,7 @@ namespace Papper
         private bool _modified = true;
         private DateTime _lastRun = DateTime.MinValue;
 
+
         /// <summary>
         /// Provides read access to the watch task.
         /// </summary>
@@ -78,13 +79,14 @@ namespace Papper
         /// Add items to the subscription. This items are active in the next watch cycle, so you will get a data change if the update was activated.
         /// </summary>
         /// <param name="vars">Vars to activate </param>
-        public void AddItems(params PlcReadReference[] vars)
+        public bool AddItems(params PlcReadReference[] vars)
         {
             using (new WriterGuard(_lock))
             {
                 _variables.AddRange(vars);
-                _modified = true;
+                return _modified = true;
             }
+            
         }
 
         /// <summary>
@@ -92,11 +94,11 @@ namespace Papper
         /// The internal 
         /// </summary>
         /// <param name="vars"></param>
-        public void RemoveItems(params PlcReadReference[] vars)
+        public bool RemoveItems(params PlcReadReference[] vars)
         {
             using (new WriterGuard(_lock))
             {
-                _modified = vars.Select(item => _variables.Remove(item)).Any() | _modified;
+                return _modified = vars.Any(item => _variables.Remove(item)) | _modified;
             }
         }
 

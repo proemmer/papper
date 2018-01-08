@@ -317,13 +317,17 @@ namespace UnitTestSuit
             }
             var items = writeData.Keys.Select(variable => PlcReadReference.FromAddress($"DB15.{variable}")).ToArray();
 
-            using (var sub = _papper.SubscribeDataChanges(callback, items))
+            using (var sub = _papper.SubscribeDataChanges(callback))
             {
-                Assert.Equal(2, sub.Count);
-
-                sub.RemoveItems(items.FirstOrDefault());
-
-                Assert.Equal(1, sub.Count);
+                Assert.True(sub.AddItems(items));
+                var c = sub.DetectChangesAsync();
+                Thread.Sleep(100);
+                sub.Pause();
+                Assert.True(sub.RemoveItems(items.FirstOrDefault()));
+                Assert.True(sub.RemoveItems(items.FirstOrDefault())); // <- modified is already true
+                c = sub.DetectChangesAsync();
+                sub.Pause();
+                Assert.False(sub.RemoveItems(items.FirstOrDefault()));
             }
         }
 
