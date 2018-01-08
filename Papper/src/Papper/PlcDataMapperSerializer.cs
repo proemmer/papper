@@ -35,6 +35,18 @@ namespace Papper
             return (T)binding.ConvertFromRaw(data);
         }
 
+        /// <summary>
+        /// Returns the size in bytes of the given type.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public int SerializedByteSize<T>()
+        {
+            var t = typeof(T);
+            var plcObject = PlcObjectResolver.GetMapping(t.Name, _tree, t, true);
+            return plcObject.ByteSize;
+        }
+
 
         private PlcObjectBinding GetTypeForConversion(Type type)
         {
