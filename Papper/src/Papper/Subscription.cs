@@ -108,50 +108,77 @@ namespace Papper
         /// <returns></returns>
         public async Task<ChangeResult> DetectChangesAsync()
         {
-            _cts = new CancellationTokenSource();
-            while (!Watching.IsCompleted)
+            var cts = new CancellationTokenSource();
+            if (Interlocked.CompareExchange(ref _cts, cts, null) != null)
             {
-                if (_cts.IsCancellationRequested)
-                {
-                    return new ChangeResult(null, true, Watching.IsCompleted);
-                }
+                cts.Dispose();
+                throw new InvalidOperationException($"More than one detection run at the same time is not supported!");
+            }
 
-                if (_modified)
+            try
+            {
+                while (!Watching.IsCompleted)
                 {
-                    using (new WriterGuard(_lock))
+                    if (_cts.IsCancellationRequested)
                     {
-                        _executions = _mapper.DetermineExecutions(_variables);
-                        _modified = false;
+                        return new ChangeResult(null, true, Watching.IsCompleted);
+                    }
+
+                    if (_modified)
+                    {
+                        using (new WriterGuard(_lock))
+                        {
+                            if (_modified)
+                            {
+                                _executions = _mapper.DetermineExecutions(_variables);
+                                _modified = false;
+                            }
+                        }
+                    }
+
+                    if (_executions == null)
+                    {
+                        _modified = true;
+                        continue;
+                    }
+
+                    // determine outdated
+                    var needUpdate = _mapper.UpdateableItems(_executions);
+
+                    // read outdated
+                    await _mapper.ReadFromPlc(needUpdate); // Update the read cache;
+
+                    var detect = DateTime.Now;
+                    var readRes = _mapper.CreatePlcReadResults(needUpdate.Keys, needUpdate, _lastRun, (x) => FilterChanged(detect, x));
+                    if (readRes.Length > 0)
+                    {
+                        _lastRun = detect;
+                        return new ChangeResult(readRes, Watching.IsCanceled, Watching.IsCompleted);
+                    }
+
+                    if (_cts.IsCancellationRequested)
+                    {
+                        return new ChangeResult(null, true, Watching.IsCompleted);
+                    }
+
+                    try
+                    {
+                        await Task.Delay(Interval, _cts.Token);
+                    }
+                    catch(TaskCanceledException){}
+
+                    if (_cts.IsCancellationRequested)
+                    {
+                        return new ChangeResult(null, true, Watching.IsCompleted);
                     }
                 }
-
-                // determine outdated
-                var needUpdate = _mapper.UpdateableItems(_executions);
-                    
-                // read outdated
-                await _mapper.ReadFromPlc(needUpdate); // Update the read cache;
-
-                var detect = DateTime.Now;
-                var readRes = _mapper.CreatePlcReadResults(needUpdate.Keys, needUpdate, _lastRun, (x) => FilterChanged(detect, x));
-                if (readRes.Length > 0)
-                {
-                    _lastRun = detect;
-                    return new ChangeResult(readRes, Watching.IsCanceled, Watching.IsCompleted);
-                }
-
-                if (_cts.IsCancellationRequested)
-                {
-                    return new ChangeResult(null, true, Watching.IsCompleted);
-                }
-
-                await Task.Delay(Interval, _cts.Token);
-
-                if (_cts.IsCancellationRequested)
-                {
-                    return new ChangeResult(null, true, Watching.IsCompleted);
-                }
+                return new ChangeResult(null, Watching.IsCanceled, Watching.IsCompleted);
             }
-            return new ChangeResult(null, Watching.IsCanceled, Watching.IsCompleted);
+            finally
+            {
+                _cts.Dispose();
+                _cts = null;
+            }
         }
 
 

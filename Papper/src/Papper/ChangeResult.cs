@@ -5,7 +5,7 @@
         /// <summary>
         /// True if the current read was canceled
         /// </summary>
-        public bool IsCancelled { get; }
+        public bool IsCanceled { get; }
 
         /// <summary>
         /// True if is complete
@@ -20,7 +20,7 @@
         public ChangeResult(PlcReadResult[] result, bool isCancelled, bool isCompleted)
         {
             Results = result;
-            IsCancelled = isCancelled;
+            IsCanceled = isCancelled;
             IsCompleted = isCompleted;
         }
     }

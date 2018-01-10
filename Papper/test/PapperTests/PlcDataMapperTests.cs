@@ -251,7 +251,7 @@ namespace UnitTestSuit
                        {
                            var res = await subscription.DetectChangesAsync();
 
-                           if (!res.IsCompleted && !res.IsCancelled)
+                           if (!res.IsCompleted && !res.IsCanceled)
                            {
                                if (!intiState)
                                {
@@ -311,23 +311,68 @@ namespace UnitTestSuit
                     { "W88", (UInt16)3},
                     { "X99_0", true  },
                 };
-            var are = new AutoResetEvent(false);
-            void callback(object s, PlcNotificationEventArgs e)
-            {
-            }
             var items = writeData.Keys.Select(variable => PlcReadReference.FromAddress($"DB15.{variable}")).ToArray();
 
-            using (var sub = _papper.SubscribeDataChanges(callback))
+            using (var sub = _papper.CreateSubscription())
             {
                 Assert.True(sub.AddItems(items));
-                var c = sub.DetectChangesAsync();
+                var c = sub.DetectChangesAsync();  // returns because we start a new detection
                 Thread.Sleep(100);
-                sub.Pause();
                 Assert.True(sub.RemoveItems(items.FirstOrDefault()));
                 Assert.True(sub.RemoveItems(items.FirstOrDefault())); // <- modified is already true
-                c = sub.DetectChangesAsync();
-                sub.Pause();
+                c = sub.DetectChangesAsync();      // returns because we moditied the detection
                 Assert.False(sub.RemoveItems(items.FirstOrDefault()));
+            }
+        }
+
+        [Fact]
+        public async void TestDuplicateDetection()
+        {
+            var writeData = new Dictionary<string, object> {
+                    { "W88", (UInt16)3},
+                    { "X99_0", true  },
+                };
+            var items = writeData.Keys.Select(variable => PlcReadReference.FromAddress($"DB15.{variable}")).ToArray();
+
+            using (var sub = _papper.CreateSubscription())
+            {
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                {
+                    var c1 = sub.DetectChangesAsync();  // returns because we start a new detection
+                    var c2 = await sub.DetectChangesAsync();  // returns because we start a new detection
+                    await c1;
+                });
+            }
+        }
+
+        [Fact]
+        public async void TestCancellation()
+        {
+            var writeData = new Dictionary<string, object> {
+                    { "W88", (UInt16)3},
+                    { "X99_0", true  },
+                };
+            var items = writeData.Keys.Select(variable => PlcReadReference.FromAddress($"DB15.{variable}")).ToArray();
+
+            using (var sub = _papper.CreateSubscription())
+            {
+                Assert.True(sub.AddItems(items));
+                var c = sub.DetectChangesAsync();  // returns because we start a new detection
+                Thread.Sleep(500);
+                var res = await c;
+                Assert.False(res.IsCanceled);
+                Assert.False(res.IsCompleted);
+                Assert.NotNull(res.Results);
+                Assert.Equal(2, res.Results.Length);
+
+                c = sub.DetectChangesAsync(); 
+                Thread.Sleep(500);
+                sub.Pause();
+                res = await c;
+                Assert.True(res.IsCanceled);
+                Assert.False(res.IsCompleted);
+                Assert.Null(res.Results);
+
             }
         }
 

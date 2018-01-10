@@ -56,7 +56,7 @@ namespace Papper.Notification
                     try
                     {
                         var result = await subscription.DetectChangesAsync();
-                        if (!result.IsCompleted && !result.IsCancelled)
+                        if (!result.IsCompleted && !result.IsCanceled)
                         {
                             callback(subscription, new PlcNotificationEventArgs(result.Results));
                         }

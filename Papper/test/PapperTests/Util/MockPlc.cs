@@ -7,6 +7,7 @@ namespace UnitTestSuit.Util
 {
     public static class MockPlc
     {
+
         public class PlcBlock
         {
             public byte[] Data { get; private set; }
@@ -40,9 +41,15 @@ namespace UnitTestSuit.Util
         {
             if (!_plc.TryGetValue(selector, out PlcBlock plcblock))
             {
-                plcblock = new PlcBlock(minSize > 0 ? minSize : 0);
-                _plc.Add(selector, plcblock);
-                return plcblock;
+                lock (_plc)
+                {
+                    if (!_plc.TryGetValue(selector, out plcblock))
+                    { 
+                        plcblock = new PlcBlock(minSize > 0 ? minSize : 0);
+                        _plc.Add(selector, plcblock);
+                        return plcblock;
+                    }
+                }
             }
             if (minSize > 0)
                 plcblock.UpdateBlockSize(minSize);
