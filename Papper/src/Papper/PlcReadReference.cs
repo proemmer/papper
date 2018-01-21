@@ -2,9 +2,19 @@
 
 namespace Papper
 {
+    /// <summary>
+    /// This class is used to define read operations.
+    /// </summary>
     public struct PlcReadReference : IPlcReference
     {
+        /// <summary>
+        /// Mapping part of the address
+        /// </summary>
         public string Mapping { get; internal set; }
+
+        /// <summary>
+        /// Variable part of the address
+        /// </summary>
         public string Variable { get; internal set; }
 
         /// <summary>
@@ -23,7 +33,13 @@ namespace Papper
             };
         }
 
-
+        /// <summary>
+        /// Create a couple of <see cref="PlcReadReference"/> by a given variable root, and some sub variables of the root.
+        /// This method can used if you will read more than one variable of the same data block.
+        /// </summary>
+        /// <param name="root">Rootpart of a variable</param>
+        /// <param name="variables">variables</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="PlcReadReference"/></returns>
         public static IEnumerable<PlcReadReference> FromRoot(string root, params string[] variables)
         {
             foreach (var variable in variables)

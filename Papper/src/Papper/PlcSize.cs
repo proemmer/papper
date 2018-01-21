@@ -1,5 +1,8 @@
 ﻿namespace Papper
 {
+    /// <summary>
+    /// Define a Size of a Variable
+    /// </summary>
     public class PlcSize
     {
         /// <summary>

@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace Papper
 {
+    /// <summary>
+    /// This representates a subscription to a plc value change detection.
+    /// </summary>
     public class Subscription : IDisposable
     {
         private readonly TaskCompletionSource<object> _watchingTcs = new TaskCompletionSource<object>();
