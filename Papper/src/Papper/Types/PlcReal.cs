@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using Papper.Internal;
 
 namespace Papper.Types
@@ -18,14 +17,12 @@ namespace Papper.Types
             if (data.IsEmpty)
                 return default;
 
-            return data.GetSwap<float>(plcObjectBinding.Offset);
+            return Converter.ReadSingleBigEndian(data.Slice(plcObjectBinding.Offset));
         }
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            var subset = Convert.ToSingle(value).SetSwap();
-            for (var i = 0; i < subset.Length; i++)
-                data[plcObjectBinding.Offset + i] = subset[i];
+            Converter.WriteSingleBigEndian(data.Slice(plcObjectBinding.Offset), Convert.ToSingle(value));
         }
     }
 }

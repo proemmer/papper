@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Linq;
 using Papper.Internal;
 
@@ -18,16 +19,14 @@ namespace Papper.Types
             if (data.IsEmpty)
                 return date;
            
-            return date.AddDays(data.GetSwap<ushort>(plcObjectBinding.Offset));
+            return date.AddDays(BinaryPrimitives.ReadInt16BigEndian(data.Slice(plcObjectBinding.Offset)));
         }
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             var dateVal = (DateTime)value;
             var date = new DateTime(1990, 1, 1);
-            var subset = Convert.ToUInt16(dateVal.Subtract(date).Days).SetSwap();
-            for (var i = 0; i < subset.Length; i++)
-                data[plcObjectBinding.Offset + i] = subset[i];
+            BinaryPrimitives.WriteUInt16BigEndian(data.Slice(plcObjectBinding.Offset), Convert.ToUInt16(dateVal.Subtract(date).Days));
         }
     }
 }

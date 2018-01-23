@@ -168,7 +168,7 @@ namespace Papper.Internal
                 }
 
                 if (plcStruct != null)
-                    updated = AddPlcObjects(plcStruct, plcObjects, plcStruct.Childs.Select(child => child.Name), key + ".", baseOffset);
+                    updated = AddPlcObjects(plcStruct, plcObjects, plcStruct.Childs.Select(child => child.Name), key + ".", baseOffset) || updated;
             }
             return updated;
         }

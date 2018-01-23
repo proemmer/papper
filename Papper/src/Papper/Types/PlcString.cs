@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Linq;
 using System.Text;
 using Papper.Internal;
@@ -37,14 +38,8 @@ namespace Papper.Types
             if (data.IsEmpty)
                 return string.Empty;
 
-            //var subset = data.Skip(plcObjectBinding.Offset).Take(Size.Bytes).ToArray();
-            //var maxLength = subset.Take(1).ToArray().GetSwap<byte>();
-            //var curLength = subset.Skip(1).Take(1).ToArray().GetSwap<byte>();
-            //var take = Math.Min(maxLength, curLength);
-            //return Encoding.Default.GetString(subset.Skip(2).Take(take).ToArray());
-
-            var maxLength = data.GetSwap<byte>(plcObjectBinding.Offset);
-            var curLength = data.GetSwap<byte>(plcObjectBinding.Offset+1);
+            var maxLength = data[plcObjectBinding.Offset];
+            var curLength = data[plcObjectBinding.Offset+1];
             var take = Math.Min(Math.Min(maxLength, curLength), Size.Bytes-2);
             return Encoding.ASCII.GetString(data.ToArray(), plcObjectBinding.Offset + 2,take);
         }
@@ -53,7 +48,7 @@ namespace Papper.Types
         {
             var maxLength = Convert.ToByte(Size.Bytes - 2);
             var i = plcObjectBinding.Offset;
-            data[i++] = maxLength.SetSwap()[0];
+            data[i++] = maxLength;
             var fill = string.Empty;
             if (value != null)
             {
@@ -62,7 +57,7 @@ namespace Papper.Types
                 var take = Math.Min(maxLength, curLength);
                 fill = str.Substring(0, take);
 
-                data[i++] = take.SetSwap()[0];
+                data[i++] = take;
                 foreach (var c in fill)
                     data[i++] = Convert.ToByte(c);
             }

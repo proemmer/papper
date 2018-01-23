@@ -1,6 +1,8 @@
 ﻿using Papper;
 using Papper.Notification;
+using PapperTests.Mappings;
 using System;
+using System.Buffers.Binary;
 using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -30,6 +32,7 @@ namespace UnitTestSuit
             _papper.AddMapping(typeof(DB_Safety));
             _papper.AddMapping(typeof(ArrayTestMapping));
             _papper.AddMapping(typeof(StringArrayTestMapping));
+            _papper.AddMapping(typeof(PrimitiveValuesMapping));
 
             var vars = _papper.GetVariablesOf(nameof(DB_Safety));
             Assert.Equal(4596, vars.Count());
@@ -127,6 +130,18 @@ namespace UnitTestSuit
             Test(mapping, accessDict, new DateTime(599266080000000000));  //01.01.1900
         }
 
+
+        [Fact]
+        public void SingleAccessTest()
+        {
+            var mapping = "PrimitiveValuesMapping";
+            var accessDict = new Dictionary<string, object> {
+                    { "Single", (Single)2.2},
+                };
+
+            Test(mapping, accessDict, (Single)0);
+        }
+
         [Fact]
         public void ArrayElementsAccessTest()
         {
@@ -181,6 +196,7 @@ namespace UnitTestSuit
             
             Test(mapping, accessDict, Enumerable.Repeat(0, 5000).ToArray());
         }
+
 
         [Fact]
         public void TestStructuralAccess()
@@ -383,10 +399,12 @@ namespace UnitTestSuit
             var originData = new Dictionary<string, object> {
                     { "W88", (UInt16)0},
                     { "X99_0", false  },
+                    { "DW100", (UInt32)0},
                 };
             var writeData = new Dictionary<string, object> {
                     { "W88", (UInt16)3},
                     { "X99_0", true  },
+                    { "DW100", (UInt32)5},
                 };
             var are = new AutoResetEvent(false);
             void callback(object s, PlcNotificationEventArgs e)
@@ -483,6 +501,26 @@ namespace UnitTestSuit
             Assert.Empty(result);
         }
 
+        [Fact]
+        public void ConvertTest()
+        {
+            Span<byte> data = new Span<byte>(new byte[] { 0x01, 0x02, 0x03, 0x04 });
+
+            var v2 = BinaryPrimitives.ReadInt32BigEndian(data);
+            var v3 = BinaryPrimitives.ReadInt32LittleEndian(data);
+
+            var data1 = new Span<byte>(new byte[4]);
+            Single s = 25.4f;
+            BinaryPrimitives.WriteInt32BigEndian(data1, Convert.ToInt32(s));
+            var res = Convert.ToSingle(BinaryPrimitives.ReadInt32BigEndian(data1));
+
+            var data4 = new Span<byte>(new byte[4]);
+            Converter.WriteSingleBigEndian(data4, s);
+            var x4 = Converter.ReadSingleBigEndian(data4);
+        }
+
+
+    
 
         #region Helper
 

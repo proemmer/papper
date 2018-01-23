@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Linq;
 using Papper.Internal;
 
@@ -17,14 +18,12 @@ namespace Papper.Types
             if (data.IsEmpty)
                 return default;
 
-            return data.GetSwap<Int32>(plcObjectBinding.Offset);
+            return BinaryPrimitives.ReadInt32BigEndian(data.Slice(plcObjectBinding.Offset));
         }
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            var subset = Convert.ToInt32(value).SetSwap();
-            for (var i = 0; i < subset.Length; i++)
-                data[plcObjectBinding.Offset + i] = subset[i];
+            BinaryPrimitives.WriteInt32BigEndian(data.Slice(plcObjectBinding.Offset), Convert.ToInt32(value));
         }
     }
 }

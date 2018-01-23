@@ -61,7 +61,7 @@ namespace Papper
         /// <returns></returns>
         public bool IsPartOfMapping(string mapping)
         {
-            return mapping.AsSpan().SequenceEqual(Address.AsSpan().Slice(0, Address.IndexOf(".")));
+            return mapping.AsReadOnlySpan().SequenceEqual(Address.AsReadOnlySpan().Slice(0, Address.IndexOf(".")));
         }
 
     }
