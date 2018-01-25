@@ -104,12 +104,24 @@ namespace Papper.Internal
             if (ReadDataCache != null && ReadDataCache.Length > _partitionSize && size != ReadDataCache.Length)
             {
                 var partitions = new List<Partiton>();
-                for (var i = offset; i <= Math.Min(ReadDataCache.Length, offset+size); i+= _partitionSize)
+                var dataLeft = size;
+                var index = offset;
+                do
                 {
-                    var partitionId = i / _partitionSize;
-                    if (Partitons.TryGetValue(partitionId, out Partiton partiton))
+                    var partitionId = index / _partitionSize;
+                    if (Partitons.TryGetValue(partitionId, out Partiton partiton) && !partitions.Contains(partiton))
+                    {
                         partitions.Add(partiton);
-                }
+                        var off = (partiton.Size - offset);
+                        dataLeft -= off;
+                        index += off;
+                        offset = 0;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                } while (dataLeft > 0);
                 return partitions;
             }
             
