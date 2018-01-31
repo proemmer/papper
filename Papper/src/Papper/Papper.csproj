@@ -10,7 +10,7 @@
     <AssemblyName>Papper</AssemblyName>
     <PackageId>Papper</PackageId>
     <PackageTags>siemens plc datamapper S7</PackageTags>
-    <PackageReleaseNotes>* Extended deserializer with an additional method to detect the serialized size.</PackageReleaseNotes>
+    <PackageReleaseNotes>* Fixed a bug in partion selection</PackageReleaseNotes>
     <PackageProjectUrl>http://proemmer.github.io/papper</PackageProjectUrl>
     <PackageLicenseUrl>https://opensource.org/licenses/Apache-2.0</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
@@ -22,10 +22,12 @@
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
-    <Version>1.0.9</Version>
+    <Version>1.0.10</Version>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/proemmer/papper.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <AssemblyVersion>1.0.10.0</AssemblyVersion>
+    <FileVersion>1.0.10.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

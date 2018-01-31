@@ -79,18 +79,36 @@ namespace Papper.Helper
 
         public IList<Partiton> GetPartitonsByOffset(int offset, int size)
         {
-            if (Data.Length > _partitionSize && size != Data.Length)
+            if (Data != null && Data.Length > _partitionSize && size != Data.Length)
             {
                 var partitions = new List<Partiton>();
-                for (var i = offset; i <= Math.Min(Data.Length, offset+size); i+= _partitionSize)
+                var index = offset;
+                do
                 {
-                    var partitionId = i / _partitionSize;
-                    if (Partitons.TryGetValue(partitionId, out Partiton partiton))
+                    var partitionId = index / _partitionSize;
+                    if (Partitons.TryGetValue(partitionId, out Partiton partiton) && !partitions.Contains(partiton))
+                    {
                         partitions.Add(partiton);
-                }
+                        var off = (partiton.Size - offset);
+                        if (off > 0)
+                        {
+                            size -= off;
+                            index += off;
+                            offset = 0;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                } while (size > 0);
                 return partitions;
             }
-            
+
             return Partitons.Values.ToList();
         }
 
