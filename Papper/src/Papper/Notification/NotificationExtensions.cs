@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Papper.Notification
@@ -15,7 +16,17 @@ namespace Papper.Notification
         /// <param name="callback">Callback method</param>
         /// <param name="items">items to watch</param>
         /// <returns></returns>
-        public static Subscription SubscribeDataChanges(this PlcDataMapper mapper, OnChangeEventHandler callback, params PlcReadReference[] items)
+        public static Subscription SubscribeDataChanges(this PlcDataMapper mapper, OnChangeEventHandler callback, params PlcReadReference[] items) 
+            => SubscribeDataChanges(mapper, callback, items as IEnumerable<PlcReadReference>);
+
+        /// <summary>
+        /// Subscribe to changes of variables
+        /// </summary>
+        /// <param name="mapper">Reference to plc Datampper</param>
+        /// <param name="callback">Callback method</param>
+        /// <param name="items">items to watch</param>
+        /// <returns></returns>
+        public static Subscription SubscribeDataChanges(this PlcDataMapper mapper, OnChangeEventHandler callback, IEnumerable<PlcReadReference> items)
         {
             var subscription = new Subscription(mapper, items);
             RunWatchTask(subscription, callback);

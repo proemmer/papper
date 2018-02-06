@@ -49,12 +49,12 @@ namespace Papper
         /// </summary>
         /// <param name="mapper">The reference to the plcDatamapper.</param>
         /// <param name="vars">The variables we should watch.</param>
-        public Subscription(PlcDataMapper mapper, PlcReadReference[] vars = null)
+        public Subscription(PlcDataMapper mapper, IEnumerable<PlcReadReference> vars = null)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _lock = new ReaderWriterLockSlim();
             if (vars != null) AddItems(vars);
-            
+
         }
 
         /// <summary>
@@ -82,14 +82,19 @@ namespace Papper
         /// Add items to the subscription. This items are active in the next watch cycle, so you will get a data change if the update was activated.
         /// </summary>
         /// <param name="vars">Vars to activate </param>
-        public bool AddItems(params PlcReadReference[] vars)
+        public bool AddItems(params PlcReadReference[] vars) => AddItems(vars as IEnumerable<PlcReadReference>);
+
+        /// <summary>
+        /// Add items to the subscription. This items are active in the next watch cycle, so you will get a data change if the update was activated.
+        /// </summary>
+        /// <param name="vars">Vars to activate </param>
+        public bool AddItems(IEnumerable<PlcReadReference> vars)
         {
             using (new WriterGuard(_lock))
             {
                 _variables.AddRange(vars);
                 return _modified = true;
             }
-            
         }
 
         /// <summary>
@@ -97,7 +102,14 @@ namespace Papper
         /// The internal 
         /// </summary>
         /// <param name="vars"></param>
-        public bool RemoveItems(params PlcReadReference[] vars)
+        public bool RemoveItems(params PlcReadReference[] vars) => RemoveItems(vars as IEnumerable<PlcReadReference>);
+
+        /// <summary>
+        /// Remove items from the watch list. This items will be removed before the next what cycle.
+        /// The internal 
+        /// </summary>
+        /// <param name="vars"></param>
+        public bool RemoveItems(IEnumerable<PlcReadReference> vars)
         {
             using (new WriterGuard(_lock))
             {

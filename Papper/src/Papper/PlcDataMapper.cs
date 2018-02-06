@@ -27,7 +27,7 @@ namespace Papper
         /// his delegate is used to invoke the write operations.
         /// </summary>
         /// <returns></returns>
-        public delegate Task WriteOperation(IEnumerable<DataPack> reads);
+        public delegate Task WriteOperation(IEnumerable<DataPack> writes);
 
 
         #endregion
@@ -143,13 +143,19 @@ namespace Papper
             return true;
         }
 
+        /// <summary>
+        /// Read variables from an given mapping
+        /// </summary>
+        /// <param name="vars"></param>
+        /// <returns>return a dictionary with all variables and the read value</returns>
+        public Task<PlcReadResult[]> ReadAsync(params PlcReadReference[] vars) => ReadAsync(vars as IEnumerable<PlcReadReference>);
 
         /// <summary>
         /// Read variables from an given mapping
         /// </summary>
         /// <param name="vars"></param>
         /// <returns>return a dictionary with all variables and the read value</returns>
-        public async Task<PlcReadResult[]> ReadAsync(params PlcReadReference[] vars)
+        public async Task<PlcReadResult[]> ReadAsync(IEnumerable<PlcReadReference> vars)
         {
             // determine executions
             var executions = DetermineExecutions(vars);
@@ -164,7 +170,13 @@ namespace Papper
             return CreatePlcReadResults(executions, needUpdate);
         }
 
-
+        /// <summary>
+        /// Write values to variables of an given mapping
+        /// </summary>
+        /// <param name="mapping">mapping name specified in the MappingAttribute</param>
+        /// <param name="values">variable names and values to write</param>
+        /// <returns>return true if all operations are succeeded</returns>
+        public Task<PlcWriteResult[]> WriteAsync(params PlcWriteReference[] vars) => WriteAsync(vars as IEnumerable<PlcWriteReference>);
 
         /// <summary>
         /// Write values to variables of an given mapping
@@ -172,7 +184,7 @@ namespace Papper
         /// <param name="mapping">mapping name specified in the MappingAttribute</param>
         /// <param name="values">variable names and values to write</param>
         /// <returns>return true if all operations are succeeded</returns>
-        public async Task<PlcWriteResult[]> WriteAsync(params PlcWriteReference[] vars)
+        public async Task<PlcWriteResult[]> WriteAsync(IEnumerable<PlcWriteReference> vars)
         {
             
             // because we need the byte arrays only for converting, we can use the ArrayPool
@@ -225,8 +237,6 @@ namespace Papper
             }
         }
 
-
-        
         /// <summary>
         /// Return address data of the given variable
         /// </summary>
@@ -255,7 +265,6 @@ namespace Papper
             }
             throw new KeyNotFoundException($"There is variable <{variable}> for mapping <{mapping}>");
         }
-
 
         /// <summary>
         /// Create a Subscription to watch data changes

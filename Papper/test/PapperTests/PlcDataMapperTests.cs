@@ -258,7 +258,7 @@ namespace UnitTestSuit
 
             using (var subscription = _papper.CreateSubscription())
             {
-                subscription.AddItems(originData.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray());
+                subscription.AddItems(originData.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")));
                 var t = Task.Run(async () =>
                {
                    try
