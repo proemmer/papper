@@ -39,8 +39,8 @@ namespace Papper
         private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
         private readonly ConcurrentDictionary<string, IEntry> _mappings = new ConcurrentDictionary<string, IEntry>();
         private readonly ReaderWriterLockSlim _mappingsLock = new ReaderWriterLockSlim();
-        private event ReadOperation _onRead;
-        private event WriteOperation _onWrite;
+        private ReadOperation _readEventHandler;
+        private WriteOperation _writeEventHandler;
         private readonly IReadOperationOptimizer _optimizer;
         #endregion
 
@@ -49,36 +49,18 @@ namespace Papper
 
         public int ReadDataBlockSize { get; private set; }
         public int PduSize { get; private set; }
-        public event ReadOperation OnRead
-        {
-            add
-            {
-                _onRead += value;
-            }
-            remove
-            {
-                _onRead -= value;
-            }
-        }
-
-        public event WriteOperation OnWrite
-        {
-            add
-            {
-                _onWrite += value;
-            }
-            remove
-            {
-                _onWrite -= value;
-            }
-        }
 
         internal IReadOperationOptimizer Optimizer => _optimizer;
         #endregion
 
-        public PlcDataMapper(int pduSize = PduSizeDefault, OptimizerType optimizer = OptimizerType.Block)
+        public PlcDataMapper(int pduSize, 
+                             ReadOperation readEventHandler,
+                             WriteOperation writeEventHandler = null,
+                             OptimizerType optimizer = OptimizerType.Block)
         {
             PduSize = pduSize;
+            _readEventHandler = readEventHandler;
+            _writeEventHandler = writeEventHandler;
             _optimizer = OptimizerFactory.CreateOptimizer(optimizer);
             ReadDataBlockSize = pduSize - ReadDataHeaderLength;
             if (ReadDataBlockSize <= 0)
@@ -88,10 +70,8 @@ namespace Papper
 
         ~PlcDataMapper()
         {
-            if(_onRead != null)
-                _onRead -= _onRead;
-            if(_onWrite != null)
-                _onWrite -= _onWrite;
+            _readEventHandler = null;
+            _writeEventHandler = null;
         }
 
         /// <summary>
@@ -290,13 +270,12 @@ namespace Papper
 
         internal async Task ReadFromPlc(Dictionary<Execution, DataPack> needUpdate)
         {
-            // read outdated
-            await _onRead(needUpdate.Values);
+            await _readEventHandler?.Invoke(needUpdate.Values);
         }
 
         internal async Task WriteToPlc(IEnumerable<DataPack> packs)
         {
-            await _onWrite(packs);
+            await _writeEventHandler?.Invoke(packs);
         }
 
         internal List<Execution> DetermineExecutions<T>(IEnumerable<T> vars) where T: IPlcReference

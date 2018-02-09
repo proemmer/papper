@@ -22,13 +22,10 @@ namespace UnitTestSuit
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
     public class PlcDataMapperTests
     {
-        private PlcDataMapper _papper = new PlcDataMapper(960);
+        private PlcDataMapper _papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
 
         public PlcDataMapperTests()
         {
-            _papper.OnRead += Papper_OnRead;
-            _papper.OnWrite += Papper_OnWrite;
-
             _papper.AddMapping(typeof(DB_Safety));
             _papper.AddMapping(typeof(ArrayTestMapping));
             _papper.AddMapping(typeof(StringArrayTestMapping));
@@ -574,7 +571,7 @@ namespace UnitTestSuit
             await Task.CompletedTask;
         }
 
-        private async Task Papper_OnWrite(IEnumerable<DataPack> reads)
+        private static async Task Papper_OnWrite(IEnumerable<DataPack> reads)
         {
             var result = reads.ToList();
             foreach (var item in result)

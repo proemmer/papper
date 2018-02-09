@@ -1,6 +1,7 @@
 ﻿using Papper;
 using PMSComponentHost.VTagStorerLoader;
 using System;
+using System.Text;
 using UnitTestSuit.Mappings;
 using Xunit;
 
@@ -41,6 +42,18 @@ namespace UnitTestSuit
 
             var size = s.SerializedByteSize<PLCDataPMS>();
             var deserialized = s.Deserialize<PLCDataPMS>(data);
+
+
+        }
+
+
+        [Fact]
+        void TestString()
+        {
+
+            var st = new byte[] { 0x20, 0x20, 0x00, Convert.ToByte('T'), Convert.ToByte('X'), 0x00, 0x20, 0x20, 0x00, 0x20, 0x20 };
+
+            var s = Encoding.ASCII.GetString(st, 0, st.Length).Trim();
 
 
         }

@@ -127,10 +127,7 @@ namespace PapperCmd
 
         public static void Main(string[] args)
         {
-            var papper = new PlcDataMapper(960);
-            papper.OnRead += Papper_OnRead ;
-            papper.OnWrite += Papper_OnWrite;
-
+            var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
             papper.AddMapping(typeof(DB_Safety));
 
             PerformReadFull(papper);
