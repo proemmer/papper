@@ -8,11 +8,11 @@ namespace Papper.Notification
 {
     public class PlcNotificationEventArgs : EventArgs, IEnumerable<PlcReadResult>
     {
-        private readonly PlcReadResult[] _changedItems;
+        private readonly IEnumerable<PlcReadResult> _changedItems;
         private readonly Exception _exception;
         private readonly bool _completed;
 
-        public PlcNotificationEventArgs(PlcReadResult[] changedItems)
+        public PlcNotificationEventArgs(IEnumerable<PlcReadResult> changedItems)
         {
             _changedItems = changedItems;
         }
@@ -45,7 +45,7 @@ namespace Papper.Notification
         /// <returns></returns>
         public object this[string name]
         {
-            get { return _changedItems != null ? _changedItems.FirstOrDefault(x => x.Address == name).Value : null; }
+            get { return _changedItems?.FirstOrDefault(x => x.Address == name).Value; }
         }
 
         /// <summary>
@@ -179,7 +179,7 @@ namespace Papper.Notification
         /// <returns></returns>
         public int FieldCount
         {
-            get { return _changedItems != null ? _changedItems.Length : 0; }
+            get { return _changedItems != null ? _changedItems.Count() : 0; }
         }
 
         /// <summary>

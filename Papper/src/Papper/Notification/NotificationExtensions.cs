@@ -25,10 +25,11 @@ namespace Papper.Notification
         /// <param name="mapper">Reference to plc Datampper</param>
         /// <param name="callback">Callback method</param>
         /// <param name="items">items to watch</param>
+        /// <param name="changeDetectionStrategy">seup the starategy to detect changes. <see cref="ChangeDetectionStrategy"/>. This setting depends on the access library.</param>
         /// <returns></returns>
-        public static Subscription SubscribeDataChanges(this PlcDataMapper mapper, OnChangeEventHandler callback, IEnumerable<PlcReadReference> items)
+        public static Subscription SubscribeDataChanges(this PlcDataMapper mapper, OnChangeEventHandler callback, IEnumerable<PlcReadReference> items, ChangeDetectionStrategy changeDetectionStrategy = ChangeDetectionStrategy.Polling)
         {
-            var subscription = new Subscription(mapper, items);
+            var subscription = new Subscription(mapper, changeDetectionStrategy, items);
             RunWatchTask(subscription, callback);
             return subscription;
         }

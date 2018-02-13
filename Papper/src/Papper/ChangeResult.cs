@@ -1,4 +1,6 @@
-﻿namespace Papper
+﻿using System.Collections.Generic;
+
+namespace Papper
 {
     public struct ChangeResult
     {
@@ -15,9 +17,9 @@
         /// <summary>
         /// The <see cref="PlcReadResult"/> that was read
         /// </summary>
-        public PlcReadResult[] Results { get; }
+        public IEnumerable<PlcReadResult> Results { get; }
 
-        public ChangeResult(PlcReadResult[] result, bool isCancelled, bool isCompleted)
+        public ChangeResult(IEnumerable<PlcReadResult> result, bool isCancelled, bool isCompleted)
         {
             Results = result;
             IsCanceled = isCancelled;

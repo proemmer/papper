@@ -17,6 +17,8 @@ namespace Papper
         private readonly LruCache _lruCache = new LruCache();
         private readonly List<PlcReadReference> _variables = new List<PlcReadReference>();
         private readonly ReaderWriterLockSlim _lock;
+        private readonly ChangeDetectionStrategy _changeDetectionStrategy;
+        private AsyncAutoResetEvent<IEnumerable<DataPack>> _changeEvent;
 
         private CancellationTokenSource _cts;
         private List<Execution> _executions;
@@ -44,15 +46,21 @@ namespace Papper
         /// </summary>
         public int Count => _variables.Count;
 
+
         /// <summary>
         /// Create an instance of a subscription to detect plc data changes
         /// </summary>
         /// <param name="mapper">The reference to the plcDatamapper.</param>
         /// <param name="vars">The variables we should watch.</param>
-        public Subscription(PlcDataMapper mapper, IEnumerable<PlcReadReference> vars = null)
+        public Subscription(PlcDataMapper mapper, ChangeDetectionStrategy changeDetectionStrategy = ChangeDetectionStrategy.Polling , IEnumerable<PlcReadReference> vars = null)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _changeDetectionStrategy = changeDetectionStrategy;
             _lock = new ReaderWriterLockSlim();
+            if(changeDetectionStrategy == ChangeDetectionStrategy.Event)
+            {
+                _changeEvent = new AsyncAutoResetEvent<IEnumerable<DataPack>>();
+            }
             if (vars != null) AddItems(vars);
 
         }
@@ -146,6 +154,11 @@ namespace Papper
                             if (_modified)
                             {
                                 _executions = _mapper.DetermineExecutions(_variables);
+                                if (_changeDetectionStrategy == ChangeDetectionStrategy.Event)
+                                {
+                                    var needUpdate = _mapper.UpdateableItems(_executions, false);
+                                    await _mapper.UpdateMonitoringItems(needUpdate.Values);
+                                }
                                 _modified = false;
                             }
                         }
@@ -157,15 +170,29 @@ namespace Papper
                         continue;
                     }
 
-                    // determine outdated
-                    var needUpdate = _mapper.UpdateableItems(_executions);
-
-                    // read outdated
-                    await _mapper.ReadFromPlc(needUpdate); // Update the read cache;
-
+                    PlcReadResult[] readRes = null;
                     var detect = DateTime.Now;
-                    var readRes = _mapper.CreatePlcReadResults(needUpdate.Keys, needUpdate, _lastRun, (x) => FilterChanged(detect, x));
-                    if (readRes.Length > 0)
+                    if (_changeDetectionStrategy == ChangeDetectionStrategy.Polling)
+                    {
+                        // determine outdated
+                        var needUpdate = _mapper.UpdateableItems(_executions);
+
+                        // read outdated
+                        await _mapper.ReadFromPlc(needUpdate); // Update the read cache;
+
+                        // filter to get only changed items
+                        readRes = _mapper.CreatePlcReadResults(needUpdate.Keys, needUpdate, _lastRun, (x) => FilterChanged(detect, x));
+                    }
+                    else
+                    {
+                        var packs = await _changeEvent.WaitAsync();
+                        if (packs != null && packs.Any())
+                        {
+                            readRes = _mapper.CreatePlcReadResults(_executions, packs);
+                        }
+                    }
+
+                    if (readRes != null && readRes.Any())
                     {
                         _lastRun = detect;
                         return new ChangeResult(readRes, Watching.IsCanceled, Watching.IsCompleted);
@@ -196,6 +223,19 @@ namespace Papper
             }
         }
 
+
+
+        internal void OnDataChanged(IEnumerable<DataPack> changed)
+        {
+            if (_changeEvent != null)
+            {
+                _changeEvent.Set(changed);
+            }
+            else
+            {
+                throw new InvalidOperationException("This operation is not allowed for this change detection strategy");
+            }
+        }
 
         /// <summary>
         /// This filter detects which items are changed during the sleep  phase of the subscription and returns only the changed ones.
@@ -239,5 +279,9 @@ namespace Papper
         }
 
 
+        private void MapDataPacks()
+        {
+
+        }
     }
 }
