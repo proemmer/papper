@@ -140,7 +140,7 @@ namespace UnitTestSuit.Util
                         changed.Clear();
                     }
                 }
-                catch(Exception ex)
+                catch(Exception)
                 {
 
                 }

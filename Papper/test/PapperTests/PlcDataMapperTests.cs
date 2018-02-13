@@ -284,7 +284,7 @@ namespace UnitTestSuit
                                        else
                                            Assert.Equal(originData[item.Variable], item.Value);
                                    }
-                                   catch (Exception ex)
+                                   catch (Exception)
                                    {
 
                                    }
@@ -294,7 +294,7 @@ namespace UnitTestSuit
                            } 
                        }
                    }
-                   catch(Exception ex)
+                   catch(Exception)
                    {
 
                    }
@@ -580,7 +580,7 @@ namespace UnitTestSuit
                                         else
                                             Assert.Equal(originData[item.Variable], item.Value);
                                     }
-                                    catch (Exception ex)
+                                    catch (Exception )
                                     {
 
                                     }
@@ -590,7 +590,7 @@ namespace UnitTestSuit
                             }
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception )
                     {
 
                     }
@@ -740,8 +740,7 @@ namespace UnitTestSuit
             }
             else
             {
-                var dictionary = parent as IDictionary<string, object>;
-                if (dictionary != null)
+                if (parent is IDictionary<string, object> dictionary)
                     dictionary[name] = value;
             }
         }
@@ -758,10 +757,8 @@ namespace UnitTestSuit
 
         private static bool ElementEqual(object obj1, object obj2)
         {
-            var list1 = obj1 as IEnumerable;
-            var list2 = obj2 as IEnumerable;
-
-            if (list1 != null && list2 != null)
+            if (obj1 is IEnumerable list1 &&
+                obj2 is IEnumerable list2 )
             {
                 var enumerator1 = list1.GetEnumerator();
                 var enumerator2 = list2.GetEnumerator();
@@ -783,10 +780,8 @@ namespace UnitTestSuit
 
         private static bool DynamicObjectCompare(object obj1, object obj2)
         {
-            var dictionary1 = obj1 as IDictionary<string, object>;
-            var dictionary2 = obj2 as IDictionary<string, object>;
-
-            if (dictionary1 != null && dictionary2 != null)
+            if (obj1 is IDictionary<string, object> dictionary1 &&
+                obj2 is IDictionary<string, object> dictionary2)
             {
                 foreach (var o1 in dictionary1)
                 {
