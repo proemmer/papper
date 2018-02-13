@@ -13,9 +13,15 @@
         public ExecutionResult ExecutionResult { get; set; }
 
 
-        public void ApplyData(byte[] data)
+        public DataPack ApplyData(byte[] data)
         {
             Data = data;
+            return this;
+        }
+
+        public override string ToString()
+        {
+            return $"{Selector}.{Offset}.{Length}#{BitMask}";
         }
     }
 }

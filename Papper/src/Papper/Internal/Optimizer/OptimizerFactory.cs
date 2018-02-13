@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Papper.Internal
 {
@@ -20,7 +18,7 @@ namespace Papper.Internal
                 case OptimizerType.Block:
                     return new BlockBasedReadOperationOptimizer();
                 case OptimizerType.Items:
-                    return null;
+                    return new ItemBasedReadOperationOptimizer();
                 default:
                     throw new ArgumentException($"Unknown optimizer type given!");
             }

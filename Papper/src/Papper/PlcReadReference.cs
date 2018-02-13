@@ -7,15 +7,24 @@ namespace Papper
     /// </summary>
     public struct PlcReadReference : IPlcReference
     {
-        /// <summary>
-        /// Mapping part of the address
+        private string _address;
+        private int _dot;
+
+
+        /// mapping part of the address
         /// </summary>
-        public string Mapping { get; internal set; }
+        public string Mapping => Address.Substring(0, _dot);
 
         /// <summary>
-        /// Variable part of the address
+        /// variable part of the address.
         /// </summary>
-        public string Variable { get; internal set; }
+        public string Variable => Address.Substring(_dot + 1);
+
+
+        /// <summary>
+        /// Full address is composed of mapping and variable
+        /// </summary>
+        public string Address => _address;
 
         /// <summary>
         /// 
@@ -24,13 +33,14 @@ namespace Papper
         /// <returns></returns>
         public static PlcReadReference FromAddress(string address)
         {
-            var firstDot = address.IndexOf('.');
-            var area = address.Substring(0, firstDot);
-            return new PlcReadReference
-            {
-                Mapping = area,
-                Variable = address.Substring(firstDot + 1)
-            };
+            return new PlcReadReference(address);
+        }
+
+
+        public PlcReadReference(string address)
+        {
+            _address = address;
+            _dot = address.IndexOf(".");
         }
 
 

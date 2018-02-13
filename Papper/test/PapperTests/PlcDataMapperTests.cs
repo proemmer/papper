@@ -268,11 +268,11 @@ namespace UnitTestSuit
                            {
                                if (!intiState)
                                {
-                                   Assert.Equal(2, res.Results.Length);
+                                   Assert.Equal(2, res.Results.Count());
                                }
                                else
                                {
-                                   Assert.Equal(3, res.Results.Length);
+                                   Assert.Equal(3, res.Results.Count());
                                }
 
                                foreach (var item in res.Results)
@@ -376,7 +376,7 @@ namespace UnitTestSuit
                 Assert.False(res.IsCanceled);
                 Assert.False(res.IsCompleted);
                 Assert.NotNull(res.Results);
-                Assert.Equal(2, res.Results.Length);
+                Assert.Equal(2, res.Results.Count());
 
                 c = sub.DetectChangesAsync(); 
                 Thread.Sleep(500);
@@ -516,8 +516,105 @@ namespace UnitTestSuit
             var x4 = Converter.ReadSingleBigEndian(data4);
         }
 
+        [Fact]
+        public void TestExternalDataChange()
+        {
+            
+            var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite, UpdateHandler, Papper.Internal.OptimizerType.Items);
+            papper.AddMapping(typeof(DB_Safety));
+            MockPlc.OnItemChanged = (items) => 
+            {
+                papper.OnDataChanges(items.Select(i => new DataPack
+                {
+                    Selector = i.Selector,
+                    Offset = i.Offset,
+                    Length = i.Length,
+                    BitMask = i.BitMask,
+                    ExecutionResult = ExecutionResult.Ok
+                }.ApplyData(i.Data)));
+            };
+            var sleepTime = 1000;
+            var mapping = "DB_Safety";
+            var intiState = true;
+            var originData = new Dictionary<string, object> {
+                    { "SafeMotion.Slots[15].SlotId", (byte)0},
+                    { "SafeMotion.Slots[15].HmiId", (UInt32)0},
+                    { "SafeMotion.Slots[15].Commands.TakeoverPermitted", false },
+                };
+            var writeData = new Dictionary<string, object> {
+                    { "SafeMotion.Slots[15].SlotId", (byte)3},
+                    { "SafeMotion.Slots[15].HmiId", (UInt32)4},
+                    { "SafeMotion.Slots[15].Commands.TakeoverPermitted", false },
+                };
+            var are = new AutoResetEvent(false);
 
-    
+
+            using (var subscription = papper.CreateSubscription(ChangeDetectionStrategy.Event))
+            {
+                subscription.AddItems(originData.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")));
+                var t = Task.Run(async () =>
+                {
+                    try
+                    {
+                        while (!subscription.Watching.IsCompleted)
+                        {
+                            var res = await subscription.DetectChangesAsync();
+
+                            if (!res.IsCompleted && !res.IsCanceled)
+                            {
+                                if (!intiState)
+                                {
+                                    Assert.Equal(2, res.Results.Count());
+                                }
+                                else
+                                {
+                                    Assert.Equal(3, res.Results.Count());
+                                }
+
+                                foreach (var item in res.Results)
+                                {
+                                    try
+                                    {
+                                        if (!intiState)
+                                            Assert.Equal(writeData[item.Variable], item.Value);
+                                        else
+                                            Assert.Equal(originData[item.Variable], item.Value);
+                                    }
+                                    catch (Exception ex)
+                                    {
+
+                                    }
+                                }
+
+                                are.Set();
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                });
+
+                //waiting for initialize
+                Assert.True(are.WaitOne(sleepTime));
+                intiState = false;
+                var writeResults = papper.WriteAsync(PlcWriteReference.FromRoot(mapping, writeData.ToArray()).ToArray()).GetAwaiter().GetResult();
+                foreach (var item in writeResults)
+                {
+                    Assert.Equal(ExecutionResult.Ok, item.ActionResult);
+                }
+                //waiting for write update
+                Assert.True(are.WaitOne(sleepTime));
+
+                //test if data change only occurred if data changed
+                Assert.False(are.WaitOne(sleepTime));
+
+            }
+        }
+
+ 
+
 
         #region Helper
 
@@ -549,6 +646,15 @@ namespace UnitTestSuit
         private DateTime Normalize(DateTime dt)
         {
             return dt.AddTicks((dt.Ticks % 10000) * -1);
+        }
+
+        private async Task UpdateHandler(IEnumerable<DataPack> monitoring, bool add = true)
+        {
+            foreach (var item in monitoring)
+            {
+                MockPlc.UpdateDataChangeItem(item, !add);
+            }
+            await Task.CompletedTask;
         }
 
         private static async Task Papper_OnRead(IEnumerable<DataPack> reads)
@@ -606,44 +712,7 @@ namespace UnitTestSuit
             await Task.CompletedTask;
         }
 
-
-        //private static bool Papper_OnWrite(string selector, int offset, byte[] data, byte bitMask = 0)
-        //{
-        //    try
-        //    {
-        //        var length = data.Length;
-        //        if (bitMask == 0)
-        //        {
-        //            Console.WriteLine($"OnWrite: selector:{selector}; offset:{offset}; length:{length}");
-        //            Array.Copy(data, 0, MockPlc.GetPlcEntry(selector, offset + length).Data, offset, length);
-        //        }
-        //        else
-        //        {
-        //            foreach (var item in data)
-        //            {
-        //                var bm = bitMask;
-        //                for (var i = 0; i < 8; i++)
-        //                {
-        //                    var bit = bm.GetBit(i);
-        //                    if (bit)
-        //                    {
-        //                        Console.WriteLine($"OnWriteBit: selector:{selector}; offset:{offset + 1};");
-        //                        var b = MockPlc.GetPlcEntry(selector, offset + 1).Data[offset];
-        //                        MockPlc.GetPlcEntry(selector, offset + 1).Data[offset] = b.SetBit(i, item.GetBit(i));
-        //                        bm = bm.SetBit(i, false);
-        //                        if (bm == 0)
-        //                            break;
-        //                    }
-        //                }
-        //            }
-        //        }
-        //        return true;
-        //    }
-        //    catch (Exception)
-        //    {
-        //        return false;
-        //    }
-        //}
+        
 
         private static ExpandoObject ToExpando<T>(T instance)
         {

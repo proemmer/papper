@@ -29,6 +29,11 @@ namespace Papper
         /// <returns></returns>
         public delegate Task WriteOperation(IEnumerable<DataPack> writes);
 
+        /// <summary>
+        /// his delegate is used to invoke the write operations.
+        /// </summary>
+        /// <returns></returns>
+        public delegate Task UpdateMonitoring(IEnumerable<DataPack> monitoring, bool add = true);
 
         #endregion
 
@@ -41,6 +46,7 @@ namespace Papper
         private readonly ReaderWriterLockSlim _mappingsLock = new ReaderWriterLockSlim();
         private ReadOperation _readEventHandler;
         private WriteOperation _writeEventHandler;
+        private UpdateMonitoring _updateHandler;
         private readonly IReadOperationOptimizer _optimizer;
         #endregion
 
@@ -53,14 +59,16 @@ namespace Papper
         internal IReadOperationOptimizer Optimizer => _optimizer;
         #endregion
 
-        public PlcDataMapper(int pduSize, 
+        public PlcDataMapper(int pduSize,
                              ReadOperation readEventHandler,
                              WriteOperation writeEventHandler = null,
+                             UpdateMonitoring updateHandler = null,
                              OptimizerType optimizer = OptimizerType.Block)
         {
             PduSize = pduSize;
             _readEventHandler = readEventHandler;
             _writeEventHandler = writeEventHandler;
+            _updateHandler = updateHandler;
             _optimizer = OptimizerFactory.CreateOptimizer(optimizer);
             ReadDataBlockSize = pduSize - ReadDataHeaderLength;
             if (ReadDataBlockSize <= 0)
@@ -72,6 +80,7 @@ namespace Papper
         {
             _readEventHandler = null;
             _writeEventHandler = null;
+            _updateHandler = null;
         }
 
         /// <summary>
@@ -188,7 +197,7 @@ namespace Papper
                     return buffer;
                 }
 
-                var values = vars.ToDictionary(x => $"{x.Mapping}.{x.Variable}", x => x.Value);
+                var values = vars.ToDictionary(x => x.Address, x => x.Value);
                 // determine executions
                 var executions = DetermineExecutions(vars);
 
@@ -250,14 +259,20 @@ namespace Papper
         /// Create a Subscription to watch data changes
         /// </summary>
         /// <returns></returns>
-        public Subscription CreateSubscription()
+        public Subscription CreateSubscription(ChangeDetectionStrategy changeDetectionStrategy = ChangeDetectionStrategy.Polling)
         {
-            var sub = new Subscription(this);
+            var sub = new Subscription(this, changeDetectionStrategy);
             _subscriptions.Add(sub);
             return sub;
         }
 
-
+        public void OnDataChanges(IEnumerable<DataPack> changed)
+        {
+            foreach (var item in _subscriptions.ToList())
+            {
+                item.OnDataChanged(changed);
+            }
+        }
 
 
         #region internal read write operations
@@ -278,6 +293,11 @@ namespace Papper
             await _writeEventHandler?.Invoke(packs);
         }
 
+        internal async Task UpdateMonitoringItems(IEnumerable<DataPack> monitoring, bool add = true)
+        {
+            await _updateHandler?.Invoke(monitoring, add);
+        }
+
         internal List<Execution> DetermineExecutions<T>(IEnumerable<T> vars) where T: IPlcReference
         {
             return vars.GroupBy(x => x.Mapping)
@@ -290,11 +310,11 @@ namespace Papper
         }
 
 
-        internal PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions, Dictionary<Execution, 
-                                                      DataPack> needUpdate,
+        internal PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions, 
+                                                      Dictionary<Execution, DataPack> needUpdate,
                                                       DateTime? changedAfter = null,
-                                                      Func<IEnumerable<KeyValuePair<string, PlcObjectBinding>>, IEnumerable<KeyValuePair<string, 
-                                                      PlcObjectBinding>>> filter = null)
+                                                      Func<IEnumerable<KeyValuePair<string, PlcObjectBinding>>, 
+                                                      IEnumerable<KeyValuePair<string, PlcObjectBinding>>> filter = null)
         {
             if (filter == null)
             {
@@ -308,6 +328,20 @@ namespace Papper
                                                                                       b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache), 
                                                                                       group.Key)
                                                        )).ToArray();
+        }
+
+        internal PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions, IEnumerable<DataPack> packs)
+        {
+            return packs.Select(pack => executions.FirstOrDefault(x => pack.Selector == x.PlcRawData.Selector &&
+                                                                pack.Offset == x.PlcRawData.Offset &&
+                                                                pack.Length == (x.PlcRawData.Size > 0 ? x.PlcRawData.Size : 1))?.ApplyDataPack(pack))
+                        .Where(exec => exec != null)
+                        .GroupBy(exec => exec.ExecutionResult) // Group by execution result
+                        .SelectMany(group => group.SelectMany(g => g.Bindings)
+                                                    .Select(b => new PlcReadResult(b.Key,
+                                                                    b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache),
+                                                                    group.Key)
+                                                    )).ToArray();
         }
 
         internal Dictionary<Execution, DataPack> UpdateableItems(List<Execution> executions, bool onlyOutdated = true)

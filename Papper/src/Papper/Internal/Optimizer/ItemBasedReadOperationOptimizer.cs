@@ -1,11 +1,13 @@
-﻿using Papper.Types;
+﻿using Papper.Internal;
+using Papper.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Papper.Internal
 {
-    internal class BlockBasedReadOperationOptimizer : IReadOperationOptimizer
+    internal class ItemBasedReadOperationOptimizer : IReadOperationOptimizer
     {
 
 
@@ -67,23 +69,9 @@ namespace Papper.Internal
                     }
                     else
                     {
-                        var unusedBytes = current.Offset - directOffset;
-                        var modifiedSize = pred.Size + unusedBytes + current.Size;
-                        if (pred.Size + unusedBytes + current.Size <= readDataBlockSize)
-                        {
-                            //It is OK to use one block, because its in one PDU. Better one read than many
-                            if (count)
-                            {
-                                offset = pred.Size + unusedBytes;
-                                pred.Size = modifiedSize;
-                            }
-                        }
-                        else
-                        {
-                            rawBlocks.Add(current);
-                            pred = current;
-                            offset = 0;
-                        }
+                        rawBlocks.Add(current);
+                        pred = current;
+                        offset = 0;
                     }
                 }
 
