@@ -390,6 +390,16 @@ namespace UnitTestSuit
         }
 
         [Fact]
+        public void PerformReadWriteRaw()
+        {
+            var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
+            var readResults = papper.ReadAsync(PlcReadReference.FromAddress("DB2000.W2")).GetAwaiter().GetResult();
+            var writeResults = papper.WriteAsync(PlcWriteReference.FromAddress("DB2000.W2", (UInt16)3)).GetAwaiter().GetResult();
+
+        }
+
+
+        [Fact]
         public void PerformRawDataChange()
         {
             var intiState = true;
@@ -520,7 +530,7 @@ namespace UnitTestSuit
         public void TestExternalDataChange()
         {
             
-            var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite, UpdateHandler, Papper.Internal.OptimizerType.Items);
+            var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite, UpdateHandler, OptimizerType.Items);
             papper.AddMapping(typeof(DB_Safety));
             MockPlc.OnItemChanged = (items) => 
             {

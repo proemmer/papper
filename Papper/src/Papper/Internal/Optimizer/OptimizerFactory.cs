@@ -2,13 +2,6 @@
 
 namespace Papper.Internal
 {
-    public enum OptimizerType
-    {
-        Block,
-        Items
-    }
-
-
     internal static class OptimizerFactory
     {
         public static IReadOperationOptimizer CreateOptimizer(OptimizerType type)

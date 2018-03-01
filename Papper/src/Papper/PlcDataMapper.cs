@@ -52,11 +52,10 @@ namespace Papper
 
         #region Properties
 
-
         public int ReadDataBlockSize { get; private set; }
         public int PduSize { get; private set; }
-
         internal IReadOperationOptimizer Optimizer => _optimizer;
+
         #endregion
 
         public PlcDataMapper(int pduSize,
@@ -232,17 +231,12 @@ namespace Papper
         /// <param name="mapping">name of the mapping</param>
         /// <param name="variable">name of the variable</param>
         /// <returns></returns>
-        public PlcItemAddress GetAddressOf(string mapping, string variable)
+        public PlcItemAddress GetAddressOf(IPlcReference var)
         {
-            if (string.IsNullOrWhiteSpace(mapping))
-                throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
-            if (string.IsNullOrWhiteSpace(variable))
-                throw new ArgumentException("The given argument could not be null or whitespace.", "variable");
-
             var result = new Dictionary<string, object>();
-            if (_mappings.TryGetValue(mapping, out IEntry entry))
+            if (_mappings.TryGetValue(var.Mapping, out IEntry entry))
             {
-                if (entry.Variables.TryGetValue(variable, out Tuple<int, Types.PlcObject> varibleEntry))
+                if (entry.Variables.TryGetValue(var.Variable, out Tuple<int, Types.PlcObject> varibleEntry))
                 {
                     return new PlcItemAddress(
                         varibleEntry.Item2.Selector,
@@ -252,7 +246,7 @@ namespace Papper
                         );
                 }
             }
-            throw new KeyNotFoundException($"There is variable <{variable}> for mapping <{mapping}>");
+            throw new KeyNotFoundException($"There is variable <{var.Variable}> for mapping <{var.Mapping}>");
         }
 
         /// <summary>
