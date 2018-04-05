@@ -133,7 +133,7 @@ namespace Papper.Internal
                             plcObject = new PlcArray(value, plcObject, 0, length);
                         }
                     }
-                    plcObject.Offset.Bytes = Int32.Parse(parts.First());
+                    plcObject.Offset.Bytes = Int32.Parse(parts[0]);
                     if (!plcObjects.ContainsKey(value))
                     {
                         plcObjects.Add(value, new Tuple<int, PlcObject>(0, plcObject));
@@ -158,7 +158,6 @@ namespace Papper.Internal
                 if (item == null)
                     continue;
 
-                var plcStruct = item as PlcStruct;
                 var key = prefix + value;
 
                 if (!plcObjects.ContainsKey(key))
@@ -167,7 +166,7 @@ namespace Papper.Internal
                     updated = true;
                 }
 
-                if (plcStruct != null)
+                if (item is PlcStruct plcStruct)
                     updated = AddPlcObjects(plcStruct, plcObjects, plcStruct.Childs.Select(child => child.Name), key + ".", baseOffset) || updated;
             }
             return updated;

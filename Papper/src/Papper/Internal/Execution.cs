@@ -32,7 +32,7 @@ namespace Papper.Internal
         {
             if (pack.ExecutionResult == ExecutionResult.Ok)
             {
-                if(PlcRawData.ReadDataCache == null || !PlcRawData.ReadDataCache.SequenceEqual(pack.Data))
+                if(PlcRawData.ReadDataCache.IsEmpty || !PlcRawData.ReadDataCache.Span.SequenceEqual(pack.Data.Span))
                 {
                     _changeDetected = DateTime.Now; // We detected a change in this data area -> bindungs have to thes the position by themselves.
                 }

@@ -157,7 +157,7 @@ namespace Papper
                                 if (_changeDetectionStrategy == ChangeDetectionStrategy.Event)
                                 {
                                     var needUpdate = _mapper.UpdateableItems(_executions, false);
-                                    await _mapper.UpdateMonitoringItems(needUpdate.Values);
+                                    await _mapper.UpdateMonitoringItemsAsync(needUpdate.Values);
                                 }
                                 _modified = false;
                             }
@@ -178,7 +178,7 @@ namespace Papper
                         var needUpdate = _mapper.UpdateableItems(_executions);
 
                         // read outdated
-                        await _mapper.ReadFromPlc(needUpdate); // Update the read cache;
+                        await _mapper.ReadFromPlcAsync(needUpdate); // Update the read cache;
 
                         // filter to get only changed items
                         readRes = _mapper.CreatePlcReadResults(needUpdate.Keys, needUpdate, _lastRun, (x) => FilterChanged(detect, x));
@@ -252,11 +252,11 @@ namespace Papper
                 var size = objBinding.Size == 0 ? 1 : objBinding.Size;
                 if (!_lruCache.TryGetValue(binding.Key, out LruState saved) ||
                     (objBinding.Size == 0
-                        ? objBinding.Data[objBinding.Offset].GetBit(objBinding.MetaData.Offset.Bits) != saved.Data[0].GetBit(objBinding.MetaData.Offset.Bits)
-                        : !objBinding.Data.SequenceEqual(objBinding.Offset, saved.Data, 0, size)))
+                        ? objBinding.Data.Span[objBinding.Offset].GetBit(objBinding.MetaData.Offset.Bits) != saved.Data.Span[0].GetBit(objBinding.MetaData.Offset.Bits)
+                        : !objBinding.Data.Slice(objBinding.Offset, size).Span.SequenceEqual(saved.Data.Slice(0, size).Span)))
                 {
                     result.Add(binding);
-                    var data = objBinding.Data.AsSpan().Slice(objBinding.Offset, size);
+                    var data = objBinding.Data.Slice(objBinding.Offset, size);
                     if (saved == null)
                     {
                         saved = _lruCache.Create(binding.Key, data, detect, objBinding.ValidationTimeInMs);

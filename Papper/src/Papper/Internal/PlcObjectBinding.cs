@@ -22,7 +22,7 @@ namespace Papper.Internal
 
         public bool FullType { get; private set; }
 
-        public byte[] Data
+        public Memory<byte> Data
         {
             get { return _rawData.ReadDataCache; }
         }

@@ -7,7 +7,7 @@ namespace Papper.Internal
 {
     internal class PlcRawData
     {
-        private byte[] _data;
+        private Memory<byte> _data = Memory<byte>.Empty;
         private readonly int _partitionSize;
         private readonly int _readDataBlockSize;
         private DateTime _lastUpdate;
@@ -47,17 +47,14 @@ namespace Papper.Internal
             Partitons = new Dictionary<int, Partiton>();
         }
 
-        public byte[] ReadDataCache
+        public Memory<byte> ReadDataCache
         {
             get { return _data; }
             set
             {
-                if (_data != value)
-                {
-                    _data = value;
-                    if (!Partitons.Any())
-                        CreatePartitions();
-                }
+                _data = value;
+                if (!Partitons.Any())
+                    CreatePartitions();
             }
         }
 
@@ -101,7 +98,7 @@ namespace Papper.Internal
 
         public IList<Partiton> GetPartitonsByOffset(int offset, int size)
         {
-            if (ReadDataCache != null && ReadDataCache.Length > _partitionSize && size != ReadDataCache.Length)
+            if (!ReadDataCache.IsEmpty && ReadDataCache.Length > _partitionSize && size != ReadDataCache.Length)
             {
                 var partitions = new List<Partiton>();
                 var index = offset;

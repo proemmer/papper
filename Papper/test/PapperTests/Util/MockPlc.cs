@@ -17,7 +17,7 @@ namespace UnitTestSuit.Util
 
         public class PlcItem 
         {
-            public byte[] Data { get; set; }
+            public Memory<byte> Data { get; set; }
             public string Selector { get; set; }
 
             public int Offset { get; set; }
@@ -33,7 +33,7 @@ namespace UnitTestSuit.Util
 
         public class PlcBlock
         {
-            public byte[] Data { get; private set; }
+            public Memory<byte> Data { get; private set; }
             public int MinSize { get { return Data.Length; } }
 
             public PlcBlock(int minSize)
@@ -45,8 +45,8 @@ namespace UnitTestSuit.Util
             {
                 if (Data.Length < size)
                 {
-                    var tmp = new byte[size];
-                    Array.Copy(Data, 0, tmp, 0, Data.Length);
+                    Memory<byte> tmp = new byte[size];
+                    Data.CopyTo(tmp);
                     Data = tmp;
                 }
             }
@@ -126,8 +126,8 @@ namespace UnitTestSuit.Util
                 {
                     foreach (var item in _items.ToList())
                     {
-                        var res = GetPlcEntry(item.Value.Selector, item.Value.Offset + item.Value.Length).Data.SubArray(item.Value.Offset, item.Value.Length);
-                        if (item.Value.Data == null || !res.SequenceEqual(item.Value.Data))
+                        var res = GetPlcEntry(item.Value.Selector, item.Value.Offset + item.Value.Length).Data.Slice(item.Value.Offset, item.Value.Length);
+                        if (item.Value.Data.IsEmpty || !res.Span.SequenceEqual(item.Value.Data.Span))
                         {
                             item.Value.Data = res;
                             changed.Add(item.Value);

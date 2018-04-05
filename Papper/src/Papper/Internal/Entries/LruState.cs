@@ -7,10 +7,10 @@ namespace Papper.Internal
     {
         public int ValidationTime { get; private set; }
         public DateTime LastUsage { get; private set; }
-        public byte[] Data { get; private set; }
+        public Memory<byte> Data { get; private set; }
         
 
-        public LruState(Span<byte> data, DateTime detected, int validationTime)
+        public LruState(Memory<byte> data, DateTime detected, int validationTime)
         {
             ValidationTime = validationTime;
             Data = ArrayPool<byte>.Shared.Rent(data.Length);
@@ -19,7 +19,7 @@ namespace Papper.Internal
 
         public void ApplyUsage(DateTime detected) => LastUsage = detected;
 
-        public void ApplyChange(Span<byte> data, DateTime detected)
+        public void ApplyChange(Memory<byte> data, DateTime detected)
         {
             data.CopyTo(Data);
             LastUsage = detected;
@@ -32,7 +32,7 @@ namespace Papper.Internal
 
         public void Dispose()
         {
-            ArrayPool<byte>.Shared.Return(Data);
+            ArrayPool<byte>.Shared.Return(Data.ToArray());
         }
 
     }

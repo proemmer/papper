@@ -125,12 +125,12 @@ namespace Papper.Types
             if (list != null)
             {
                 //Special handling for byte and char, because of performance (specially with big data)
-                if (ArrayType is PlcByte &&  value is byte[])
+                if (ArrayType is PlcByte &&  (value is byte[] || value is Memory<byte>))
                 {
                     var byteArray = value as byte[];
                     byteArray.CopyTo(data.Slice(plcObjectBinding.Offset, byteArray.Length));
                 }
-                else if (ArrayType is PlcChar && value is char[])
+                else if (ArrayType is PlcChar && (value is char[] || value is Memory<char>))
                 {
                     var charArray = value as char[];
                     Encoding.ASCII.GetBytes(charArray).CopyTo(data.Slice(plcObjectBinding.Offset, charArray.Length));
@@ -285,7 +285,7 @@ namespace Papper.Types
         {
             if (path.IsPathToCurrent && !path.IsPathIndexed)
                 return this;
-            var idx = path.ArrayIndizes.First();
+            var idx = path.ArrayIndizes[0];
             if (idx >= From && idx <= To)
             {
                 offset += Offset.Bytes + ((idx - From)* GetElementSizeForOffset());

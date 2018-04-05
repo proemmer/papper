@@ -47,7 +47,7 @@ namespace Papper.Types
             if (!plcObjectBinding.FullType || _structType == null)
             {
                 var obj = new ExpandoObject();
-                foreach (var child in plcObjectBinding.MetaData.Childs.OfType<PlcObject>())
+                foreach (var child in plcObjectBinding.MetaData.Childs.OfType<PlcObject>().AsParallel())
                 {
                     var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes, plcObjectBinding.ValidationTimeInMs);
                     AddProperty(obj, child.Name, child.ConvertFromRaw(binding, data));
@@ -57,7 +57,7 @@ namespace Papper.Types
             else
             {
                 var obj = Activator.CreateInstance(_structType);
-                foreach (var child in plcObjectBinding.MetaData.Childs.OfType<PlcObject>())
+                foreach (var child in plcObjectBinding.MetaData.Childs.OfType<PlcObject>().AsParallel())
                 {
                     var prop = _structType.GetProperty(child.Name);
                     var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes, plcObjectBinding.ValidationTimeInMs, true);

@@ -1,4 +1,6 @@
-﻿namespace Papper
+﻿using System;
+
+namespace Papper
 {
     public class DataPack
     {
@@ -8,12 +10,12 @@
 
         public byte BitMask { get; set; }
 
-        public byte[] Data { get; internal set; }
+        public Memory<byte> Data { get; internal set; }
 
         public ExecutionResult ExecutionResult { get; set; }
 
 
-        public DataPack ApplyData(byte[] data)
+        public DataPack ApplyData(Memory<byte> data)
         {
             Data = data;
             return this;

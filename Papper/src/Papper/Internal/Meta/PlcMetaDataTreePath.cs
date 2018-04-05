@@ -99,7 +99,7 @@ namespace Papper.Internal
             get
             {
                 var node = _nodes.FirstOrDefault();
-                return node != null ? node.Split(new[] { "[", "]" }, StringSplitOptions.RemoveEmptyEntries).First() : string.Empty;
+                return node != null ? node.Split(new[] { "[", "]" }, StringSplitOptions.RemoveEmptyEntries)[0] : string.Empty;
             }
         }
 

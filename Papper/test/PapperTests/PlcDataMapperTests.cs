@@ -470,11 +470,11 @@ namespace UnitTestSuit
 
             //Byte data check
             var dbData = MockPlc.GetPlcEntry("DB30").Data;
-            Assert.True(dbData.SubArray(0, 2).SequenceEqual(new byte[] { 35, 5 }));
-            Assert.True(dbData.SubArray(2, 5).SequenceEqual("TEST1".ToByteArray(5)));
+            Assert.True(dbData.Slice(0, 2).Span.SequenceEqual(new byte[] { 35, 5 }));
+            Assert.True(dbData.Slice(2, 5).Span.SequenceEqual("TEST1".ToByteArray(5)));
 
-            Assert.True(dbData.SubArray(152, 2).SequenceEqual(new byte[] { 35, 5 }));
-            Assert.True(dbData.SubArray(154, 5).SequenceEqual("TEST5".ToByteArray(5)));
+            Assert.True(dbData.Slice(152, 2).Span.SequenceEqual(new byte[] { 35, 5 }));
+            Assert.True(dbData.Slice(154, 5).Span.SequenceEqual("TEST5".ToByteArray(5)));
         }
 
 
@@ -547,14 +547,14 @@ namespace UnitTestSuit
             var mapping = "DB_Safety";
             var intiState = true;
             var originData = new Dictionary<string, object> {
-                    { "SafeMotion.Slots[15].SlotId", (byte)0},
-                    { "SafeMotion.Slots[15].HmiId", (UInt32)0},
-                    { "SafeMotion.Slots[15].Commands.TakeoverPermitted", false },
+                    { "SafeMotion.Slots[16].SlotId", (byte)0},
+                    { "SafeMotion.Slots[16].HmiId", (UInt32)0},
+                    { "SafeMotion.Slots[16].Commands.TakeoverPermitted", false },
                 };
             var writeData = new Dictionary<string, object> {
-                    { "SafeMotion.Slots[15].SlotId", (byte)3},
-                    { "SafeMotion.Slots[15].HmiId", (UInt32)4},
-                    { "SafeMotion.Slots[15].Commands.TakeoverPermitted", false },
+                    { "SafeMotion.Slots[16].SlotId", (byte)3},
+                    { "SafeMotion.Slots[16].HmiId", (UInt32)4},
+                    { "SafeMotion.Slots[16].Commands.TakeoverPermitted", true },
                 };
             var are = new AutoResetEvent(false);
 
@@ -572,6 +572,7 @@ namespace UnitTestSuit
 
                             if (!res.IsCompleted && !res.IsCanceled)
                             {
+
                                 if (!intiState)
                                 {
                                     Assert.Equal(2, res.Results.Count());
@@ -585,6 +586,8 @@ namespace UnitTestSuit
                                 {
                                     try
                                     {
+                                        Console.WriteLine($"Changed: {item.Variable} = item.Value");
+
                                         if (!intiState)
                                             Assert.Equal(writeData[item.Variable], item.Value);
                                         else
@@ -673,8 +676,8 @@ namespace UnitTestSuit
             foreach (var item in result)
             {
                 Console.WriteLine($"OnRead: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
-                var res = MockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length).Data.SubArray(item.Offset, item.Length);
-                if(res != null)
+                var res = MockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length);
+                if(!res.IsEmpty)
                 {
                     item.ApplyData(res);
                     item.ExecutionResult = ExecutionResult.Ok;
@@ -695,21 +698,22 @@ namespace UnitTestSuit
                 if (item.BitMask == 0)
                 {
                     Console.WriteLine($"OnWrite: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
-                    Array.Copy(item.Data, 0, MockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length).Data, item.Offset, item.Length);
+                    item.Data.Slice(0, item.Length).CopyTo(MockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length));
                     item.ExecutionResult = ExecutionResult.Ok;
                 }
                 else
                 {
-                    foreach (var bItem in item.Data)
+                    for (int j = 0; j < item.Data.Length; j++)
                     {
+                        var bItem = item.Data.Span[j];
                         var bm = item.BitMask;
                         for (var i = 0; i < 8; i++)
                         {
                             var bit = bm.GetBit(i);
                             if (bit)
                             {
-                                var b = MockPlc.GetPlcEntry(item.Selector, item.Offset + 1).Data[item.Offset];
-                                MockPlc.GetPlcEntry(item.Selector, item.Offset + 1).Data[item.Offset] = b.SetBit(i, bItem.GetBit(i));
+                                var b = MockPlc.GetPlcEntry(item.Selector, item.Offset + 1).Data.Span[item.Offset];
+                                MockPlc.GetPlcEntry(item.Selector, item.Offset + 1).Data.Span[item.Offset] = b.SetBit(i, bItem.GetBit(i));
                                 item.ExecutionResult = ExecutionResult.Ok;
                                 bm = bm.SetBit(i, false);
                                 if (bm == 0)

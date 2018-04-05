@@ -13,7 +13,7 @@ namespace Papper.Internal
             return _states.TryGetValue(key, out state);
         }
 
-        public LruState Create(string key, Span<byte> data, DateTime detect, int validationTime)
+        public LruState Create(string key, Memory<byte> data, DateTime detect, int validationTime)
         {
             var state = new LruState(data, detect, validationTime);
             _states.Add(key, state);
@@ -25,7 +25,7 @@ namespace Papper.Internal
             state?.ApplyUsage(detect);
         }
 
-        public void Update(LruState state, Span<byte> data, DateTime detect)
+        public void Update(LruState state, Memory<byte> data, DateTime detect)
         {
             state?.ApplyChange(data, detect);
         }

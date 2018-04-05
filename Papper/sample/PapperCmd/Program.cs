@@ -104,7 +104,7 @@ namespace PapperCmd
         private static bool _toggle;
         private class PlcBlock
         {
-            public byte[] Data { get; private set; }
+            public Memory<byte> Data { get; private set; }
             public int MinSize { get { return Data.Length; } }
 
             public PlcBlock(int minSize)
@@ -117,7 +117,7 @@ namespace PapperCmd
                 if(Data.Length < size)
                 {
                     var tmp = new byte[size];
-                    Array.Copy(Data, 0, tmp, 0, Data.Length);
+                    Data.CopyTo(tmp);
                     Data = tmp;
                 }
             }
@@ -218,12 +218,12 @@ namespace PapperCmd
                 };
             _toggle = !_toggle;
             var are = new AutoResetEvent(false);
-            OnChangeEventHandler callback = (s, e) =>
+            void callback(object s, PlcNotificationEventArgs e)
             {
                 foreach (var item in e)
                     Console.WriteLine($"DataChanged detected: {item.Address} = {item.Value}");
                 are.Set();
-            };
+            }
             var items = writeData.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray();
             var subscription = papper.SubscribeDataChanges(callback, items);
 
@@ -300,20 +300,21 @@ namespace PapperCmd
                 if(item.BitMask == 0)
                 {
                     Console.WriteLine($"OnWrite: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
-                    Array.Copy(item.Data, 0, GetPlcEntry(item.Selector, item.Offset + item.Length).Data, item.Offset, item.Length);
+                    item.Data.Slice(0, item.Length).CopyTo(GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length));
                 }
                 else
                 {
-                    foreach (var bItem in item.Data)
+                    for (int j = 0; j < item.Data.Length; j++)
                     {
+                        var bItem = item.Data.Span[j];
                         var bm = item.BitMask;
                         for (var i = 0; i < 8; i++)
                         {
                             var bit = bm.GetBit(i);
                             if (bit)
                             {
-                                var b = GetPlcEntry(item.Selector, item.Offset + 1).Data[item.Offset];
-                                GetPlcEntry(item.Selector, item.Offset + 1).Data[item.Offset] = b.SetBit(i, bItem.GetBit(i));
+                                var b = GetPlcEntry(item.Selector, item.Offset + 1).Data.Span[item.Offset];
+                                GetPlcEntry(item.Selector, item.Offset + 1).Data.Span[item.Offset] = b.SetBit(i, bItem.GetBit(i));
                                 item.ExecutionResult = ExecutionResult.Ok;
                                 bm = bm.SetBit(i, false);
                                 if (bm == 0)
@@ -371,8 +372,8 @@ namespace PapperCmd
             foreach (var item in result)
             {
                 Console.WriteLine($"OnRead: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
-                var res = GetPlcEntry(item.Selector, item.Offset + item.Length).Data.SubArray(item.Offset, item.Length);
-                if (res != null)
+                var res = GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length);
+                if (!res.IsEmpty)
                 {
                     item.ApplyData(res);
                     item.ExecutionResult = ExecutionResult.Ok;

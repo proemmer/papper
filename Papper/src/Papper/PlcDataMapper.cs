@@ -152,7 +152,7 @@ namespace Papper
             var needUpdate = UpdateableItems(executions);
 
             // read from plc
-            await ReadFromPlc(needUpdate);
+            await ReadFromPlcAsync(needUpdate);
 
             // transform to result
             return CreatePlcReadResults(executions, needUpdate);
@@ -181,7 +181,7 @@ namespace Papper
             {
                 KeyValuePair<string, DataPack> UpdatePack(string key, DataPack pack, int dataOffset)
                 {
-                    pack.Data = pack.Data.SubArray(dataOffset, pack.Length);
+                    pack.Data = pack.Data.Slice(dataOffset, pack.Length);
                     return new KeyValuePair<string, DataPack>(key, pack);
                 }
 
@@ -213,7 +213,7 @@ namespace Papper
                                          }, x.Value.Offset))
                                                 .ToDictionary(x => x.Key, x => x.Value);
 
-                await WriteToPlc(prepared.Values);
+                await WriteToPlcAsync(prepared.Values);
 
                 executions.ForEach(exec => exec.Invalidate());
 
@@ -277,19 +277,19 @@ namespace Papper
         }
 
 
-        internal async Task ReadFromPlc(Dictionary<Execution, DataPack> needUpdate)
+        internal Task ReadFromPlcAsync(Dictionary<Execution, DataPack> needUpdate)
         {
-            await _readEventHandler?.Invoke(needUpdate.Values);
+            return _readEventHandler?.Invoke(needUpdate.Values);
         }
 
-        internal async Task WriteToPlc(IEnumerable<DataPack> packs)
+        internal Task WriteToPlcAsync(IEnumerable<DataPack> packs)
         {
-            await _writeEventHandler?.Invoke(packs);
+            return _writeEventHandler?.Invoke(packs);
         }
 
-        internal async Task UpdateMonitoringItems(IEnumerable<DataPack> monitoring, bool add = true)
+        internal Task UpdateMonitoringItemsAsync(IEnumerable<DataPack> monitoring, bool add = true)
         {
-            await _updateHandler?.Invoke(monitoring, add);
+            return _updateHandler?.Invoke(monitoring, add);
         }
 
         internal List<Execution> DetermineExecutions<T>(IEnumerable<T> vars) where T: IPlcReference
@@ -319,7 +319,7 @@ namespace Papper
                              .GroupBy(exec => exec.ExecutionResult) // Group by execution result
                              .SelectMany(group => filter(group.SelectMany(g => g.Bindings))
                                                        .Select(b => new PlcReadResult(b.Key, 
-                                                                                      b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache), 
+                                                                                      b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache.Span), 
                                                                                       group.Key)
                                                        )).ToArray();
         }
@@ -333,7 +333,7 @@ namespace Papper
                         .GroupBy(exec => exec.ExecutionResult) // Group by execution result
                         .SelectMany(group => group.SelectMany(g => g.Bindings)
                                                     .Select(b => new PlcReadResult(b.Key,
-                                                                    b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache),
+                                                                    b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache.Span),
                                                                     group.Key)
                                                     )).ToArray();
         }
