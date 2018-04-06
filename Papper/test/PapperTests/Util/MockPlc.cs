@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -127,9 +128,17 @@ namespace UnitTestSuit.Util
                     foreach (var item in _items.ToList())
                     {
                         var res = GetPlcEntry(item.Value.Selector, item.Value.Offset + item.Value.Length).Data.Slice(item.Value.Offset, item.Value.Length);
-                        if (item.Value.Data.IsEmpty || !res.Span.SequenceEqual(item.Value.Data.Span))
+                        if (item.Value.Data.IsEmpty || !res.Span.SequenceEqual(item.Value.Data.Span.Slice(0, item.Value.Length)))
                         {
-                            item.Value.Data = res;
+                            if (item.Value.Data.IsEmpty || item.Value.Data.Length < res.Length)
+                            {
+                                if(!item.Value.Data.IsEmpty)
+                                {
+                                    ArrayPool<byte>.Shared.Return(item.Value.Data.ToArray());
+                                }
+                                item.Value.Data = ArrayPool<byte>.Shared.Rent(res.Length);
+                            }
+                            res.CopyTo(item.Value.Data);
                             changed.Add(item.Value);
                         }
                     }
@@ -143,6 +152,16 @@ namespace UnitTestSuit.Util
                 catch(Exception)
                 {
 
+                }
+                finally
+                {
+                    foreach (var item in _items.ToList())
+                    {
+                        if (!item.Value.Data.IsEmpty)
+                        {
+                            ArrayPool<byte>.Shared.Return(item.Value.Data.ToArray());
+                        }
+                    }
                 }
 
                 Thread.Sleep(500);

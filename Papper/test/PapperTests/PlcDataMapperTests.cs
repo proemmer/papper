@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using UnitTestSuit.Mappings;
 using UnitTestSuit.Util;
 using Xunit;
+using Xunit.Abstractions;
 
 //run in sequence because of db sharing
 [assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
@@ -23,9 +24,11 @@ namespace UnitTestSuit
     public class PlcDataMapperTests
     {
         private PlcDataMapper _papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
+        private readonly ITestOutputHelper _output;
 
-        public PlcDataMapperTests()
+        public PlcDataMapperTests(ITestOutputHelper output)
         {
+            _output = output;
             _papper.AddMapping(typeof(DB_Safety));
             _papper.AddMapping(typeof(ArrayTestMapping));
             _papper.AddMapping(typeof(StringArrayTestMapping));
@@ -543,7 +546,7 @@ namespace UnitTestSuit
                     ExecutionResult = ExecutionResult.Ok
                 }.ApplyData(i.Data)));
             };
-            var sleepTime = 1000;
+            var sleepTime = 10000;
             var mapping = "DB_Safety";
             var intiState = true;
             var originData = new Dictionary<string, object> {
@@ -554,10 +557,12 @@ namespace UnitTestSuit
             var writeData = new Dictionary<string, object> {
                     { "SafeMotion.Slots[16].SlotId", (byte)3},
                     { "SafeMotion.Slots[16].HmiId", (UInt32)4},
-                    { "SafeMotion.Slots[16].Commands.TakeoverPermitted", true },
+                    { "SafeMotion.Slots[16].Commands.TakeoverPermitted", false },
                 };
             var are = new AutoResetEvent(false);
 
+            // write initial state
+            papper.WriteAsync(PlcWriteReference.FromRoot(mapping, originData.ToArray()).ToArray()).GetAwaiter().GetResult();
 
             using (var subscription = papper.CreateSubscription(ChangeDetectionStrategy.Event))
             {
@@ -572,7 +577,7 @@ namespace UnitTestSuit
 
                             if (!res.IsCompleted && !res.IsCanceled)
                             {
-
+                                _output.WriteLine($"Changed: initial state is {intiState}");
                                 if (!intiState)
                                 {
                                     Assert.Equal(2, res.Results.Count());
@@ -586,7 +591,7 @@ namespace UnitTestSuit
                                 {
                                     try
                                     {
-                                        Console.WriteLine($"Changed: {item.Variable} = item.Value");
+                                        _output.WriteLine($"Changed: {item.Variable} = {item.Value}");
 
                                         if (!intiState)
                                             Assert.Equal(writeData[item.Variable], item.Value);
@@ -610,7 +615,7 @@ namespace UnitTestSuit
                 });
 
                 //waiting for initialize
-                Assert.True(are.WaitOne(sleepTime));
+                Assert.True(are.WaitOne(sleepTime), "waiting for initialize");
                 intiState = false;
                 var writeResults = papper.WriteAsync(PlcWriteReference.FromRoot(mapping, writeData.ToArray()).ToArray()).GetAwaiter().GetResult();
                 foreach (var item in writeResults)
@@ -618,10 +623,10 @@ namespace UnitTestSuit
                     Assert.Equal(ExecutionResult.Ok, item.ActionResult);
                 }
                 //waiting for write update
-                Assert.True(are.WaitOne(sleepTime));
+                Assert.True(are.WaitOne(sleepTime), "waiting for write update");
 
                 //test if data change only occurred if data changed
-                Assert.False(are.WaitOne(sleepTime));
+                Assert.False(are.WaitOne(sleepTime), $"test if data change only occurred if data changed");
 
             }
         }

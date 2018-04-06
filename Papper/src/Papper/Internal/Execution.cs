@@ -48,7 +48,7 @@ namespace Papper.Internal
         /// </summary>
         public void Invalidate()
         {
-            PlcRawData.LastUpdate = _changeDetected = DateTime.Now;
+            PlcRawData.LastUpdate = _changeDetected = DateTime.MinValue;
         }
 
     }
