@@ -272,6 +272,17 @@ namespace Papper.Internal
             return obj as PlcObject;
         }
 
+
+        private static string NormalizeTypeName(string name)
+        {
+            var result = new StringBuilder();
+            foreach (char c in name.Where(c => c != '.'))
+            {
+                result.Append(c);
+            }
+            return result.ToString();
+        }
+
         /// <summary>
         /// Try to get Meta data from MetaTree. If the data are not in the tree, try to create and add it. 
         /// All the calculation of the offsets will be made in this method. the tree has two parts, one for MetaData and one for The Mappings.
@@ -280,7 +291,7 @@ namespace Papper.Internal
         private static PlcObject GetMetaData(ITree tree, Type t)
         {
             var nodePathStack = new Stack<string>();
-            var name = t.FullName.Replace(".", "");
+            var name = NormalizeTypeName(t.FullName);
             nodePathStack.Push(RootNodeName);
             nodePathStack.Push(MetaDataNodeName);
             nodePathStack.Push(name);

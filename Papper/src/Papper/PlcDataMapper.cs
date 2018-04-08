@@ -368,16 +368,20 @@ namespace Papper
                 case "TM":
                 case "CT":
                 case var s when Regex.IsMatch(s, "^DB\\d+$"):
-                    using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
                     {
-                        if (!_mappings.TryGetValue(mapping, out entry))
+                        using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
                         {
-                            entry = new RawEntry(this, mapping, ReadDataBlockSize, 0);
-                            using (upgradeableGuard.UpgradeToWriterLock())
-                                _mappings.TryAdd(mapping, entry);
+                            if (!_mappings.TryGetValue(mapping, out entry))
+                            {
+                                entry = new RawEntry(this, mapping, ReadDataBlockSize, 0);
+                                using (upgradeableGuard.UpgradeToWriterLock())
+                                {
+                                    _mappings.TryAdd(mapping, entry);
+                                }
+                            }
                         }
+                        return true;
                     }
-                    return true;
             }
 
             return false;

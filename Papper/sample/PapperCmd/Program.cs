@@ -292,7 +292,7 @@ namespace PapperCmd
             Console.WriteLine($"Finished PerformDataChange");
         }
 
-        private static async Task Papper_OnWrite(IEnumerable<DataPack> reads)
+        private static Task Papper_OnWrite(IEnumerable<DataPack> reads)
         {
             var result = reads.ToList();
             foreach (var item in result)
@@ -324,7 +324,7 @@ namespace PapperCmd
                     }
                 }
             }
-            await Task.CompletedTask;
+            return Task.CompletedTask;
         }
 
 
@@ -366,7 +366,7 @@ namespace PapperCmd
         //}
 
 
-        private static async Task Papper_OnRead(IEnumerable<DataPack> reads)
+        private static Task Papper_OnRead(IEnumerable<DataPack> reads)
         {
             var result = reads.ToList();
             foreach (var item in result)
@@ -383,7 +383,7 @@ namespace PapperCmd
                     item.ExecutionResult = ExecutionResult.Error;
                 }
             }
-            await Task.CompletedTask;
+            return Task.CompletedTask;
         }
 
 

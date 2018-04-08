@@ -666,16 +666,16 @@ namespace UnitTestSuit
             return dt.AddTicks((dt.Ticks % 10000) * -1);
         }
 
-        private async Task UpdateHandler(IEnumerable<DataPack> monitoring, bool add = true)
+        private Task UpdateHandler(IEnumerable<DataPack> monitoring, bool add = true)
         {
             foreach (var item in monitoring)
             {
                 MockPlc.UpdateDataChangeItem(item, !add);
             }
-            await Task.CompletedTask;
+            return Task.CompletedTask;
         }
 
-        private static async Task Papper_OnRead(IEnumerable<DataPack> reads)
+        private static Task Papper_OnRead(IEnumerable<DataPack> reads)
         {
             var result = reads.ToList();
             foreach (var item in result)
@@ -692,10 +692,10 @@ namespace UnitTestSuit
                     item.ExecutionResult = ExecutionResult.Error;
                 }
             }
-            await Task.CompletedTask;
+            return Task.CompletedTask;
         }
 
-        private static async Task Papper_OnWrite(IEnumerable<DataPack> reads)
+        private static Task Papper_OnWrite(IEnumerable<DataPack> reads)
         {
             var result = reads.ToList();
             foreach (var item in result)
@@ -728,7 +728,7 @@ namespace UnitTestSuit
                     }
                 }
             }
-            await Task.CompletedTask;
+            return Task.CompletedTask;
         }
 
         

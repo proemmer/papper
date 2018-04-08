@@ -138,15 +138,19 @@ namespace Papper.Types
                 else
                 {
                     var enumerator = list.GetEnumerator();
+                    var childEnumeratore = Childs.OfType<PlcObject>().GetEnumerator();
                     for (var i = 0; i < ArrayLength; i++)
                     {
                         if (enumerator.MoveNext())
                         {
-                            var child = Childs.OfType<PlcObject>().Skip(i).FirstOrDefault();
-                            if (child == null)
+                            if (childEnumeratore.MoveNext())
+                            {
+                                var child = childEnumeratore.Current;
+                                var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + (child.Size.Bytes * i), plcObjectBinding.ValidationTimeInMs);
+                                ArrayType.ConvertToRaw(enumerator.Current, binding, data);
+                            }
+                            else
                                 throw new Exception("Array error");
-                            var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + (child.Size.Bytes * i), plcObjectBinding.ValidationTimeInMs);
-                            ArrayType.ConvertToRaw(enumerator.Current, binding, data);
                         }
                         else
                         {
@@ -189,11 +193,12 @@ namespace Papper.Types
 
                     var list = Array.CreateInstance(t, ArrayLength);
                     var idx = From;
+                    var childEnumerator = Childs.OfType<PlcObject>().GetEnumerator();
                     for (var i = 0; i < ArrayLength; i++)
                     {
-                        var child = Childs.OfType<PlcObject>().Skip(i).FirstOrDefault();
-                        if (child == null)
+                        if(!childEnumerator.MoveNext())
                             throw new Exception("Array error");
+                        var child = childEnumerator.Current;
                         var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + ((idx - From) * GetElementSizeForOffset()), plcObjectBinding.ValidationTimeInMs, fully);
                         list.SetValue(((T)ArrayType.ConvertFromRaw(binding, data)),i);
                         idx++;
@@ -204,11 +209,12 @@ namespace Papper.Types
                 {
                     var list = new T[ArrayLength];
                     var idx = From;
+                    var childEnumerator = Childs.OfType<PlcObject>().GetEnumerator();
                     for (var i = 0; i < ArrayLength; i++)
                     {
-                        var child = Childs.OfType<PlcObject>().Skip(i).FirstOrDefault();
-                        if (child == null)
+                        if (!childEnumerator.MoveNext())
                             throw new Exception("Array error");
+                        var child = childEnumerator.Current;
                         var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + ((idx - From) * GetElementSizeForOffset()), plcObjectBinding.ValidationTimeInMs, fully);
                         list[i] = ((T)ArrayType.ConvertFromRaw(binding, data));
                         idx++;

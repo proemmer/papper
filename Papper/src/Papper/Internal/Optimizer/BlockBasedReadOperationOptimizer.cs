@@ -19,22 +19,26 @@ namespace Papper.Internal
             PlcRawData pred = null;
             var offsetCountedAsBoolean = -1;
             var offset = 0;
-            foreach (var item in objects.OrderBy(i => i.Value.Item1 + i.Value.Item2.Offset.Bytes).ThenBy(i => i.Value.Item2.Offset.Bits).ThenBy(i => i.Key.Length).ToList())
+            foreach (var item in objects.OrderBy(i => i.Value.Item1 + i.Value.Item2.Offset.Bytes)
+                                        .ThenBy(i => i.Value.Item2.Offset.Bits)
+                                        .ThenBy(i => i.Key.Length))
             {
                 var count = true;
+                var currentOffset = item.Value.Item1 + item.Value.Item2.Offset.Bytes;
+                var sizeInBytes = item.Value.Item2.Size.Bytes;
+
                 if (item.Value.Item2 is PlcBool)
                 {
-                    var currentOffset = item.Value.Item1 + item.Value.Item2.Offset.Bytes;
                     if (currentOffset != offsetCountedAsBoolean)
-                        offsetCountedAsBoolean = item.Value.Item1 + item.Value.Item2.Offset.Bytes;
+                        offsetCountedAsBoolean = currentOffset;
                     else
                         count = false;
                 }
 
                 var current = new PlcRawData(readDataBlockSize)
                 {
-                    Offset = item.Value.Item1 + item.Value.Item2.Offset.Bytes,
-                    Size = item.Value.Item2.Size.Bytes == 0 && count ? 1 : item.Value.Item2.Size.Bytes,
+                    Offset = currentOffset,
+                    Size = sizeInBytes == 0 && count ? 1 : sizeInBytes,
                     Selector = selector
                 };
 
