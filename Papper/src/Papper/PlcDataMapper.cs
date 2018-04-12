@@ -1,21 +1,17 @@
 ﻿using Papper.Attributes;
-using Papper.Common;
-using Papper.Entries;
-using Papper.Helper;
+using Papper.Internal;
 using System;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Papper
 {
-    public delegate void OnChangeEventHandler(object sender, PlcNotificationEventArgs e);
-    
-
-
     // This project can output the Class library as a NuGet Package.
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
     public class PlcDataMapper
@@ -24,67 +20,55 @@ namespace Papper
         /// <summary>
         /// This delegate is used to invoke the read operations
         /// </summary>
-        /// <param name="selector">Selector from the MappingAttribute</param>
-        /// <param name="offset">Offset in byte to the first byte to read</param>
-        /// <param name="length">Number of bytes to read.</param>
         /// <returns></returns>
-        public delegate byte[] ReadOperation(string selector, int offset, int length);
+        public delegate Task ReadOperation(IEnumerable<DataPack> reads);
 
         /// <summary>
         /// his delegate is used to invoke the write operations.
         /// </summary>
-        /// <param name="selector">Selector from the MappingAttribute</param>
-        /// <param name="offset">Offset in byte to the first byte to write</param>
-        /// <param name="data"></param>
-        /// <param name="mask">bit mask, all bits with true will be written </param>
         /// <returns></returns>
-        public delegate bool WriteOperation(string selector, int offset, byte[] data, byte bitMask = 0);
+        public delegate Task WriteOperation(IEnumerable<DataPack> writes);
+
+        /// <summary>
+        /// his delegate is used to invoke the write operations.
+        /// </summary>
+        /// <returns></returns>
+        public delegate Task UpdateMonitoring(IEnumerable<DataPack> monitoring, bool add = true);
 
         #endregion
 
         #region Fields
-        internal enum ReadResult { Successfully, Failed, UseCache }
-        private const string ADDRESS_PREFIX = "$ABSSYMBOLS$_";
+        private HashSet<Subscription> _subscriptions = new HashSet<Subscription>();
         private const int PduSizeDefault = 480;
         private const int ReadDataHeaderLength = 18;
         private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
         private readonly ConcurrentDictionary<string, IEntry> _mappings = new ConcurrentDictionary<string, IEntry>();
         private readonly ReaderWriterLockSlim _mappingsLock = new ReaderWriterLockSlim();
-        private event ReadOperation _onRead;
-        private event WriteOperation _onWrite;
+        private ReadOperation _readEventHandler;
+        private WriteOperation _writeEventHandler;
+        private UpdateMonitoring _updateHandler;
+        private readonly IReadOperationOptimizer _optimizer;
         #endregion
 
         #region Properties
+
         public int ReadDataBlockSize { get; private set; }
         public int PduSize { get; private set; }
-        public event ReadOperation OnRead
-        {
-            add
-            {
-                _onRead += value;
-            }
-            remove
-            {
-                _onRead -= value;
-            }
-        }
+        internal IReadOperationOptimizer Optimizer => _optimizer;
 
-        public event WriteOperation OnWrite
-        {
-            add
-            {
-                _onWrite += value;
-            }
-            remove
-            {
-                _onWrite -= value;
-            }
-        }
         #endregion
 
-        public PlcDataMapper(int pduSize = PduSizeDefault)
+        public PlcDataMapper(int pduSize,
+                             ReadOperation readEventHandler,
+                             WriteOperation writeEventHandler = null,
+                             UpdateMonitoring updateHandler = null,
+                             OptimizerType optimizer = OptimizerType.Block)
         {
             PduSize = pduSize;
+            _readEventHandler = readEventHandler;
+            _writeEventHandler = writeEventHandler;
+            _updateHandler = updateHandler;
+            _optimizer = OptimizerFactory.CreateOptimizer(optimizer);
             ReadDataBlockSize = pduSize - ReadDataHeaderLength;
             if (ReadDataBlockSize <= 0)
                 throw new ArgumentException($"PDU size have to be greater then {ReadDataHeaderLength}", "pduSize");
@@ -93,10 +77,9 @@ namespace Papper
 
         ~PlcDataMapper()
         {
-            if(_onRead != null)
-                _onRead -= _onRead;
-            if(_onWrite != null)
-                _onWrite -= _onWrite;
+            _readEventHandler = null;
+            _writeEventHandler = null;
+            _updateHandler = null;
         }
 
         /// <summary>
@@ -148,66 +131,31 @@ namespace Papper
             return true;
         }
 
+        /// <summary>
+        /// Read variables from an given mapping
+        /// </summary>
+        /// <param name="vars"></param>
+        /// <returns>return a dictionary with all variables and the read value</returns>
+        public Task<PlcReadResult[]> ReadAsync(params PlcReadReference[] vars) => ReadAsync(vars as IEnumerable<PlcReadReference>);
 
         /// <summary>
         /// Read variables from an given mapping
         /// </summary>
-        /// <param name="mapping">mapping name specified in the MappingAttribute</param>
         /// <param name="vars"></param>
-        /// <returns>return a dictionary with all variables and the red value</returns>
-        public Dictionary<string, object> Read(string mapping, params string[] vars)
+        /// <returns>return a dictionary with all variables and the read value</returns>
+        public async Task<PlcReadResult[]> ReadAsync(IEnumerable<PlcReadReference> vars)
         {
-            if (string.IsNullOrWhiteSpace(mapping))
-                throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
+            // determine executions
+            var executions = DetermineExecutions(vars);
 
-            var result = new Dictionary<string, object>();
-            if (_mappings.TryGetValue(mapping, out IEntry entry))
-            {
-                foreach (var execution in entry.GetOperations(vars))
-                {
-                    if (ExecuteRead(execution) != ReadResult.Failed)
-                    {
-                        foreach (var item in execution.Bindings)
-                            result.Add(item.Key, item.Value.ConvertFromRaw());
-                    } 
-                }
-            }
-            return result;
-        }
+            // determine outdated
+            var needUpdate = UpdateableItems(executions);
 
-        /// <summary>
-        /// Read variables from an given address
-        /// </summary>
-        /// <param name="mapping">mapping name specified in the MappingAttribute</param>
-        /// <param name="vars"></param>
-        /// <returns>return a dictionary with all variables and the red value</returns>
-        public Dictionary<string, object> ReadAbs(string from, params string[] vars)
-        {
-            IEntry entry;
-            var result = new Dictionary<string, object>();
-            var key = $"$ABSSYMBOLS$_{from}";
-            using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
-            {
-                if (!_mappings.TryGetValue(key, out entry))
-                {
-                    entry = new RawEntry(this, from, ReadDataBlockSize, 0);
-                    using (upgradeableGuard.UpgradeToWriterLock())
-                        _mappings.TryAdd(key, entry);
-                }
-            }
+            // read from plc
+            await ReadFromPlcAsync(needUpdate);
 
-            if(entry != null)
-            { 
-                foreach (var execution in entry.GetOperations(vars))
-                {
-                    if (ExecuteRead(execution) != ReadResult.Failed)
-                    {
-                        foreach (var item in execution.Bindings)
-                            result.Add(item.Key, item.Value.ConvertFromRaw());
-                    }
-                }
-            }
-            return result;
+            // transform to result
+            return CreatePlcReadResults(executions, needUpdate);
         }
 
         /// <summary>
@@ -216,85 +164,65 @@ namespace Papper
         /// <param name="mapping">mapping name specified in the MappingAttribute</param>
         /// <param name="values">variable names and values to write</param>
         /// <returns>return true if all operations are succeeded</returns>
-        public bool Write(string mapping, Dictionary<string,object> values)
-        {
-            if (string.IsNullOrWhiteSpace(mapping))
-                throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
-
-            var result = true;
-            if (!_mappings.TryGetValue(mapping, out IEntry entry))
-                return result;
-
-            foreach (var execution in entry.GetOperations(values.Keys.ToArray()))
-            {
-                foreach (var binding in execution.Bindings)
-                {
-                    if (!binding.Value.MetaData.IsReadOnly)
-                    {
-                        lock (binding.Value.RawData)
-                        {
-                            binding.Value.ConvertToRaw(values[binding.Key]);
-                            if (!Write(binding.Value))
-                            {
-                                Debug.WriteLine($"Error writing {binding.Key}");
-                                result = false;
-                            }
-                        }
-                    }
-                    else
-                        throw new UnauthorizedAccessException($"You could not write the variable {binding.Key} because you have only read access to it!");
-                }
-            }
-
-            return result;
-        }
+        public Task<PlcWriteResult[]> WriteAsync(params PlcWriteReference[] vars) => WriteAsync(vars as IEnumerable<PlcWriteReference>);
 
         /// <summary>
-        /// Write values to a given address
+        /// Write values to variables of an given mapping
         /// </summary>
-        /// <param name="to"></param>
-        /// <param name="values"></param>
-        /// <returns></returns>
-        public bool WriteAbs(string to, Dictionary<string, object> values)
+        /// <param name="mapping">mapping name specified in the MappingAttribute</param>
+        /// <param name="values">variable names and values to write</param>
+        /// <returns>return true if all operations are succeeded</returns>
+        public async Task<PlcWriteResult[]> WriteAsync(IEnumerable<PlcWriteReference> vars)
         {
             
-            IEntry entry;
-            var result = true;
-            var key = $"$ABSSYMBOLS$_{to}";
-            using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
+            // because we need the byte arrays only for converting, we can use the ArrayPool
+            var memoryBuffer = new Dictionary<PlcRawData, byte[]>();
+            try
             {
-                if (!_mappings.TryGetValue(key, out entry))
+                KeyValuePair<string, DataPack> UpdatePack(string key, DataPack pack, int dataOffset)
                 {
-                    entry = new RawEntry(this, to, ReadDataBlockSize, 0);
-                    using (upgradeableGuard.UpgradeToWriterLock())
-                        _mappings.TryAdd(key, entry);
+                    pack.Data = pack.Data.Slice(dataOffset, pack.Length);
+                    return new KeyValuePair<string, DataPack>(key, pack);
                 }
-            }
 
-            if (entry != null)
-            {
-                foreach (var execution in entry.GetOperations(values.Keys.ToArray()))
+                byte[] GetOrCreateBufferAndApplyValue(PlcObjectBinding binding, Dictionary<PlcRawData, byte[]> dict, object value)
                 {
-                    foreach (var binding in execution.Bindings)
+                    if (!dict.TryGetValue(binding.RawData, out var buffer))
                     {
-                        if (!binding.Value.MetaData.IsReadOnly)
-                        {
-                            lock (binding.Value.RawData)
-                            {
-                                binding.Value.ConvertToRaw(values[binding.Key]);
-                                if (!Write(binding.Value))
-                                {
-                                    Debug.WriteLine($"Error writing {binding.Key}");
-                                    result = false;
-                                }
-                            }
-                        }
-                        else
-                            throw new UnauthorizedAccessException($"You could not write the variable {binding.Key} because you have only read access to it!");
+                        buffer = ArrayPool<byte>.Shared.Rent(binding.RawData.MemoryAllocationSize);
+                        dict.Add(binding.RawData, buffer);
                     }
+                    binding.ConvertToRaw(value, buffer);
+                    return buffer;
                 }
+
+                var values = vars.ToDictionary(x => x.Address, x => x.Value);
+                // determine executions
+                var executions = DetermineExecutions(vars);
+
+                var prepared = executions.SelectMany(execution => execution.Bindings.Where(b => !b.Value.MetaData.IsReadOnly))
+                                         .Select(x => UpdatePack(x.Key, new DataPack
+                                         {
+                                             Selector = x.Value.RawData.Selector,
+                                             Offset = x.Value.Offset + x.Value.RawData.Offset,
+                                             Length = x.Value.Size > 0 ? x.Value.Size : 1,
+                                             BitMask = x.Value.Size <= 0 ? Converter.SetBit(0, x.Value.MetaData.Offset.Bits, true) : (byte)0,
+                                             Data = GetOrCreateBufferAndApplyValue( x.Value,
+                                                                                    memoryBuffer,
+                                                                                    values[x.Key])
+                                         }, x.Value.Offset))
+                                                .ToDictionary(x => x.Key, x => x.Value);
+
+                await WriteToPlcAsync(prepared.Values);
+
+                executions.ForEach(exec => exec.Invalidate());
+
+                return prepared.Select(x => new PlcWriteResult(x.Key, x.Value.ExecutionResult)).ToArray();
             }
-            return result;
+            finally
+            {
+                memoryBuffer.Values.ToList().ForEach(x => ArrayPool<byte>.Shared.Return(x));
+            }
         }
 
         /// <summary>
@@ -303,17 +231,12 @@ namespace Papper
         /// <param name="mapping">name of the mapping</param>
         /// <param name="variable">name of the variable</param>
         /// <returns></returns>
-        public PlcItemAddress GetAddressOf(string mapping, string variable)
+        public PlcItemAddress GetAddressOf(IPlcReference var)
         {
-            if (string.IsNullOrWhiteSpace(mapping))
-                throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
-            if (string.IsNullOrWhiteSpace(variable))
-                throw new ArgumentException("The given argument could not be null or whitespace.", "variable");
-
             var result = new Dictionary<string, object>();
-            if (_mappings.TryGetValue(mapping, out IEntry entry))
+            if (_mappings.TryGetValue(var.Mapping, out IEntry entry))
             {
-                if (entry.Variables.TryGetValue(variable, out Tuple<int, Types.PlcObject> varibleEntry))
+                if (entry.Variables.TryGetValue(var.Variable, out Tuple<int, Types.PlcObject> varibleEntry))
                 {
                     return new PlcItemAddress(
                         varibleEntry.Item2.Selector,
@@ -323,239 +246,144 @@ namespace Papper
                         );
                 }
             }
-            throw new KeyNotFoundException($"There is variable <{variable}> for mapping <{mapping}>");
+            throw new KeyNotFoundException($"There is variable <{var.Variable}> for mapping <{var.Mapping}>");
         }
-        
-        
+
+        /// <summary>
+        /// Create a Subscription to watch data changes
+        /// </summary>
+        /// <returns></returns>
+        public Subscription CreateSubscription(ChangeDetectionStrategy changeDetectionStrategy = ChangeDetectionStrategy.Polling)
+        {
+            var sub = new Subscription(this, changeDetectionStrategy);
+            _subscriptions.Add(sub);
+            return sub;
+        }
+
+        public void OnDataChanges(IEnumerable<DataPack> changed)
+        {
+            foreach (var item in _subscriptions.ToList())
+            {
+                item.OnDataChanged(changed);
+            }
+        }
+
+
         #region internal read write operations
 
-        internal ReadResult ExecuteRead(Execution exec)
+        internal bool RemoveSubscription(Subscription sub)
         {
-            if (exec.Partitions != null)
-            {
-                if (exec.ValidationTimeMs <= 0 || exec.Partitions.Min(x => x.LastUpdate).AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now)
-                    return ReadPartitions(exec.PlcRawData, exec.Partitions) ? ReadResult.Successfully : ReadResult.Failed;
-            }
-            else if (exec.ValidationTimeMs <= 0 || exec.PlcRawData.LastUpdate.AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now)
-                return Read(exec.PlcRawData) ? ReadResult.Successfully : ReadResult.Failed;
-            return ReadResult.UseCache; //We need no read, because the timestamps are ok
+            return _subscriptions.Remove(sub);
         }
 
-        private bool Read(PlcRawData rawData)
+
+        internal Task ReadFromPlcAsync(Dictionary<Execution, DataPack> needUpdate)
         {
-            lock (rawData)
-            {
-                var size = rawData.Size > 0 ? rawData.Size : 1;
-                if (Read(rawData.Selector, rawData.Offset, size, rawData.Data))
-                {
-                    rawData.LastUpdate = DateTime.Now;
-                    return true;
-                }
-                return false;
-            }
+            return _readEventHandler?.Invoke(needUpdate.Values);
         }
 
-        private bool ReadPartitions(PlcRawData rawData, IEnumerable<Partiton> partitons)
+        internal Task WriteToPlcAsync(IEnumerable<DataPack> packs)
         {
-            lock (rawData)
-            {
-                try
-                {
-                    var startPartition = partitons.First();
-                    var offset = rawData.Offset + startPartition.Offset;
-                    var readSize = partitons.Sum(x => x.Size);
+            return _writeEventHandler?.Invoke(packs);
+        }
 
-                    Partiton prev = null;
-                    var blocks = new List<Tuple<int, int>>();
-                    foreach (var part in partitons)
+        internal Task UpdateMonitoringItemsAsync(IEnumerable<DataPack> monitoring, bool add = true)
+        {
+            return _updateHandler?.Invoke(monitoring, add);
+        }
+
+        internal List<Execution> DetermineExecutions<T>(IEnumerable<T> vars) where T: IPlcReference
+        {
+            return vars.GroupBy(x => x.Mapping)
+                                .Select((execution) => GetOrAddMapping(execution.Key, out IEntry entry)
+                                                                ? (execution, entry)
+                                                                : (null, null))
+                                .Where(x => x.execution != null)
+                                .SelectMany(x => x.entry.GetOperations(x.execution.Select(exec => exec.Variable)))
+                                .ToList();
+        }
+
+
+        internal PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions, 
+                                                      Dictionary<Execution, DataPack> needUpdate,
+                                                      DateTime? changedAfter = null,
+                                                      Func<IEnumerable<KeyValuePair<string, PlcObjectBinding>>, 
+                                                      IEnumerable<KeyValuePair<string, PlcObjectBinding>>> filter = null)
+        {
+            if (filter == null)
+            {
+                filter = (x) => x;
+            }
+            return executions.Select(exec => needUpdate.TryGetValue(exec, out var pack) ? exec.ApplyDataPack(pack) : exec)
+                             .Where(exec => changedAfter == null || exec.LastChange > changedAfter) // filter by data area
+                             .GroupBy(exec => exec.ExecutionResult) // Group by execution result
+                             .SelectMany(group => filter(group.SelectMany(g => g.Bindings))
+                                                       .Select(b => new PlcReadResult(b.Key, 
+                                                                                      b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache.Span), 
+                                                                                      group.Key)
+                                                       )).ToArray();
+        }
+
+        internal PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions, IEnumerable<DataPack> packs)
+        {
+            return packs.Select(pack => executions.FirstOrDefault(x => pack.Selector == x.PlcRawData.Selector &&
+                                                                pack.Offset == x.PlcRawData.Offset &&
+                                                                pack.Length == (x.PlcRawData.Size > 0 ? x.PlcRawData.Size : 1))?.ApplyDataPack(pack))
+                        .Where(exec => exec != null)
+                        .GroupBy(exec => exec.ExecutionResult) // Group by execution result
+                        .SelectMany(group => group.SelectMany(g => g.Bindings)
+                                                    .Select(b => new PlcReadResult(b.Key,
+                                                                    b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache.Span),
+                                                                    group.Key)
+                                                    )).ToArray();
+        }
+
+        internal Dictionary<Execution, DataPack> UpdateableItems(List<Execution> executions, bool onlyOutdated = true)
+        {
+            return executions.Where(exec => !onlyOutdated || exec.ValidationTimeMs <= 0 || exec.PlcRawData.LastUpdate.AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now)
+                           .Select(x => new KeyValuePair<Execution, DataPack>(x,
+                                                                            new DataPack
+                                                                            {
+                                                                                Selector = x.PlcRawData.Selector,
+                                                                                Offset = x.PlcRawData.Offset,
+                                                                                Length = x.PlcRawData.Size > 0 ? x.PlcRawData.Size : 1
+                                                                            }))
+                           .ToDictionary(x => x.Key, x => x.Value);
+        }
+
+
+        private bool GetOrAddMapping(string mapping, out IEntry entry)
+        {
+            if (_mappings.TryGetValue(mapping, out entry))
+            {
+                return true;
+            }
+
+            // If the mapping is an absolute mapping we can create an entry
+            switch (mapping)
+            {
+                case "IB":
+                case "FB":
+                case "QB":
+                case "TM":
+                case "CT":
+                case var s when Regex.IsMatch(s, "^DB\\d+$"):
                     {
-                        if (prev != null)
+                        using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
                         {
-                            var pos = prev.Offset + prev.Size;
-                            if (pos != part.Offset)
+                            if (!_mappings.TryGetValue(mapping, out entry))
                             {
-                                blocks.Add(new Tuple<int, int>(offset, pos));
-                                prev = null;
+                                entry = new RawEntry(this, mapping, ReadDataBlockSize, 0);
+                                using (upgradeableGuard.UpgradeToWriterLock())
+                                {
+                                    _mappings.TryAdd(mapping, entry);
+                                }
                             }
-                            else
-                                prev = part;
                         }
-                        else
-                        {
-                            offset = rawData.Offset + part.Offset; // offset of block
-                            prev = part;
-                        }
+                        return true;
                     }
-                    if (prev != null)
-                        blocks.Add(new Tuple<int, int>(offset, prev.Offset + prev.Size));
-
-                    var targetOffset = startPartition.Offset;
-                    foreach (var item in blocks)
-                    {
-                        if (Read(rawData.Selector, item.Item1, item.Item2, rawData.Data, targetOffset))
-                        {
-                            foreach (var partiton in partitons)
-                                partiton.LastUpdate = DateTime.Now;
-                        }
-                    }
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
-                return true;
             }
-        }
 
-        private bool Read(string selector, int offset, int length, byte[] data, int targetOffset = 0)
-        {
-            if (_onRead == null)
-                throw new NullReferenceException("The event handler for the read method is not registered.");
-
-            try
-            {
-                byte[] red = _onRead(selector,  offset, length);
-                if (red != null)
-                    red.CopyTo(data, targetOffset);
-                else
-                    return false;
-            }
-            catch(Exception)
-            {
-                return false;
-            }
-            return true;
-        }
-
-        private bool Write(PlcObjectBinding binding)
-        {
-            if (_onWrite == null)
-                throw new NullReferenceException("The event handler for the write method is not registered.");
-
-            lock (binding.RawData)
-            {
-                var rawData = binding.RawData;
-                var offset = rawData.Offset + binding.Offset;
-                if (binding.Size != 0)
-                {
-                    var size = binding.Size;
-                    var data = rawData.Data.SubArray(binding.Offset, size);
-                    return _onWrite(rawData.Selector, offset, data);
-                }
-
-                var bitData = rawData.Data.SubArray(binding.Offset,1);
-                return _onWrite(rawData.Selector, offset, bitData, Converter.SetBit(0, binding.MetaData.Offset.Bits, true));
-            }
-        }
-
-        #endregion
-
-        #region active polling
-
-        /// <summary>
-        /// Subscribe to changes of symbolic variables
-        /// </summary>
-        /// <param name="mapping">Name of the registered mappings</param>
-        /// <param name="callback">Callback method</param>
-        /// <returns></returns>
-        public bool SubscribeDataChanges(string mapping, OnChangeEventHandler callback)
-        {
-            if (_mappings.TryGetValue(mapping, out IEntry entry))
-            {
-                entry.OnChange += callback;
-                return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Subscribe to changes of symbolic variables
-        /// </summary>
-        /// <param name="mapping">Name of the registered mappings</param>
-        /// <param name="callback">Callback method</param>
-        /// <returns></returns>
-        public bool UnsubscribeDataChanges(string mapping, OnChangeEventHandler callback)
-        {
-            if (_mappings.TryGetValue(mapping, out IEntry entry))
-            {
-                entry.OnChange -= callback;
-                return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Subscribe to changes of absolute variables
-        /// </summary>
-        /// <param name="area">DB??, FB, IB, ...</param>
-        /// <param name="callback">Callback method</param>
-        /// <returns></returns>
-        public bool SubscribeRawDataChanges(string area, OnChangeEventHandler callback)
-        {
-            var key = $"{ADDRESS_PREFIX}{area}";
-            using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
-            {
-                if (!_mappings.TryGetValue(key, out IEntry entry))
-                {
-                    entry = new RawEntry(this, area, ReadDataBlockSize, 0);
-                    using (upgradeableGuard.UpgradeToWriterLock())
-                        _mappings.TryAdd(key, entry);
-                }
-
-                entry.OnChange += callback;
-                return true;
-            }
-        }
-
-        /// <summary>
-        /// Unsubscribe to changes of absolute variables
-        /// </summary>
-        /// <param name="area">DB??, FB, IB, ...</param>
-        /// <param name="callback">Callback method</param>
-        /// <returns></returns>
-        public bool UnsubscribeRawDataChanges(string area, OnChangeEventHandler callback)
-        {
-            var key = $"{ADDRESS_PREFIX}{area}";
-            if (_mappings.TryGetValue(key, out IEntry entry))
-            {
-                entry.OnChange -= callback;
-                return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Activate or deactivate data change detection
-        /// </summary>
-        /// <param name="enable"></param>
-        /// <param name="mapping"></param>
-        /// <param name="vars"></param>
-        /// <returns></returns>
-        public bool SetActiveState(bool enable, string mapping, params string[] vars)
-        {
-            if (string.IsNullOrWhiteSpace(mapping))
-                throw new ArgumentException("The given argument could not be null or whitespace.", "mapping");
-            var result = new Dictionary<string, object>();
-            if (_mappings.TryGetValue(mapping, out IEntry entry))
-                return entry.SetActiveState(enable, vars);
-            return false;
-        }
-
-        /// <summary>
-        /// Activate or deactivate data change detection
-        /// </summary>
-        /// <param name="enable"></param>
-        /// <param name="area"></param>
-        /// <param name="vars"></param>
-        /// <returns></returns>
-        public bool SetRawActiveState(bool enable, string area, params string[] vars)
-        {
-            if (string.IsNullOrWhiteSpace(area))
-                throw new ArgumentException("The given argument could not be null or whitespace.", "area");
-            var key = $"$ABSSYMBOLS$_{area}";
-            var result = new Dictionary<string, object>();
-            if (_mappings.TryGetValue(key, out IEntry entry))
-                return entry.SetActiveState(enable, vars);
             return false;
         }
 

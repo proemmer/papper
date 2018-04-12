@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using Papper.Helper;
+using Papper.Internal;
 
 namespace Papper.Types
 {
@@ -12,16 +12,14 @@ namespace Papper.Types
             Size = new PlcSize { Bytes = 2 };
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            if (plcObjectBinding.Data == null || !plcObjectBinding.Data.Any())
+            if (data.IsEmpty)
             {
                 return TimeSpan.MinValue;
             }
-            var subset = plcObjectBinding.Data.Skip(plcObjectBinding.Offset).Take(Size.Bytes).ToArray();
-
-            var w1 = plcObjectBinding.Data[plcObjectBinding.Offset + 1].GetBcdByte();
-            var idx0Value = plcObjectBinding.Data[plcObjectBinding.Offset];
+            var w1 = data[plcObjectBinding.Offset + 1].GetBcdByte();
+            var idx0Value = data[plcObjectBinding.Offset];
             var w2 = ((idx0Value & 0x0f));
             long number = w2 * 100 + w1;
             switch ((idx0Value >> 4) & 0x03)
@@ -44,7 +42,7 @@ namespace Papper.Types
             return new TimeSpan(number);  // Is this really correct?
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             var time = (TimeSpan)value;
             byte valueBase;
@@ -80,8 +78,8 @@ namespace Papper.Types
             var p2 = ((val - p3 * 100) / 10);
             var p1 = (val - p3 * 100 - p2 * 10);
 
-            plcObjectBinding.Data[plcObjectBinding.Offset] = Convert.ToByte(valueBase << 4 | p3);
-            plcObjectBinding.Data[plcObjectBinding.Offset] = Convert.ToByte((p2 << 4 | p1));
+            data[plcObjectBinding.Offset] = Convert.ToByte(valueBase << 4 | p3);
+            data[plcObjectBinding.Offset] = Convert.ToByte((p2 << 4 | p1));
         }
     }
 }

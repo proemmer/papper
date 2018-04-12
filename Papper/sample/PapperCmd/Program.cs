@@ -1,9 +1,11 @@
 ﻿using Papper;
 using Papper.Attributes;
+using Papper.Notification;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace PapperCmd
 {
@@ -102,7 +104,7 @@ namespace PapperCmd
         private static bool _toggle;
         private class PlcBlock
         {
-            public byte[] Data { get; private set; }
+            public Memory<byte> Data { get; private set; }
             public int MinSize { get { return Data.Length; } }
 
             public PlcBlock(int minSize)
@@ -115,7 +117,7 @@ namespace PapperCmd
                 if(Data.Length < size)
                 {
                     var tmp = new byte[size];
-                    Array.Copy(Data, 0, tmp, 0, Data.Length);
+                    Data.CopyTo(tmp);
                     Data = tmp;
                 }
             }
@@ -125,10 +127,7 @@ namespace PapperCmd
 
         public static void Main(string[] args)
         {
-            var papper = new PlcDataMapper(960);
-            papper.OnRead += Papper_OnRead;
-            papper.OnWrite += Papper_OnWrite;
-
+            var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
             papper.AddMapping(typeof(DB_Safety));
 
             PerformReadFull(papper);
@@ -141,15 +140,16 @@ namespace PapperCmd
             PerformRawDataChange(papper);
         }
 
+
+
         private static void PerformReadFull(PlcDataMapper papper)
         {
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.DarkGreen;
-            var result = papper.Read("DB_Safety",
-                                     "SafeMotion");
+            var result = papper.ReadAsync(PlcReadReference.FromAddress("DB_Safety.SafeMotion")).GetAwaiter().GetResult();
             foreach (var item in result)
             {
-                Console.WriteLine($"Red:{item.Key} = {item.Value}");
+                Console.WriteLine($"Red:{item.Address} = {item.Value}");
             }
             Console.ResetColor();
         }
@@ -158,15 +158,15 @@ namespace PapperCmd
         {
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.DarkGreen;
-            var result = papper.Read("DB_Safety", 
+            var result = papper.ReadAsync(PlcReadReference.FromRoot("DB_Safety", 
                                      "SafeMotion.Header.NumberOfActiveSlots", 
                                      "SafeMotion.Header.Generated",
                                      "SafeMotion.Slots[42].SlotId",
                                      "SafeMotion.Slots[42].HmiId",
-                                     "SafeMotion.Slots[42].Commands.TakeoverPermitted");
+                                     "SafeMotion.Slots[42].Commands.TakeoverPermitted").ToArray()).GetAwaiter().GetResult(); ;
             foreach (var item in result)
             {
-                Console.WriteLine($"Red:{item.Key} = {item.Value}");
+                Console.WriteLine($"Red:{item.Address} = {item.Value}");
             }
             Console.ResetColor();
         }
@@ -189,7 +189,7 @@ namespace PapperCmd
             {
                 Console.WriteLine($"Write:{item.Key} = {item.Value}");
             }
-            var result = papper.Write("DB_Safety", writeData);
+            var result = papper.WriteAsync(PlcWriteReference.FromRoot("DB_Safety", writeData.ToArray()).ToArray());
             Console.ResetColor();
         }
 
@@ -207,6 +207,7 @@ namespace PapperCmd
 
         private static void PerformDataChange(PlcDataMapper papper)
         {
+            var mapping = "DB_Safety";
             Console.WriteLine();
             Console.WriteLine($"Start PerformDataChange");
             Console.ForegroundColor = ConsoleColor.Red;
@@ -217,15 +218,14 @@ namespace PapperCmd
                 };
             _toggle = !_toggle;
             var are = new AutoResetEvent(false);
-            OnChangeEventHandler callback = (s, e) =>
+            void callback(object s, PlcNotificationEventArgs e)
             {
-                Console.WriteLine($"On DataChanged :{e.From}:");
                 foreach (var item in e)
-                    Console.WriteLine($"DataChanged detected:{e.From}: {item.Key} = {item.Value}");
+                    Console.WriteLine($"DataChanged detected: {item.Address} = {item.Value}");
                 are.Set();
-            };
-            papper.SubscribeDataChanges("DB_Safety", callback);
-            papper.SetActiveState(true, "DB_Safety", writeData.Keys.ToArray());
+            }
+            var items = writeData.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray();
+            var subscription = papper.SubscribeDataChanges(callback, items);
 
             //waiting for initialize
             if (!are.WaitOne(10000))
@@ -234,7 +234,7 @@ namespace PapperCmd
             foreach (var item in writeData)
                 Console.WriteLine($"Write:{item.Key} = {item.Value}");
 
-            var result = papper.Write("DB_Safety", writeData);
+            var result = papper.WriteAsync(PlcWriteReference.FromRoot("DB_Safety", writeData.ToArray()).ToArray()).GetAwaiter().GetResult();
 
             //waiting for write update
             if (!are.WaitOne(10000))
@@ -244,8 +244,7 @@ namespace PapperCmd
             if (are.WaitOne(5000))
                 Console.WriteLine($"Error-> no change!!!!!");
 
-            papper.SetActiveState(false, "DB_Safety", writeData.Keys.ToArray());
-            papper.UnsubscribeDataChanges("DB_Safety", callback);
+            subscription.Dispose();
             Console.ResetColor();
             Console.WriteLine($"Finished PerformDataChange");
         }
@@ -263,60 +262,60 @@ namespace PapperCmd
             var are = new AutoResetEvent(false);
             OnChangeEventHandler callback = (s, e) =>
             {
-                Console.WriteLine($"On DataChanged :{e.From}:");
                 foreach (var item in e)
-                    Console.WriteLine($"DataChanged detected:{e.From}: {item.Key} = {item.Value}");
+                    Console.WriteLine($"DataChanged detected:{item.Address} = {item.Value}");
                 are.Set();
             };
-            papper.SubscribeRawDataChanges("DB15", callback);
-            papper.SetRawActiveState(true, "DB15", writeData.Keys.ToArray());
+            //papper.SubscribeRawDataChanges("DB15", callback);
+            //papper.SetRawActiveState(true, "DB15", writeData.Keys.ToArray());
 
-            //waiting for initialize
-            if (!are.WaitOne(10000))
-                Console.WriteLine($"Error-> change!!!!!");
+            ////waiting for initialize
+            //if (!are.WaitOne(10000))
+            //    Console.WriteLine($"Error-> change!!!!!");
 
-            foreach (var item in writeData)
-                Console.WriteLine($"Write:{item.Key} = {item.Value}");
+            //foreach (var item in writeData)
+            //    Console.WriteLine($"Write:{item.Key} = {item.Value}");
 
-            var result = papper.WriteAbs("DB15", writeData);
+            //var result = papper.WriteAbs("DB15", writeData);
 
-            //waiting for write update
-            if (!are.WaitOne(10000))
-                Console.WriteLine($"Error-> change!!!!!");
+            ////waiting for write update
+            //if (!are.WaitOne(10000))
+            //    Console.WriteLine($"Error-> change!!!!!");
 
-            //test if data change only occurred if data changed
-            if (are.WaitOne(5000))
-                Console.WriteLine($"Error-> no change!!!!!");
+            ////test if data change only occurred if data changed
+            //if (are.WaitOne(5000))
+            //    Console.WriteLine($"Error-> no change!!!!!");
 
-            papper.SetRawActiveState(false, "DB15", writeData.Keys.ToArray());
-            papper.UnsubscribeDataChanges("DB15", callback);
+            //papper.SetRawActiveState(false, "DB15", writeData.Keys.ToArray());
+            //papper.Unsubscribe("DB15", callback);
             Console.ResetColor();
             Console.WriteLine($"Finished PerformDataChange");
         }
 
-
-        private static bool Papper_OnWrite(string selector, int offset, byte[] data, byte bitMask = 0)
+        private static Task Papper_OnWrite(IEnumerable<DataPack> reads)
         {
-            try
+            var result = reads.ToList();
+            foreach (var item in result)
             {
-                var length = data.Length;
-                if (bitMask == 0)
+                if(item.BitMask == 0)
                 {
-                    Console.WriteLine($"OnWrite: selector:{selector}; offset:{offset}; length:{length}");
-                    Array.Copy(data, 0, GetPlcEntry(selector, offset + length).Data, offset, length);
+                    Console.WriteLine($"OnWrite: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
+                    item.Data.Slice(0, item.Length).CopyTo(GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length));
                 }
                 else
                 {
-                    foreach (var item in data)
+                    for (int j = 0; j < item.Data.Length; j++)
                     {
-                        var bm = bitMask;
+                        var bItem = item.Data.Span[j];
+                        var bm = item.BitMask;
                         for (var i = 0; i < 8; i++)
                         {
                             var bit = bm.GetBit(i);
                             if (bit)
                             {
-                                var b = GetPlcEntry(selector, offset + 1).Data[offset];
-                                GetPlcEntry(selector, offset + 1).Data[offset] = b.SetBit(i, item.GetBit( i));
+                                var b = GetPlcEntry(item.Selector, item.Offset + 1).Data.Span[item.Offset];
+                                GetPlcEntry(item.Selector, item.Offset + 1).Data.Span[item.Offset] = b.SetBit(i, bItem.GetBit(i));
+                                item.ExecutionResult = ExecutionResult.Ok;
                                 bm = bm.SetBit(i, false);
                                 if (bm == 0)
                                     break;
@@ -324,19 +323,69 @@ namespace PapperCmd
                         }
                     }
                 }
-                return true;
             }
-            catch(Exception)
-            {
-                return false;
-            }
+            return Task.CompletedTask;
         }
 
-        private static byte[] Papper_OnRead(string selector, int offset, int length)
+
+        //private static bool Papper_OnWrite(string selector, int offset, byte[] data, byte bitMask = 0)
+        //{
+        //    try
+        //    {
+        //        var length = data.Length;
+        //        if (bitMask == 0)
+        //        {
+        //            Console.WriteLine($"OnWrite: selector:{selector}; offset:{offset}; length:{length}");
+        //            Array.Copy(data, 0, GetPlcEntry(selector, offset + length).Data, offset, length);
+        //        }
+        //        else
+        //        {
+        //            foreach (var item in data)
+        //            {
+        //                var bm = bitMask;
+        //                for (var i = 0; i < 8; i++)
+        //                {
+        //                    var bit = bm.GetBit(i);
+        //                    if (bit)
+        //                    {
+        //                        var b = GetPlcEntry(selector, offset + 1).Data[offset];
+        //                        GetPlcEntry(selector, offset + 1).Data[offset] = b.SetBit(i, item.GetBit( i));
+        //                        bm = bm.SetBit(i, false);
+        //                        if (bm == 0)
+        //                            break;
+        //                    }
+        //                }
+        //            }
+        //        }
+        //        return true;
+        //    }
+        //    catch(Exception)
+        //    {
+        //        return false;
+        //    }
+        //}
+
+
+        private static Task Papper_OnRead(IEnumerable<DataPack> reads)
         {
-            Console.WriteLine($"OnRead: selector:{selector}; offset:{offset}; length:{length}");
-            return GetPlcEntry(selector, offset + length).Data.SubArray(offset, length);
+            var result = reads.ToList();
+            foreach (var item in result)
+            {
+                Console.WriteLine($"OnRead: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
+                var res = GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length);
+                if (!res.IsEmpty)
+                {
+                    item.ApplyData(res);
+                    item.ExecutionResult = ExecutionResult.Ok;
+                }
+                else
+                {
+                    item.ExecutionResult = ExecutionResult.Error;
+                }
+            }
+            return Task.CompletedTask;
         }
+
 
     }
 }

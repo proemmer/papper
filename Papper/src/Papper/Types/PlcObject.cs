@@ -3,9 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
-using Papper.Common;
-using Papper.Helper;
-using Papper.Interfaces;
+using Papper.Internal;
 
 namespace Papper.Types
 {
@@ -67,8 +65,8 @@ namespace Papper.Types
         }
 
 
-        public abstract object ConvertFromRaw(PlcObjectBinding plcObjectBinding);
-        public abstract void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding);
+        public abstract object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data);
+        public abstract void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data);
 
         public virtual object StringToObject(string value)
         {

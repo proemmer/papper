@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -12,264 +13,52 @@ namespace Papper
         private const string HexDigits = "0123456789ABCDEF";
 
         /// <summary>
-        /// Convert numeric values to a byte array with swapped bytes
+        /// Reads an Single out of a read-only span of bytes as big endian.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public static byte[] SetSwap<T>(this T value)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Single ReadSingleBigEndian(ReadOnlySpan<byte> buffer)
         {
-            byte[] buffer = null;
-            object temp = value;
-            if (value is UInt32)
+            Span<byte> result = new Span<byte>(buffer.ToArray());
+            
+            if (BitConverter.IsLittleEndian)
             {
-                buffer = BitConverter.GetBytes(SwapDWord(Convert.ToUInt32(temp)));
+                result.Reverse();
             }
-            else if (value is Int32)
-            {
-                buffer = BitConverter.GetBytes(SwapDInt(Convert.ToInt32(temp)));
-            }
-            else if (value is byte)
-            {
-                buffer = new byte[1];
-                buffer[0] = (byte)temp;
-            }
-            else if (value is UInt16)
-            {
-                buffer = BitConverter.GetBytes(SwapWord(Convert.ToUInt16(temp)));
-            }
-            else if (value is Int16)
-            {
-                buffer = BitConverter.GetBytes(SwapInt(Convert.ToInt16(temp)));
-            }
-            else if (value is Single)
-            {
-                buffer = BitConverter.GetBytes(SwapSingle(Convert.ToSingle(temp)));
-            }
-            return buffer;
+
+            return BitConverter.ToSingle(result.ToArray(), 0); ;
+
         }
 
         /// <summary>
-        /// Convert numeric values to a byte array
+        /// Writes an Single into a span of bytes as big endian.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public static byte[] SetNoSwap<T>(this T value)
-        {
-            byte[] buffer = null;
-            object temp = value;
-            if (value is UInt32)
-            {
-                buffer = BitConverter.GetBytes((UInt32)temp);
-            }
-            else if (value is Int32)
-            {
-                buffer = BitConverter.GetBytes((Int32)temp);
-            }
-            else if (value is byte)
-            {
-                buffer = new byte[1];
-                buffer[0] = (byte)temp;
-            }
-            else if (value is UInt16)
-            {
-                buffer = BitConverter.GetBytes((UInt16)temp);
-            }
-            else if (value is Int16)
-            {
-                buffer = BitConverter.GetBytes((Int16)temp);
-            }
-            else if (value is Single)
-            {
-                buffer = ToByteArray(value, 4);
-            }
 
-            return buffer;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void WriteSingleBigEndian(Span<byte> buffer, Single value)
+        {
+            var bytes = BitConverter.GetBytes(value).AsSpan();
+            if (BitConverter.IsLittleEndian)
+            {
+                if (BitConverter.IsLittleEndian)
+                    bytes.Reverse();
+            }
+            bytes.CopyTo(buffer);
         }
 
-        /// <summary>
-        /// Extract a numeric value from an IEnumerable of byte with swapped bytes
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="buffer"></param>
-        /// <param name="offset"></param>
-        /// <returns></returns>
-        public static T GetSwap<T>(this IEnumerable<byte> buffer, int offset = 0)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool ReadBit(ReadOnlySpan<byte> buffer, int bit)
         {
-            return buffer.Skip(offset).Take(sizeof(Single)).ToArray().GetSwap<T>();
+            return (((byte)(buffer[0] >> bit)) & 1) == 1;
         }
 
-        /// <summary>
-        /// Extract a numeric value from an byte array with swapped bytes
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="buffer"></param>
-        /// <param name="offset"></param>
-        /// <returns></returns>
-        public static T GetSwap<T>(this byte[] buffer, int offset = 0)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void WriteBit(Span<byte> buffer, int bit, bool value)
         {
-            object value = default(T);
-
-            if (value is UInt32)
-            {
-                value = SwapDWord(BitConverter.ToUInt32(buffer, offset));
-            }
-            else if (value is Int32)
-            {
-                value = SwapDInt(BitConverter.ToInt32(buffer, offset));
-            }
-            else if (value is byte)
-            {
-                value = buffer[offset];
-            }
-            else if (value is UInt16)
-            {
-                value = SwapWord(BitConverter.ToUInt16(buffer, offset));
-            }
-            else if (value is Int16)
-            {
-                value = SwapInt(BitConverter.ToInt16(buffer, offset));
-            }
-            else if (value is Single)
-            {
-                value = SwapSingle(BitConverter.ToSingle(buffer, offset));
-            }
-
-            return (T)value;
-        }
-
-        /// <summary>
-        /// Extract a numeric value from an IEnumerable of byte
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="buffer"></param>
-        /// <param name="offset"></param>
-        /// <returns></returns>
-        public static T GetNoSwap<T>(this IEnumerable<byte> buffer, int offset = 0)
-        {
-            return buffer.Skip(offset).Take(sizeof(Single)).ToArray().GetNoSwap<T>();
-        }
-
-        /// <summary>
-        /// Extract a numeric value from an byte array
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="buffer"></param>
-        /// <param name="offset"></param>
-        /// <returns></returns>
-        public static T GetNoSwap<T>(this byte[] buffer, int offset = 0)
-        {
-            object value = default(T);
-
-            if (value is UInt32)
-            {
-                value = BitConverter.ToUInt32(buffer, offset);
-            }
-            else if (value is Int32)
-            {
-                value = BitConverter.ToInt32(buffer, offset);
-            }
-            else if (value is byte)
-            {
-                value = buffer[0];
-            }
-            else if (value is UInt16)
-            {
-                value = BitConverter.ToUInt16(buffer, offset);
-            }
-            else if (value is Int16)
-            {
-                value = BitConverter.ToInt16(buffer, offset);
-            }
-            else if (value is Single)
-            {
-                value = (Single)BitConverter.ToSingle(buffer, offset);
-            }
-
-            return (T)value;
-        }
-
-        /// <summary>
-        /// Swap bytes in a word
-        /// </summary>
-        /// <param name="word"></param>
-        /// <returns></returns>
-        public static UInt16 SwapWord(this UInt16 word)
-        {
-            return (UInt16)(
-                    ((word & 0xFFU) << 8) |
-                    ((word & 0xFF00U) >> 8));
-        }
-
-        /// <summary>
-        /// swap bytes in a dword
-        /// </summary>
-        /// <param name="dword"></param>
-        /// <returns></returns>
-        public static UInt32 SwapDWord(this UInt32 dword)
-        {
-            return (
-                    (UInt32)((dword & 0x000000FFUL) << 24) |
-                    (UInt32)((dword & 0x0000FF00UL) << 8) |
-                    (UInt32)((dword & 0x00FF0000UL) >> 8) |
-                    (UInt32)((dword & 0xFF000000UL) >> 24)
-                    );
-        }
-
-        /// <summary>
-        /// swap bytes in an integer
-        /// </summary>
-        /// <param name="intVal"></param>
-        /// <returns></returns>
-        public static Int16 SwapInt(this Int16 intVal)
-        {
-            var buffer = new byte[2];
-            var array = intVal.ToByteArray(2);
-            buffer[0] = array[1];
-            buffer[1] = array[0];
-            return BitConverter.ToInt16(buffer, 0);
-        }
-
-        /// <summary>
-        /// swap bytes in an double integer
-        /// </summary>
-        /// <param name="intVal"></param>
-        /// <returns></returns>
-        public static Int32 SwapDInt(this Int32 intVal)
-        {
-            var buffer = new byte[4];
-            var array = intVal.ToByteArray(4);
-            buffer[0] = array[3];
-            buffer[1] = array[2];
-            buffer[2] = array[1];
-            buffer[3] = array[0];
-            return BitConverter.ToInt32(buffer, 0);
+            buffer[0] = value ? (byte)(buffer[0] | (1U << bit)) : (byte)(buffer[0] & (~(1U << bit)));
         }
 
 
-        /// <summary>
-        /// swap bytes in an single
-        /// </summary>
-        /// <param name="intVal"></param>
-        /// <returns></returns>
-        public static Single SwapSingle(this Single intVal)
-        {
-            var buffer = new byte[4];
-            var array = intVal.ToByteArray(4);
-            buffer[0] = array[3];
-            buffer[1] = array[2];
-            buffer[2] = array[1];
-            buffer[3] = array[0];
-            return BitConverter.ToSingle(buffer, 0);
-        }
-
-        /// <summary>
-        /// Get a bit by its nummer brom a byte
-        /// </summary>
-        /// <param name="data"></param>
-        /// <param name="bit"></param>
-        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool GetBit(this byte data, int bit)
         {
             // Shift the bit to the first location
@@ -279,13 +68,7 @@ namespace Papper
             return (data & 1) == 1;
         }
 
-        /// <summary>
-        /// Set a bit by its number in a byte
-        /// </summary>
-        /// <param name="data"></param>
-        /// <param name="bit"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte SetBit(this byte data, int bit, bool value)
         {
             if (value)
@@ -363,8 +146,7 @@ namespace Papper
         /// <returns></returns>
         public static byte[] ToByteArray<T>(this T value, int maxLength)
         {
-            var str = value as string;
-            if(str != null) return Encoding.ASCII.GetBytes(str).SubArray(0, maxLength);
+            if (value is string str) return Encoding.ASCII.GetBytes(str).SubArray(0, maxLength);
             var rawdata = new byte[Marshal.SizeOf(value)];
             var handle = GCHandle.Alloc(rawdata, GCHandleType.Pinned);
             Marshal.StructureToPtr(value, handle.AddrOfPinnedObject(), false);
@@ -398,7 +180,7 @@ namespace Papper
         /// <returns></returns>
         public static int GetBcdByte(this byte b)
         {
-            //Acepted Values 00 to 99
+            //Accepted Values 00 to 99
             int bt1 = b;
             var neg = (bt1 & 0xf0) == 0xf0;
             if (neg)
@@ -417,7 +199,7 @@ namespace Papper
         {
             int b0 = 0, b1 = 0;
 
-            //setze höchstes bit == negativer wert!
+            //set highest bit == negative value!
             if (value < 0)
                 return (byte)((b1 << 4) + b0);
             b1 = (value % 100 / 10);
@@ -431,7 +213,7 @@ namespace Papper
         /// <param name="b"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        public static int GetBcdWord(this byte[] b, int offset = 0)
+        public static int GetBcdWord(this Span<byte> b, int offset = 0)
         {
             int bt1 = b[offset];
             int bt2 = b[offset + 1];
@@ -472,7 +254,7 @@ namespace Papper
             return b;
         }
 
-        public static int GetBcdDWord(this byte[] b, int offset = 0)
+        public static int GetBcdDWord(this Span<byte> b, int offset = 0)
         {
             int bt1 = b[offset];
             int bt2 = b[offset + 1];

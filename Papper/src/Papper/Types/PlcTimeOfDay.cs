@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Linq;
-using Papper.Helper;
+using Papper.Internal;
 
 namespace Papper.Types
 {
@@ -12,19 +13,17 @@ namespace Papper.Types
             Size = new PlcSize { Bytes = 4 };
         }
 
-        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding)
+        public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            if (plcObjectBinding.Data == null || !plcObjectBinding.Data.Any())
+            if (data.IsEmpty)
                 return TimeSpan.MinValue;
-            return TimeSpan.FromMilliseconds(plcObjectBinding.Data.GetSwap<uint>(plcObjectBinding.Offset));
+            return TimeSpan.FromMilliseconds(BinaryPrimitives.ReadUInt32BigEndian(data.Slice(plcObjectBinding.Offset)));
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding)
+        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             var time = (TimeSpan)value;
-            var subset = Convert.ToUInt32(time.TotalMilliseconds).SetSwap();
-            for (var i = 0; i < subset.Length; i++)
-                plcObjectBinding.Data[plcObjectBinding.Offset + i] = subset[i];
+            BinaryPrimitives.WriteUInt32BigEndian(data.Slice(plcObjectBinding.Offset), Convert.ToUInt32(time.TotalMilliseconds));
         }
     }
 }
