@@ -10,7 +10,8 @@
     <AssemblyName>Papper</AssemblyName>
     <PackageId>Papper</PackageId>
     <PackageTags>siemens plc datamapper S7</PackageTags>
-    <PackageReleaseNotes>* Fixed a bug in PlcArray (deserialisation was not working with complex types)</PackageReleaseNotes>
+    <PackageReleaseNotes>* BREAKING CHANGES *
+* new design *</PackageReleaseNotes>
     <PackageProjectUrl>http://proemmer.github.io/papper</PackageProjectUrl>
     <PackageLicenseUrl>https://opensource.org/licenses/Apache-2.0</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
@@ -22,7 +23,7 @@
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
-    <Version>2.0.0-beta2</Version>
+    <Version>2.0.0-beta1</Version>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <FileVersion>2.0.0.0</FileVersion>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
