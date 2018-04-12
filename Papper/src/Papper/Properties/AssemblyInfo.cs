@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Papper")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Papper (Plc Data Mapper) is a library to map C# data structures to S7-Plc data structures.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("insite-GmbH")]
 [assembly: AssemblyProduct("Papper")]

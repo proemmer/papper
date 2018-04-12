@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Papper (Plc Data Mapper)</Description>
-    <Copyright>Copyright 2017</Copyright>
+    <Description>Papper (Plc Data Mapper) is a library to map C# data structures to S7-Plc data structures.</Description>
+    <Copyright>Copyright © Benjamin Proemmer 2016-2018</Copyright>
     <AssemblyTitle>papper</AssemblyTitle>
-    <VersionPrefix>1.0.5</VersionPrefix>
+    <VersionPrefix>1.0.10</VersionPrefix>
     <Authors>Benjamin Proemmer</Authors>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Papper</AssemblyName>
@@ -29,6 +29,8 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/proemmer/papper.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <AssemblyVersion>1.0.10.0</AssemblyVersion>
+    <FileVersion>1.0.10.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

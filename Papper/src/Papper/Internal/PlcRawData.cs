@@ -127,7 +127,7 @@ namespace Papper.Internal
                 } while (size > 0);
                 return partitions;
             }
-            
+			
             return Partitons.Values.ToList();
         }
 
