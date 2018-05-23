@@ -108,7 +108,7 @@ namespace Papper.Internal
                     if (Partitons.TryGetValue(partitionId, out Partiton partiton) && !partitions.Contains(partiton))
                     {
                         partitions.Add(partiton);
-                        var off = (partiton.Size - offset);
+                        var off = offset > 0 ? ((partiton.Offset + partiton.Size) - offset) : partiton.Size;
                         if (off > 0)
                         {
                             size -= off;
