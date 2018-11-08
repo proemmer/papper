@@ -42,10 +42,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="4.4.1" />
-    <PackageReference Include="System.Buffers" Version="4.4.0" />
-    <PackageReference Include="System.Memory" Version="4.5.0-preview1-26122-01" />
-    <PackageReference Include="System.Reflection.TypeExtensions" Version="4.4.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
+    <PackageReference Include="System.Buffers" Version="4.5.0" />
+    <PackageReference Include="System.Memory" Version="4.5.1" />
+    <PackageReference Include="System.Reflection.TypeExtensions" Version="4.5.1" />
     <PackageReference Include="System.Threading.Thread" Version="4.3.0" />
   </ItemGroup>
 

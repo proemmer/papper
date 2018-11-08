@@ -114,22 +114,57 @@ namespace Papper
             if (!mappingAttributes.Any())
                 throw new ArgumentException("The given type has no MappingAttribute", "type");
 
-            foreach (var mapping in mappingAttributes)
-            {
-
-                using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
-                {
-                    if (_mappings.TryGetValue(mapping.Name, out IEntry existingMapping))
-                    {
-                        var mappingEntry = existingMapping as MappingEntry;
-                        return mappingEntry.Mapping == mapping && mappingEntry.Type == type;
-                    }
-                    using (upgradeableGuard.UpgradeToWriterLock())
-                        _mappings.TryAdd(mapping.Name, new MappingEntry(this, mapping, type, _tree, ReadDataBlockSize, mapping.ObservationRate));
-                }
-            }
-            return true;
+            return AddMappingsInternal(type, mappingAttributes);
         }
+
+        /// <summary>
+        /// Add a type with and a list og MappingAttributes to register this type as an mapping for read and write operations
+        /// </summary>
+        /// <param name="type">Could be any type</param>
+        /// <param name="mappingAttributes">mappings to add</param>
+        /// <returns></returns>
+        public bool AddMapping(Type type, params MappingAttribute[] mappingAttributes)
+        {
+            if (type == null)
+                throw new ArgumentNullException("type");
+
+            if (!mappingAttributes.Any())
+                throw new ArgumentException("No MappingAttributes given");
+
+            return AddMappingsInternal(type, mappingAttributes);
+        }
+
+        /// <summary>
+        /// Removes all mappings defined by the mapping attributes for the given type.
+        /// </summary>
+        /// <param name="type">Has to be a type with at least one MappingAttribute</param>
+        /// <returns></returns>
+        public bool RemoveMappings(Type type)
+        {
+            if (type == null)
+                throw new ArgumentNullException("type");
+
+            var mappingAttributes = type.GetTypeInfo().GetCustomAttributes<MappingAttribute>().ToList();
+            if (!mappingAttributes.Any())
+                throw new ArgumentException("The given type has no MappingAttribute", "type");
+
+            return RemoveMappingsInternal(mappingAttributes.Select(x => x.Name));
+        }
+
+        /// <summary>
+        /// Removes all given mappings.
+        /// </summary>
+        /// <param name="mappings">Mappings names to remove</param>
+        /// <returns></returns>
+        public bool RemoveMappings(IEnumerable<string> mappings) => RemoveMappingsInternal(mappings);
+
+        /// <summary>
+        /// Removes all given mappings.
+        /// </summary>
+        /// <param name="mappings">Mappings names to remove</param>
+        /// <returns></returns>
+        public bool RemoveMappings(params string[] mappings) => RemoveMappingsInternal(mappings);
+
 
         /// <summary>
         /// Read variables from an given mapping
@@ -389,5 +424,50 @@ namespace Papper
 
         #endregion
 
+
+        private bool AddMappingsInternal(Type type, IEnumerable<MappingAttribute> mappingAttributes)
+        {
+            foreach (var mapping in mappingAttributes)
+            {
+                using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
+                {
+                    if (_mappings.TryGetValue(mapping.Name, out IEntry existingMapping) && existingMapping is MappingEntry mappingEntry)
+                    {
+                        if (mappingEntry.Mapping == mapping && mappingEntry.Type == type)
+                            continue; // mapping already exists
+                        return false; // mapping is invlaid, because it exists for a nother type
+                    }
+                    using (upgradeableGuard.UpgradeToWriterLock())
+                        _mappings.TryAdd(mapping.Name, new MappingEntry(this, mapping, type, _tree, ReadDataBlockSize, mapping.ObservationRate));
+                }
+            }
+            return true;
+        }
+
+
+        private bool RemoveMappingsInternal(IEnumerable<string> mappingNames)
+        {
+            foreach (var mapping in mappingNames)
+            {
+                using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
+                {
+                    if (_mappings.TryGetValue(mapping, out IEntry existingMapping) && existingMapping is MappingEntry mappingEntry)
+                    {
+                        if (mappingEntry.Mapping.Name == mapping)
+                        {
+                            using (upgradeableGuard.UpgradeToWriterLock())
+                            {
+                                if(!_mappings.TryRemove(mapping, out var removed))
+                                {
+                                    return false;
+                                }
+                            }
+                        }
+                     
+                    }
+                }
+            }
+            return true;
+        }
     }
 }

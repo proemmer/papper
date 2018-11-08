@@ -79,7 +79,7 @@ namespace Papper.Types
             var p1 = (val - p3 * 100 - p2 * 10);
 
             data[plcObjectBinding.Offset] = Convert.ToByte(valueBase << 4 | p3);
-            data[plcObjectBinding.Offset] = Convert.ToByte((p2 << 4 | p1));
+            data[plcObjectBinding.Offset + 1] = Convert.ToByte((p2 << 4 | p1));
         }
     }
 }
