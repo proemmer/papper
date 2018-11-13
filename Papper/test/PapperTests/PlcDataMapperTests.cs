@@ -533,7 +533,7 @@ namespace UnitTestSuit
         public void TestExternalDataChange()
         {
             
-            var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite, UpdateHandler, OptimizerType.Items);
+            var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite, UpdateHandler, ReadMetaData, OptimizerType.Items);
             papper.AddMapping(typeof(DB_Safety));
             MockPlc.OnItemChanged = (items) => 
             {
@@ -671,6 +671,15 @@ namespace UnitTestSuit
             foreach (var item in monitoring)
             {
                 MockPlc.UpdateDataChangeItem(item, !add);
+            }
+            return Task.CompletedTask;
+        }
+
+        private Task ReadMetaData(IEnumerable<MetaDataPack> packs)
+        {
+            foreach (var item in packs)
+            {
+                item.ExecutionResult = ExecutionResult.Error;
             }
             return Task.CompletedTask;
         }

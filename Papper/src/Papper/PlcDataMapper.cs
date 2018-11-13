@@ -30,10 +30,16 @@ namespace Papper
         public delegate Task WriteOperation(IEnumerable<DataPack> writes);
 
         /// <summary>
-        /// his delegate is used to invoke the write operations.
+        /// This delegate is used to invoke the write operations.
         /// </summary>
         /// <returns></returns>
         public delegate Task UpdateMonitoring(IEnumerable<DataPack> monitoring, bool add = true);
+
+        /// <summary>
+        /// This delegate is used to invoke the block info operations.
+        /// </summary>
+        /// <returns></returns>
+        public delegate Task ReadBlockInfo(IEnumerable<MetaDataPack> metadatas);
 
         #endregion
 
@@ -47,6 +53,7 @@ namespace Papper
         private ReadOperation _readEventHandler;
         private WriteOperation _writeEventHandler;
         private UpdateMonitoring _updateHandler;
+        private ReadBlockInfo _blockInfoHandler;
         private readonly IReadOperationOptimizer _optimizer;
         #endregion
 
@@ -62,12 +69,14 @@ namespace Papper
                              ReadOperation readEventHandler,
                              WriteOperation writeEventHandler = null,
                              UpdateMonitoring updateHandler = null,
+                             ReadBlockInfo blockInfoHandler = null,
                              OptimizerType optimizer = OptimizerType.Block)
         {
             PduSize = pduSize;
             _readEventHandler = readEventHandler;
             _writeEventHandler = writeEventHandler;
             _updateHandler = updateHandler;
+            _blockInfoHandler = blockInfoHandler;
             _optimizer = OptimizerFactory.CreateOptimizer(optimizer);
             ReadDataBlockSize = pduSize - ReadDataHeaderLength;
             if (ReadDataBlockSize <= 0)
@@ -80,6 +89,7 @@ namespace Papper
             _readEventHandler = null;
             _writeEventHandler = null;
             _updateHandler = null;
+            _blockInfoHandler = null;
         }
 
         /// <summary>
@@ -260,6 +270,36 @@ namespace Papper
             }
         }
 
+
+
+        public async Task<MetaDataResult[]> ReadMetaData(IEnumerable<string> mappings)
+        {
+            var results = new List<MetaDataPack>();
+            foreach (var mapping in mappings)
+            {
+                
+                if (_mappings.TryGetValue(mapping, out IEntry entry))
+                {
+                    results.Add(new MetaDataPack
+                    {
+                        MappingName = entry.PlcObject.Name,
+                        AbsoluteName = entry.PlcObject.Selector
+                    });
+                }
+                else
+                {
+                    throw new KeyNotFoundException($"The mapping {mapping} does not exist.");
+                }
+            }
+
+            await ReadBlockInfos(results);
+
+            return results.Select(x => new MetaDataResult(x.MetaData, x.ExecutionResult)).ToArray();
+
+        }
+
+
+
         /// <summary>
         /// Return address data of the given variable
         /// </summary>
@@ -295,6 +335,11 @@ namespace Papper
             return sub;
         }
 
+
+        /// <summary>
+        /// If a client supports datachanges ge has to call this method on any changes
+        /// </summary>
+        /// <param name="changed"></param>
         public void OnDataChanges(IEnumerable<DataPack> changed)
         {
             foreach (var item in _subscriptions.ToList())
@@ -317,15 +362,11 @@ namespace Papper
             return _readEventHandler?.Invoke(needUpdate.Values);
         }
 
-        internal Task WriteToPlcAsync(IEnumerable<DataPack> packs)
-        {
-            return _writeEventHandler?.Invoke(packs);
-        }
+        internal Task WriteToPlcAsync(IEnumerable<DataPack> packs) => _writeEventHandler?.Invoke(packs);
 
-        internal Task UpdateMonitoringItemsAsync(IEnumerable<DataPack> monitoring, bool add = true)
-        {
-            return _updateHandler?.Invoke(monitoring, add);
-        }
+        internal Task UpdateMonitoringItemsAsync(IEnumerable<DataPack> monitoring, bool add = true) => _updateHandler?.Invoke(monitoring, add);
+
+        internal Task ReadBlockInfos(IEnumerable<MetaDataPack> infos) => _blockInfoHandler?.Invoke(infos);
 
         internal List<Execution> DetermineExecutions<T>(IEnumerable<T> vars) where T: IPlcReference
         {
