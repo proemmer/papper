@@ -54,14 +54,13 @@ namespace Papper
         private WriteOperation _writeEventHandler;
         private UpdateMonitoring _updateHandler;
         private ReadBlockInfo _blockInfoHandler;
-        private readonly IReadOperationOptimizer _optimizer;
         #endregion
 
         #region Properties
 
         public int ReadDataBlockSize { get; private set; }
         public int PduSize { get; private set; }
-        internal IReadOperationOptimizer Optimizer => _optimizer;
+        internal IReadOperationOptimizer Optimizer { get; }
 
         #endregion
 
@@ -77,7 +76,7 @@ namespace Papper
             _writeEventHandler = writeEventHandler;
             _updateHandler = updateHandler;
             _blockInfoHandler = blockInfoHandler;
-            _optimizer = OptimizerFactory.CreateOptimizer(optimizer);
+            Optimizer = OptimizerFactory.CreateOptimizer(optimizer);
             ReadDataBlockSize = pduSize - ReadDataHeaderLength;
             if (ReadDataBlockSize <= 0)
                 throw new ArgumentException($"PDU size have to be greater then {ReadDataHeaderLength}", "pduSize");
@@ -271,8 +270,19 @@ namespace Papper
         }
 
 
+        /// <summary>
+        /// Read metadata of plc blocks
+        /// </summary>
+        /// <param name="mappings">mapping name specified in the MappingAttribute</param>
+        /// <returns>The determined metadata.</returns>
+        public Task<MetaDataResult[]> ReadMetaDataAsync(params string[] mappings) => ReadMetaDataAsync(mappings as IEnumerable<string>);
 
-        public async Task<MetaDataResult[]> ReadMetaData(IEnumerable<string> mappings)
+        /// <summary>
+        /// Read metadata of plc blocks
+        /// </summary>
+        /// <param name="mappings">mapping name specified in the MappingAttribute</param>
+        /// <returns>The determined metadata.</returns>
+        public async Task<MetaDataResult[]> ReadMetaDataAsync(IEnumerable<string> mappings)
         {
             var results = new List<MetaDataPack>();
             foreach (var mapping in mappings)
@@ -337,7 +347,7 @@ namespace Papper
 
 
         /// <summary>
-        /// If a client supports datachanges ge has to call this method on any changes
+        /// If a client supports datachanges it has to call this method on any changes
         /// </summary>
         /// <param name="changed"></param>
         public void OnDataChanges(IEnumerable<DataPack> changed)
