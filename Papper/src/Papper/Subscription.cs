@@ -105,6 +105,7 @@ namespace Papper
             }
         }
 
+
         /// <summary>
         /// Remove items from the watch list. This items will be removed before the next what cycle.
         /// The internal 
@@ -123,6 +124,23 @@ namespace Papper
             {
                 return _modified = vars.Any(item => _variables.Remove(item)) | _modified;
             }
+        }
+
+        /// <summary>
+        /// Returns the plcreadresult form the subscriptions cache
+        /// </summary>
+        /// <param name="vars"></param>
+        /// <returns></returns>
+        public PlcReadResult[] ReadResultsFromCache(IEnumerable<PlcReadReference> vars)
+        {
+            var variables = vars.Select(x => x.Address).ToList();
+            return _executions.GroupBy(exec => exec.ExecutionResult) // Group by execution result
+                                                     .SelectMany(group => group.SelectMany(g => g.Bindings)
+                                                                               .Where(b => variables.Contains(b.Key))
+                                                                               .Select(b => new PlcReadResult(b.Key,
+                                                                                                              b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache.Span),
+                                                                                                              group.Key)
+                                                                               )).ToArray();
         }
 
         /// <summary>

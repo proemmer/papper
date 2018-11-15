@@ -8,25 +8,22 @@ namespace Papper
     /// </summary>
     public struct PlcReadResult
     {
-        private string _address;
-        private object _value;
-        private ExecutionResult _executionResult;
-        private int _dot;
+        private readonly int _dot;
 
         /// <summary>
         /// Full address is composed of mapping and variable
         /// </summary>
-        public string Address => _address;
+        public string Address { get; }
 
         /// <summary>
         /// read value
         /// </summary>
-        public object Value => _value;
+        public object Value { get; }
 
         /// <summary>
         /// The result of an Executed action
         /// </summary>
-        public ExecutionResult ActionResult => _executionResult;
+        public ExecutionResult ActionResult { get; }
 
         /// <summary>
         /// mapping part of the address
@@ -47,9 +44,9 @@ namespace Papper
         /// <param name="executionResult">The result itselve. <see cref="ExecutionResult"/></param>
         public PlcReadResult(string address, object value, ExecutionResult executionResult)
         {
-            _address = address;
-            _value = value;
-            _executionResult = executionResult;
+            Address = address;
+            Value = value;
+            ActionResult = executionResult;
             _dot = address.IndexOf(".");
         }
 
