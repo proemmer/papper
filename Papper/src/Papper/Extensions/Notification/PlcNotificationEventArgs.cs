@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 
-namespace Papper.Notification
+namespace Papper.Extensions.Notification
 {
     public class PlcNotificationEventArgs : EventArgs, IEnumerable<PlcReadResult>
     {

@@ -70,6 +70,31 @@ namespace Papper
             }
         }
 
+        /// <summary>
+        /// Create a couple of <see cref="PlcWriteReference"/> by a given variable root, and some sub variables of the root, with the value to write.
+        /// This method can used if you will write more than one variable of the same data block.
+        /// </summary>
+        /// <param name="root">Rootpart of a variable</param>
+        /// <param name="variables"><see cref="KeyValuePair{TKey, TValue}"/> of variable and value</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="PlcWriteReference"/></returns>
+        public static IEnumerable<PlcWriteReference> FromRoot(string root, params (string, object)[] variables)
+            => FromRoot(root, variables as IEnumerable<(string, object)>);
+
+        /// <summary>
+        /// Create a couple of <see cref="PlcWriteReference"/> by a given variable root, and some sub variables of the root, with the value to write.
+        /// This method can used if you will write more than one variable of the same data block.
+        /// </summary>
+        /// <param name="root">Rootpart of a variable</param>
+        /// <param name="variables"><see cref="IEnumerable{KeyValuePair{TKey, TValue}}"/> of variable and value</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="PlcWriteReference"/></returns>
+        public static IEnumerable<PlcWriteReference> FromRoot(string root, IEnumerable<(string variable, object value)> variables)
+        {
+            foreach (var variable in variables)
+            {
+                yield return FromAddress($"{root}.{variable.variable}", variable.value);
+            }
+        }
+
 
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Papper;
 using Papper.Attributes;
-using Papper.Notification;
+using Papper.Extensions.Notification;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -129,7 +129,6 @@ namespace PapperCmd
         {
             var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
             papper.AddMapping(typeof(DB_Safety));
-
             PerformReadFull(papper);
             PerformRead(papper);
             PerformWrite(papper);

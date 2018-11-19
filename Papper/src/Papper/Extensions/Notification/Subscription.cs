@@ -1,11 +1,12 @@
-﻿using Papper.Internal;
+﻿using Papper;
+using Papper.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Papper
+namespace Papper.Extensions.Notification
 {
     /// <summary>
     /// This representates a subscription to a plc value change detection.

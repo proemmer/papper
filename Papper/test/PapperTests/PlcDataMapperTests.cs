@@ -1,5 +1,6 @@
 ﻿using Papper;
-using Papper.Notification;
+using Papper.Extensions.Metadata;
+using Papper.Extensions.Notification;
 using PapperTests.Mappings;
 using System;
 using System.Buffers.Binary;

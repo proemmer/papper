@@ -1,5 +1,6 @@
 ﻿using Papper.Attributes;
 using Papper.Internal;
+using Papper.Extensions.Notification;
 using System;
 using System.Buffers;
 using System.Collections.Concurrent;
@@ -9,6 +10,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Papper.Extensions.Metadata;
 
 namespace Papper
 {
@@ -48,7 +50,6 @@ namespace Papper
         private const int PduSizeDefault = 480;
         private const int ReadDataHeaderLength = 18;
         private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
-        private readonly ConcurrentDictionary<string, IEntry> _mappings = new ConcurrentDictionary<string, IEntry>();
         private readonly ReaderWriterLockSlim _mappingsLock = new ReaderWriterLockSlim();
         private ReadOperation _readEventHandler;
         private WriteOperation _writeEventHandler;
@@ -62,14 +63,50 @@ namespace Papper
         public int PduSize { get; private set; }
         internal IReadOperationOptimizer Optimizer { get; }
 
+        internal ConcurrentDictionary<string, IEntry> EntriesByName { get; } = new ConcurrentDictionary<string, IEntry>();
+
         #endregion
 
+
         public PlcDataMapper(int pduSize,
-                             ReadOperation readEventHandler,
-                             WriteOperation writeEventHandler = null,
-                             UpdateMonitoring updateHandler = null,
-                             ReadBlockInfo blockInfoHandler = null,
-                             OptimizerType optimizer = OptimizerType.Block)
+                     ReadBlockInfo blockInfoHandler,
+                     OptimizerType optimizer = OptimizerType.Block) : this(pduSize, null, null, null, blockInfoHandler, optimizer)
+        {
+        }
+
+        public PlcDataMapper(int pduSize,
+                    ReadOperation readEventHandler,
+                    OptimizerType optimizer = OptimizerType.Block) : this(pduSize, readEventHandler, null, null, null, optimizer)
+        {
+        }
+
+        public PlcDataMapper(int pduSize,
+                WriteOperation writeEventHandler,
+                OptimizerType optimizer = OptimizerType.Block) : this(pduSize, null, writeEventHandler, null, null, optimizer)
+        {
+        }
+
+        public PlcDataMapper(int pduSize,
+                            ReadOperation readEventHandler,
+                            WriteOperation writeEventHandler,
+                            OptimizerType optimizer = OptimizerType.Block) : this(pduSize, readEventHandler, writeEventHandler, null, null, optimizer)
+        {
+        }
+
+        public PlcDataMapper(int pduSize,
+                    ReadOperation readEventHandler,
+                    WriteOperation writeEventHandler,
+                    UpdateMonitoring updateHandler,
+                    OptimizerType optimizer = OptimizerType.Block) : this(pduSize, readEventHandler, writeEventHandler, updateHandler, null, optimizer)
+        {
+        }
+
+        public PlcDataMapper(int pduSize,
+                            ReadOperation readEventHandler,
+                            WriteOperation writeEventHandler,
+                            UpdateMonitoring updateHandler,
+                            ReadBlockInfo blockInfoHandler,
+                            OptimizerType optimizer = OptimizerType.Block)
         {
             PduSize = pduSize;
             _readEventHandler = readEventHandler;
@@ -94,7 +131,7 @@ namespace Papper
         /// <summary>
         /// Return a list of all registered Mappings
         /// </summary>
-        public IEnumerable<string> Mappings { get { return _mappings.Keys; } }
+        public IEnumerable<string> Mappings { get { return EntriesByName.Keys; } }
 
         /// <summary>
         /// Return all variable names of an mapping
@@ -104,7 +141,7 @@ namespace Papper
         public IEnumerable<string> GetVariablesOf(string mapping)
         {
             var result = new List<string>();
-            if (_mappings.TryGetValue(mapping, out IEntry entry))
+            if (EntriesByName.TryGetValue(mapping, out IEntry entry))
                 return PlcObjectResolver.GetLeafs(entry.PlcObject, result);
             throw new KeyNotFoundException($"The mapping {mapping} does not exist.");
         }
@@ -271,82 +308,6 @@ namespace Papper
 
 
         /// <summary>
-        /// Read metadata of plc blocks
-        /// </summary>
-        /// <param name="mappings">mapping name specified in the MappingAttribute</param>
-        /// <returns>The determined metadata.</returns>
-        public Task<MetaDataResult[]> ReadMetaDataAsync(params string[] mappings) => ReadMetaDataAsync(mappings as IEnumerable<string>);
-
-        /// <summary>
-        /// Read metadata of plc blocks
-        /// </summary>
-        /// <param name="mappings">mapping name specified in the MappingAttribute</param>
-        /// <returns>The determined metadata.</returns>
-        public async Task<MetaDataResult[]> ReadMetaDataAsync(IEnumerable<string> mappings)
-        {
-            var results = new List<MetaDataPack>();
-            foreach (var mapping in mappings)
-            {
-                
-                if (_mappings.TryGetValue(mapping, out IEntry entry))
-                {
-                    results.Add(new MetaDataPack
-                    {
-                        MappingName = entry.PlcObject.Name,
-                        AbsoluteName = entry.PlcObject.Selector
-                    });
-                }
-                else
-                {
-                    throw new KeyNotFoundException($"The mapping {mapping} does not exist.");
-                }
-            }
-
-            await ReadBlockInfos(results);
-
-            return results.Select(x => new MetaDataResult(x.MetaData, x.ExecutionResult)).ToArray();
-
-        }
-
-
-
-        /// <summary>
-        /// Return address data of the given variable
-        /// </summary>
-        /// <param name="mapping">name of the mapping</param>
-        /// <param name="variable">name of the variable</param>
-        /// <returns></returns>
-        public PlcItemAddress GetAddressOf(IPlcReference var)
-        {
-            var result = new Dictionary<string, object>();
-            if (_mappings.TryGetValue(var.Mapping, out IEntry entry))
-            {
-                if (entry.Variables.TryGetValue(var.Variable, out Tuple<int, Types.PlcObject> varibleEntry))
-                {
-                    return new PlcItemAddress(
-                        varibleEntry.Item2.Selector,
-                        varibleEntry.Item2.ElemenType,
-                        varibleEntry.Item2.Offset,
-                        varibleEntry.Item2.Size
-                        );
-                }
-            }
-            throw new KeyNotFoundException($"There is variable <{var.Variable}> for mapping <{var.Mapping}>");
-        }
-
-        /// <summary>
-        /// Create a Subscription to watch data changes
-        /// </summary>
-        /// <returns></returns>
-        public Subscription CreateSubscription(ChangeDetectionStrategy changeDetectionStrategy = ChangeDetectionStrategy.Polling)
-        {
-            var sub = new Subscription(this, changeDetectionStrategy);
-            _subscriptions.Add(sub);
-            return sub;
-        }
-
-
-        /// <summary>
         /// If a client supports datachanges it has to call this method on any changes
         /// </summary>
         /// <param name="changed"></param>
@@ -359,13 +320,17 @@ namespace Papper
         }
 
 
-        #region internal read write operations
+        #region internal
+
+        internal bool AddSubscription(Subscription sub)
+        {
+            return _subscriptions.Add(sub);
+        }
 
         internal bool RemoveSubscription(Subscription sub)
         {
             return _subscriptions.Remove(sub);
         }
-
 
         internal Task ReadFromPlcAsync(Dictionary<Execution, DataPack> needUpdate)
         {
@@ -388,7 +353,6 @@ namespace Papper
                                 .SelectMany(x => x.entry.GetOperations(x.execution.Select(exec => exec.Variable)))
                                 .ToList();
         }
-
 
         internal PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions, 
                                                       Dictionary<Execution, DataPack> needUpdate,
@@ -440,10 +404,11 @@ namespace Papper
                            .ToDictionary(x => x.Key, x => x.Value);
         }
 
+        #endregion
 
         private bool GetOrAddMapping(string mapping, out IEntry entry)
         {
-            if (_mappings.TryGetValue(mapping, out entry))
+            if (EntriesByName.TryGetValue(mapping, out entry))
             {
                 return true;
             }
@@ -460,12 +425,12 @@ namespace Papper
                     {
                         using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
                         {
-                            if (!_mappings.TryGetValue(mapping, out entry))
+                            if (!EntriesByName.TryGetValue(mapping, out entry))
                             {
                                 entry = new RawEntry(this, mapping, ReadDataBlockSize, 0);
                                 using (upgradeableGuard.UpgradeToWriterLock())
                                 {
-                                    _mappings.TryAdd(mapping, entry);
+                                    EntriesByName.TryAdd(mapping, entry);
                                 }
                             }
                         }
@@ -476,28 +441,24 @@ namespace Papper
             return false;
         }
 
-        #endregion
-
-
         private bool AddMappingsInternal(Type type, IEnumerable<MappingAttribute> mappingAttributes)
         {
             foreach (var mapping in mappingAttributes)
             {
                 using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
                 {
-                    if (_mappings.TryGetValue(mapping.Name, out IEntry existingMapping) && existingMapping is MappingEntry mappingEntry)
+                    if (EntriesByName.TryGetValue(mapping.Name, out IEntry existingMapping) && existingMapping is MappingEntry mappingEntry)
                     {
                         if (mappingEntry.Mapping == mapping && mappingEntry.Type == type)
                             continue; // mapping already exists
                         return false; // mapping is invlaid, because it exists for a nother type
                     }
                     using (upgradeableGuard.UpgradeToWriterLock())
-                        _mappings.TryAdd(mapping.Name, new MappingEntry(this, mapping, type, _tree, ReadDataBlockSize, mapping.ObservationRate));
+                        EntriesByName.TryAdd(mapping.Name, new MappingEntry(this, mapping, type, _tree, ReadDataBlockSize, mapping.ObservationRate));
                 }
             }
             return true;
         }
-
 
         private bool RemoveMappingsInternal(IEnumerable<string> mappingNames)
         {
@@ -505,13 +466,13 @@ namespace Papper
             {
                 using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
                 {
-                    if (_mappings.TryGetValue(mapping, out IEntry existingMapping) && existingMapping is MappingEntry mappingEntry)
+                    if (EntriesByName.TryGetValue(mapping, out IEntry existingMapping) && existingMapping is MappingEntry mappingEntry)
                     {
                         if (mappingEntry.Mapping.Name == mapping)
                         {
                             using (upgradeableGuard.UpgradeToWriterLock())
                             {
-                                if(!_mappings.TryRemove(mapping, out var removed))
+                                if(!EntriesByName.TryRemove(mapping, out var removed))
                                 {
                                     return false;
                                 }

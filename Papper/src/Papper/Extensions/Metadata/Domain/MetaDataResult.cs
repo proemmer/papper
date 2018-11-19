@@ -1,4 +1,4 @@
-﻿namespace Papper
+﻿namespace Papper.Extensions.Metadata
 {
     public class MetaDataResult
     {

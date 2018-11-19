@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Papper.Notification
+namespace Papper.Extensions.Notification
 {
     public delegate void OnChangeEventHandler(object sender, PlcNotificationEventArgs e);
 
