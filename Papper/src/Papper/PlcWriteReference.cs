@@ -7,8 +7,7 @@ namespace Papper
     /// </summary>
     public struct PlcWriteReference : IPlcReference
     {
-        private string _address;
-        private int _dot;
+        private readonly int _dot;
 
 
         /// mapping part of the address
@@ -24,7 +23,7 @@ namespace Papper
         /// <summary>
         /// Full address is composed of mapping and variable
         /// </summary>
-        public string Address => _address;
+        public string Address { get; }
 
         /// <summary>
         /// Value to write
@@ -37,14 +36,11 @@ namespace Papper
         /// <param name="address"> [Mapping].[Variable]</param>
         /// <param name="value">Value to write</param>
         /// <returns>An instance of a <see cref="PlcWriteReference"/></returns>
-        public static PlcWriteReference FromAddress(string address, object value)
-        {
-            return new PlcWriteReference(address, value);
-        }
+        public static PlcWriteReference FromAddress(string address, object value) =>  new PlcWriteReference(address, value);
 
         public PlcWriteReference(string address, object value)
         {
-            _address = address;
+            Address = address;
             _dot = address.IndexOf(".");
             Value = value;
         }

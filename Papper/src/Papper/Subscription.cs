@@ -15,9 +15,10 @@ namespace Papper
         private readonly TaskCompletionSource<object> _watchingTcs = new TaskCompletionSource<object>();
         private readonly PlcDataMapper _mapper;
         private readonly LruCache _lruCache = new LruCache();
-        private readonly List<PlcReadReference> _variables = new List<PlcReadReference>();
+        private readonly List<PlcWatchReference> _variables = new List<PlcWatchReference>();
         private readonly ReaderWriterLockSlim _lock;
         private readonly ChangeDetectionStrategy _changeDetectionStrategy;
+        private readonly int _defaultInterval;
         private AsyncAutoResetEvent<IEnumerable<DataPack>> _changeEvent;
 
         private CancellationTokenSource _cts;
@@ -39,7 +40,7 @@ namespace Papper
         /// <summary>
         /// Detection interval (pause between detections)
         /// </summary>
-        public int Interval { get; set; } = 1000;
+        public int Interval { get; set; }
 
         /// <summary>
         /// Returns the number of subscribed
@@ -52,12 +53,16 @@ namespace Papper
         /// </summary>
         /// <param name="mapper">The reference to the plcDatamapper.</param>
         /// <param name="vars">The variables we should watch.</param>
-        public Subscription(PlcDataMapper mapper, ChangeDetectionStrategy changeDetectionStrategy = ChangeDetectionStrategy.Polling , IEnumerable<PlcReadReference> vars = null)
+        /// <param name="defaultInterval">setup the default interval, if none was given by the <see cref="PlcWatchReference"/></param>
+        public Subscription(PlcDataMapper mapper, ChangeDetectionStrategy changeDetectionStrategy = ChangeDetectionStrategy.Polling , IEnumerable<PlcWatchReference> vars = null, int defaultInterval = 1000)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _changeDetectionStrategy = changeDetectionStrategy;
+            _defaultInterval = defaultInterval;
             _lock = new ReaderWriterLockSlim();
-            if(changeDetectionStrategy == ChangeDetectionStrategy.Event)
+            UpdateWatchCycle(vars);
+
+            if (changeDetectionStrategy == ChangeDetectionStrategy.Event)
             {
                 _changeEvent = new AsyncAutoResetEvent<IEnumerable<DataPack>>();
             }
@@ -90,17 +95,18 @@ namespace Papper
         /// Add items to the subscription. This items are active in the next watch cycle, so you will get a data change if the update was activated.
         /// </summary>
         /// <param name="vars">Vars to activate </param>
-        public bool AddItems(params PlcReadReference[] vars) => AddItems(vars as IEnumerable<PlcReadReference>);
+        public bool AddItems(params PlcWatchReference[] vars) => AddItems(vars as IEnumerable<PlcWatchReference>);
 
         /// <summary>
         /// Add items to the subscription. This items are active in the next watch cycle, so you will get a data change if the update was activated.
         /// </summary>
         /// <param name="vars">Vars to activate </param>
-        public bool AddItems(IEnumerable<PlcReadReference> vars)
+        public bool AddItems(IEnumerable<PlcWatchReference> vars)
         {
             using (new WriterGuard(_lock))
             {
                 _variables.AddRange(vars);
+                UpdateWatchCycle(_variables);
                 return _modified = true;
             }
         }
@@ -111,18 +117,23 @@ namespace Papper
         /// The internal 
         /// </summary>
         /// <param name="vars"></param>
-        public bool RemoveItems(params PlcReadReference[] vars) => RemoveItems(vars as IEnumerable<PlcReadReference>);
+        public bool RemoveItems(params PlcWatchReference[] vars) => RemoveItems(vars as IEnumerable<PlcWatchReference>);
 
         /// <summary>
         /// Remove items from the watch list. This items will be removed before the next what cycle.
         /// The internal 
         /// </summary>
         /// <param name="vars"></param>
-        public bool RemoveItems(IEnumerable<PlcReadReference> vars)
+        public bool RemoveItems(IEnumerable<PlcWatchReference> vars)
         {
             using (new WriterGuard(_lock))
             {
-                return _modified = vars.Any(item => _variables.Remove(item)) | _modified;
+                var result = _modified = vars.Any(item => _variables.Remove(item)) | _modified;
+                if(result)
+                {
+                    UpdateWatchCycle(_variables);
+                }
+                return result;
             }
         }
 
@@ -131,7 +142,7 @@ namespace Papper
         /// </summary>
         /// <param name="vars"></param>
         /// <returns></returns>
-        public PlcReadResult[] ReadResultsFromCache(IEnumerable<PlcReadReference> vars)
+        public PlcReadResult[] ReadResultsFromCache(IEnumerable<PlcWatchReference> vars)
         {
             var variables = vars.Select(x => x.Address).ToList();
             return _executions.GroupBy(exec => exec.ExecutionResult) // Group by execution result
@@ -158,6 +169,8 @@ namespace Papper
 
             try
             {
+                Dictionary<string, int> cycles = null;
+                var interval = Interval;
                 while (!Watching.IsCompleted)
                 {
                     if (_cts.IsCancellationRequested)
@@ -171,6 +184,8 @@ namespace Papper
                         {
                             if (_modified)
                             {
+                                cycles = _variables.ToDictionary(x => x.Address, x => x.WatchCycle);
+                                interval = Interval;
                                 _executions = _mapper.DetermineExecutions(_variables);
                                 if (_changeDetectionStrategy == ChangeDetectionStrategy.Event)
                                 {
@@ -193,7 +208,7 @@ namespace Papper
                     if (_changeDetectionStrategy == ChangeDetectionStrategy.Polling)
                     {
                         // determine outdated
-                        var needUpdate = _mapper.UpdateableItems(_executions);
+                        var needUpdate = _mapper.UpdateableItems(_executions, true, DetermineChanges(cycles, interval));
 
                         // read outdated
                         await _mapper.ReadFromPlcAsync(needUpdate); // Update the read cache;
@@ -223,7 +238,7 @@ namespace Papper
 
                     try
                     {
-                        await Task.Delay(Interval, _cts.Token);
+                        await Task.Delay(interval, _cts.Token);
                     }
                     catch(TaskCanceledException){}
 
@@ -241,7 +256,16 @@ namespace Papper
             }
         }
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cycles">the cycle interval of the current variable</param>
+        /// <param name="cycleInterval">the minimum of all watches</param>
+        /// <returns></returns>
+        private static Func<IEnumerable<string>, DateTime, bool> DetermineChanges(Dictionary<string, int> cycles, int cycleInterval)
+            =>  (variables, lastChange) => !cycles.Any() && 
+                                           !string.IsNullOrWhiteSpace(variables.FirstOrDefault(x => cycles.TryGetValue(x, out var interval) && 
+                                                                                                    lastChange.AddMilliseconds(interval < cycleInterval * 2 ? cycleInterval : interval) < DateTime.Now));
 
         internal void OnDataChanged(IEnumerable<DataPack> changed)
         {
@@ -297,9 +321,17 @@ namespace Papper
         }
 
 
-        private void MapDataPacks()
+        private void UpdateWatchCycle(IEnumerable<PlcWatchReference> vars)
         {
-
+            if (vars != null)
+            {
+                Interval = vars.Select(x => x.WatchCycle).Min();
+            }
+            if (Interval <= 0)
+            {
+                Interval = _defaultInterval;
+            }
         }
+
     }
 }

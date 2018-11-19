@@ -193,7 +193,7 @@ namespace Papper
             var executions = DetermineExecutions(vars);
 
             // determine outdated
-            var needUpdate = UpdateableItems(executions);
+            var needUpdate = UpdateableItems(executions, true);  // true = read some items from cache!!
 
             // read from plc
             await ReadFromPlcAsync(needUpdate);
@@ -424,9 +424,12 @@ namespace Papper
                                                     )).ToArray();
         }
 
-        internal Dictionary<Execution, DataPack> UpdateableItems(List<Execution> executions, bool onlyOutdated = true)
+        internal Dictionary<Execution, DataPack> UpdateableItems(List<Execution> executions, bool onlyOutdated, Func<IEnumerable<string>, DateTime, bool> forceUpdate = null)
         {
-            return executions.Where(exec => !onlyOutdated || exec.ValidationTimeMs <= 0 || exec.PlcRawData.LastUpdate.AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now)
+            return executions.Where(exec => !onlyOutdated || 
+                                            exec.ValidationTimeMs <= 0 || 
+                                            exec.PlcRawData.LastUpdate.AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now ||
+                                            (forceUpdate != null && forceUpdate(exec.PlcRawData.References.Keys, exec.PlcRawData.LastUpdate)))
                            .Select(x => new KeyValuePair<Execution, DataPack>(x,
                                                                             new DataPack
                                                                             {

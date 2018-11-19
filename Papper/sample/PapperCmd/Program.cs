@@ -224,7 +224,7 @@ namespace PapperCmd
                     Console.WriteLine($"DataChanged detected: {item.Address} = {item.Value}");
                 are.Set();
             }
-            var items = writeData.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray();
+            var items = writeData.Keys.Select(variable => PlcWatchReference.FromAddress($"{mapping}.{variable}", 100)).ToArray();
             var subscription = papper.SubscribeDataChanges(callback, items);
 
             //waiting for initialize

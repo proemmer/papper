@@ -258,7 +258,7 @@ namespace UnitTestSuit
 
             using (var subscription = _papper.CreateSubscription())
             {
-                subscription.AddItems(originData.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")));
+                subscription.AddItems(originData.Keys.Select(variable => PlcWatchReference.FromAddress($"{mapping}.{variable}", 100)));
                 var t = Task.Run(async () =>
                {
                    try
@@ -327,7 +327,7 @@ namespace UnitTestSuit
                     { "W88", (UInt16)3},
                     { "X99_0", true  },
                 };
-            var items = writeData.Keys.Select(variable => PlcReadReference.FromAddress($"DB15.{variable}")).ToArray();
+            var items = writeData.Keys.Select(variable => PlcWatchReference.FromAddress($"DB15.{variable}", 100)).ToArray();
 
             using (var sub = _papper.CreateSubscription())
             {
@@ -368,7 +368,7 @@ namespace UnitTestSuit
                     { "W88", (UInt16)3},
                     { "X99_0", true  },
                 };
-            var items = writeData.Keys.Select(variable => PlcReadReference.FromAddress($"DB15.{variable}")).ToArray();
+            var items = writeData.Keys.Select(variable => PlcWatchReference.FromAddress($"DB15.{variable}", 100)).ToArray();
 
             using (var sub = _papper.CreateSubscription())
             {
@@ -428,7 +428,7 @@ namespace UnitTestSuit
                 }
                 are.Set();
             }
-            var subscription = _papper.SubscribeDataChanges(callback, writeData.Keys.Select(variable => PlcReadReference.FromAddress($"DB15.{variable}")).ToArray());
+            var subscription = _papper.SubscribeDataChanges(callback, writeData.Keys.Select(variable => PlcWatchReference.FromAddress($"DB15.{variable}", 100)).ToArray());
 
 
             //waiting for initialize
@@ -566,7 +566,7 @@ namespace UnitTestSuit
 
             using (var subscription = papper.CreateSubscription(ChangeDetectionStrategy.Event))
             {
-                subscription.AddItems(originData.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")));
+                subscription.AddItems(originData.Keys.Select(variable => PlcWatchReference.FromAddress($"{mapping}.{variable}", 100)));
                 var t = Task.Run(async () =>
                 {
                     try

@@ -1,5 +1,4 @@
-﻿using Papper.Internal;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,14 +9,13 @@ namespace Papper.Internal
     /// </summary>
     internal class Execution
     {
-        private DateTime _changeDetected = DateTime.MaxValue;
         public PlcRawData PlcRawData { get; private set; }
         public IEnumerable<Partiton> Partitions { get; private set; }
         public Dictionary<string, PlcObjectBinding> Bindings { get; private set; }
         public int ValidationTimeMs { get; private set; }
         public ExecutionResult ExecutionResult { get; private set; }
 
-        public DateTime LastChange => _changeDetected;
+        public DateTime LastChange { get; private set; } = DateTime.MaxValue;
 
         public Execution(PlcRawData plcRawData, Dictionary<string, PlcObjectBinding> bindings, int validationTimeMS)
         {
@@ -34,7 +32,7 @@ namespace Papper.Internal
             {
                 if(PlcRawData.ReadDataCache.IsEmpty || !PlcRawData.ReadDataCache.Span.SequenceEqual(pack.Data.Span))
                 {
-                    _changeDetected = DateTime.Now; // We detected a change in this data area -> bindungs have to thes the position by themselves.
+                    LastChange = DateTime.Now; // We detected a change in this data area -> bindungs have to thes the position by themselves.
                 }
                 PlcRawData.ReadDataCache = pack.Data;
                 PlcRawData.LastUpdate = DateTime.Now;
@@ -48,7 +46,7 @@ namespace Papper.Internal
         /// </summary>
         public void Invalidate()
         {
-            PlcRawData.LastUpdate = _changeDetected = DateTime.MinValue;
+            PlcRawData.LastUpdate = LastChange = DateTime.MinValue;
         }
 
     }
