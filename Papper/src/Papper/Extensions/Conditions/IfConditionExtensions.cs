@@ -765,7 +765,7 @@ namespace Papper.Extensions.Conditions
                 (!result.TryGetValue(variable1.Address, out var tmp1)) ||
                 (!result.TryGetValue(variable2.Address, out var tmp2)) ||
                 (!result.TryGetValue(variable3.Address, out var tmp3)) ||
-                (!result.TryGetValue(variable3.Address, out var tmp4)) ||
+                (!result.TryGetValue(variable4.Address, out var tmp4)) ||
                 !cmp((T1)tmp1, (T2)tmp2, (T3)tmp3, (T4)tmp4))
             {
                 if (otherwise == null) return false;
@@ -798,8 +798,8 @@ namespace Papper.Extensions.Conditions
                 (!result.TryGetValue(variable1.Address, out var tmp1)) ||
                 (!result.TryGetValue(variable2.Address, out var tmp2)) ||
                 (!result.TryGetValue(variable3.Address, out var tmp3)) ||
-                (!result.TryGetValue(variable3.Address, out var tmp4)) ||
-                (!result.TryGetValue(variable3.Address, out var tmp5)) ||
+                (!result.TryGetValue(variable4.Address, out var tmp4)) ||
+                (!result.TryGetValue(variable5.Address, out var tmp5)) ||
                 !cmp((T1)tmp1, (T2)tmp2, (T3)tmp3, (T4)tmp4, (T5)tmp5))
             {
                 if (otherwise == null) return false;
@@ -833,10 +833,10 @@ namespace Papper.Extensions.Conditions
             if (result.IsNullOrEmpty() ||
                 (!result.TryGetValue(variable1.Address, out var tmp1)) ||
                 (!result.TryGetValue(variable2.Address, out var tmp2)) ||
-                (!result.TryGetValue(variable3.Address, out var tmp3)) ||
-                (!result.TryGetValue(variable3.Address, out var tmp4)) ||
-                (!result.TryGetValue(variable3.Address, out var tmp5)) ||
-                (!result.TryGetValue(variable3.Address, out var tmp6)) ||
+                (!result.TryGetValue(variable4.Address, out var tmp3)) ||
+                (!result.TryGetValue(variable5.Address, out var tmp4)) ||
+                (!result.TryGetValue(variable6.Address, out var tmp5)) ||
+                (!result.TryGetValue(variable7.Address, out var tmp6)) ||
                 !cmp((T1)tmp1, (T2)tmp2, (T3)tmp3, (T4)tmp4, (T5)tmp5, (T6)tmp6))
             {
                 if (otherwise == null) return false;
@@ -873,10 +873,10 @@ namespace Papper.Extensions.Conditions
                 (!result.TryGetValue(variable1.Address, out var tmp1)) ||
                 (!result.TryGetValue(variable2.Address, out var tmp2)) ||
                 (!result.TryGetValue(variable3.Address, out var tmp3)) ||
-                (!result.TryGetValue(variable3.Address, out var tmp4)) ||
-                (!result.TryGetValue(variable3.Address, out var tmp5)) ||
-                (!result.TryGetValue(variable3.Address, out var tmp6)) ||
-                (!result.TryGetValue(variable3.Address, out var tmp7)) ||
+                (!result.TryGetValue(variable4.Address, out var tmp4)) ||
+                (!result.TryGetValue(variable5.Address, out var tmp5)) ||
+                (!result.TryGetValue(variable6.Address, out var tmp6)) ||
+                (!result.TryGetValue(variable7.Address, out var tmp7)) ||
                 !cmp((T1)tmp1, (T2)tmp2, (T3)tmp3, (T4)tmp4, (T5)tmp5, (T6)tmp6, (T7)tmp7))
             {
                 if (otherwise == null) return false;
@@ -914,11 +914,11 @@ namespace Papper.Extensions.Conditions
                 (!result.TryGetValue(variable1.Address, out var tmp1)) ||
                 (!result.TryGetValue(variable2.Address, out var tmp2)) ||
                 (!result.TryGetValue(variable3.Address, out var tmp3)) ||
-                (!result.TryGetValue(variable3.Address, out var tmp4)) ||
-                (!result.TryGetValue(variable3.Address, out var tmp5)) ||
-                (!result.TryGetValue(variable3.Address, out var tmp6)) ||
-                (!result.TryGetValue(variable3.Address, out var tmp7)) ||
-                (!result.TryGetValue(variable3.Address, out var tmp8)) ||
+                (!result.TryGetValue(variable4.Address, out var tmp4)) ||
+                (!result.TryGetValue(variable5.Address, out var tmp5)) ||
+                (!result.TryGetValue(variable6.Address, out var tmp6)) ||
+                (!result.TryGetValue(variable7.Address, out var tmp7)) ||
+                (!result.TryGetValue(variable8.Address, out var tmp8)) ||
                 !cmp((T1)tmp1, (T2)tmp2, (T3)tmp3, (T4)tmp4, (T5)tmp5, (T6)tmp6, (T7)tmp7, (T8)tmp8))
             {
                 if (otherwise == null) return false;
