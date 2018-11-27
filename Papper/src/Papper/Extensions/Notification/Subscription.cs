@@ -16,7 +16,7 @@ namespace Papper.Extensions.Notification
         private readonly TaskCompletionSource<object> _watchingTcs = new TaskCompletionSource<object>();
         private readonly PlcDataMapper _mapper;
         private readonly LruCache _lruCache = new LruCache();
-        private readonly List<PlcWatchReference> _variables = new List<PlcWatchReference>();
+        private readonly Dictionary<string, PlcWatchReference> _variables = new Dictionary<string, PlcWatchReference>();
         private readonly ReaderWriterLockSlim _lock;
         private readonly ChangeDetectionStrategy _changeDetectionStrategy;
         private readonly int _defaultInterval;
@@ -106,8 +106,21 @@ namespace Papper.Extensions.Notification
         {
             using (new WriterGuard(_lock))
             {
-                _variables.AddRange(vars);
-                UpdateWatchCycle(_variables);
+                foreach (var variable in vars)
+                {
+                    if(_variables.TryGetValue(variable.Address, out var current))
+                    {
+                        if(current.WatchCycle > variable.WatchCycle)
+                        {
+                            _variables[variable.Address] = variable;
+                        }
+                    }
+                    else
+                    {
+                        _variables.Add(variable.Address, variable);
+                    }
+                }
+                UpdateWatchCycle(_variables.Values);
                 return _modified = true;
             }
         }
@@ -129,11 +142,9 @@ namespace Papper.Extensions.Notification
         {
             using (new WriterGuard(_lock))
             {
-                var result = _modified = vars.Any(item => _variables.Remove(item)) | _modified;
-                if(result)
-                {
-                    UpdateWatchCycle(_variables);
-                }
+                var result = vars.Any(item => _variables.Remove(item.Address)) | _modified;
+                if(result)  UpdateWatchCycle(_variables.Values);
+                _modified = result;
                 return result;
             }
         }
@@ -185,9 +196,9 @@ namespace Papper.Extensions.Notification
                         {
                             if (_modified)
                             {
-                                cycles = _variables.ToDictionary(x => x.Address, x => x.WatchCycle);
+                                cycles = _variables.Values.ToDictionary(x => x.Address, x => x.WatchCycle);
                                 interval = Interval;
-                                _executions = _mapper.DetermineExecutions(_variables);
+                                _executions = _mapper.DetermineExecutions(_variables.Values);
                                 if (_changeDetectionStrategy == ChangeDetectionStrategy.Event)
                                 {
                                     var needUpdate = _mapper.UpdateableItems(_executions, false);
