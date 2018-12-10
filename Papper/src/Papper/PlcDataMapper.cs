@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Papper.Extensions.Metadata;
+using Papper.Types;
 
 namespace Papper
 {
@@ -47,8 +48,8 @@ namespace Papper
 
         #region Fields
         private HashSet<Subscription> _subscriptions = new HashSet<Subscription>();
-        private const int PduSizeDefault = 480;
-        private const int ReadDataHeaderLength = 18;
+        private const int _pduSizeDefault = 480;
+        private const int _readDataHeaderLength = 18;
         private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
         private readonly ReaderWriterLockSlim _mappingsLock = new ReaderWriterLockSlim();
         private ReadOperation _readEventHandler;
@@ -114,9 +115,9 @@ namespace Papper
             _updateHandler = updateHandler;
             _blockInfoHandler = blockInfoHandler;
             Optimizer = OptimizerFactory.CreateOptimizer(optimizer);
-            ReadDataBlockSize = pduSize - ReadDataHeaderLength;
+            ReadDataBlockSize = pduSize - _readDataHeaderLength;
             if (ReadDataBlockSize <= 0)
-                throw new ArgumentException($"PDU size have to be greater then {ReadDataHeaderLength}", "pduSize");
+                throw new ArgumentException($"PDU size have to be greater then {_readDataHeaderLength}", "pduSize");
             PlcMetaDataTreePath.CreateAbsolutePath(PlcObjectResolver.RootNodeName);
         }
 
@@ -404,6 +405,11 @@ namespace Papper
                            .ToDictionary(x => x.Key, x => x.Value);
         }
 
+
+        internal bool IsValidReference(PlcWatchReference watchs) 
+            => GetOrAddMapping(watchs.Mapping, out var entry) &&
+                (entry is MappingEntry && entry.PlcObject.Get(new PlcMetaDataTreePath(watchs.Variable)) != null) ||
+                (entry is RawEntry);
         #endregion
 
         private bool GetOrAddMapping(string mapping, out IEntry entry)

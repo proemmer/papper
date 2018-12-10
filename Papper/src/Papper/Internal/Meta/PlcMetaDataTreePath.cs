@@ -1,24 +1,23 @@
-﻿using System;
+﻿using Papper.Types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Papper.Internal;
-using Papper.Types;
 
 namespace Papper.Internal
 {
     internal class PlcMetaDataTreePath : ITreePath
     {
         public const string Separator = ".";
-        private static readonly string[] SplitSeparator = { Separator };
+        private static readonly string[] _splitSeparator = { Separator };
         private readonly List<string> _nodes = new List<string>();
         private int[] _arrayIndizes;
 
-        static public PlcMetaDataTreePath CreateAbsolutePath(params string[] nodeNames)
+        public static PlcMetaDataTreePath CreateAbsolutePath(params string[] nodeNames)
         {
             return CreatePath((new List<string> { Separator }).Concat(nodeNames).ToArray());
         }
 
-        static public PlcMetaDataTreePath CreatePath(params string[] nodeNames)
+        public static PlcMetaDataTreePath CreatePath(params string[] nodeNames)
         {
             if (nodeNames.Skip(1).Any(node => node.IndexOf(Separator, StringComparison.Ordinal) >= 0)
                 || (nodeNames[0].Length > 1 && nodeNames[0].IndexOf(Separator, StringComparison.Ordinal) > 0))
@@ -26,7 +25,7 @@ namespace Papper.Internal
             return new PlcMetaDataTreePath(nodeNames);
         }
 
-        static public PlcMetaDataTreePath CreateNodePath(ITreePath path, PlcObject plcObject)
+        public static PlcMetaDataTreePath CreateNodePath(ITreePath path, PlcObject plcObject)
         {
             return path.Extend(plcObject.Name) as PlcMetaDataTreePath;
         }
@@ -42,7 +41,7 @@ namespace Papper.Internal
             }
 
             if (!string.IsNullOrWhiteSpace(path))
-                _nodes.AddRange(path.Split(SplitSeparator, StringSplitOptions.None));
+                _nodes.AddRange(path.Split(_splitSeparator, StringSplitOptions.None));
         }
 
         private PlcMetaDataTreePath(IEnumerable<string> nodes)

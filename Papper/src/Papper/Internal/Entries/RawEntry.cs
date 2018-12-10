@@ -14,8 +14,6 @@ namespace Papper.Internal
         }
 
         protected override bool AddObject(ITreeNode plcObj, Dictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values)
-        {
-            return PlcObjectResolver.AddRawPlcObjects(PlcObject, Variables, values);
-        }
+            => PlcObjectResolver.AddRawPlcObjects(PlcObject, Variables, values);
     }
 }

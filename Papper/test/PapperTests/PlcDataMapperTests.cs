@@ -332,7 +332,7 @@ namespace UnitTestSuit
 
             using (var sub = _papper.CreateSubscription())
             {
-                Assert.True(sub.AddItems(items));
+                Assert.True(sub.TryAddItems(items));
                 var c = sub.DetectChangesAsync();  // returns because we start a new detection
                 Thread.Sleep(100);
                 Assert.True(sub.RemoveItems(items.FirstOrDefault()));
@@ -373,7 +373,7 @@ namespace UnitTestSuit
 
             using (var sub = _papper.CreateSubscription())
             {
-                Assert.True(sub.AddItems(items));
+                Assert.True(sub.TryAddItems(items));
                 var c = sub.DetectChangesAsync();  // returns because we start a new detection
                 Thread.Sleep(500);
                 var res = await c;
@@ -507,9 +507,11 @@ namespace UnitTestSuit
                     { "XXX", "TEST1"}
                 };
 
-
-            var result = _papper.ReadAsync(PlcReadReference.FromRoot(mapping, accessDict.Keys.ToArray()).ToArray()).GetAwaiter().GetResult(); ;
-            Assert.Empty(result);
+            Assert.Throws<InvalidVariableException>(() =>
+           {
+               var result = _papper.ReadAsync(PlcReadReference.FromRoot(mapping, accessDict.Keys.ToArray()).ToArray()).GetAwaiter().GetResult();
+               Assert.Empty(result);
+           });
         }
 
         [Fact]
@@ -632,7 +634,25 @@ namespace UnitTestSuit
             }
         }
 
- 
+        [Fact]
+        public void TestInvalidMappings()
+        {
+
+            var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite, UpdateHandler, ReadMetaData, OptimizerType.Items);
+            papper.AddMapping(typeof(DB_Safety));
+
+            using (var subscription = papper.CreateSubscription(ChangeDetectionStrategy.Event))
+            {
+                Assert.True(subscription.TryAddItems(PlcWatchReference.FromAddress("DB_Safety.SafeMotion.Slots[0]", 100)));
+                Assert.False(subscription.TryAddItems(PlcWatchReference.FromAddress("Test.XY", 100)));
+                Assert.False(subscription.TryAddItems(PlcWatchReference.FromAddress("DB_Safety.XY", 100)));
+
+
+                Assert.Throws<InvalidVariableException>( () => subscription.AddItems(PlcWatchReference.FromAddress("Test.XY", 100)));
+                Assert.Throws<InvalidVariableException>( () => subscription.AddItems(PlcWatchReference.FromAddress("DB_Safety.XY", 100)));
+            }
+        }
+
 
 
         #region Helper

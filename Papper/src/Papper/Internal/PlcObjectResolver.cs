@@ -42,6 +42,7 @@ namespace Papper.Internal
         /// <param name="values"></param>
         internal static bool AddRawPlcObjects(ITreeNode plcObj, Dictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values)
         {
+            var adds = new Dictionary<string, Tuple<int, PlcObject>>();
             var updated = false;
             foreach (var value in values)
             {
@@ -120,26 +121,37 @@ namespace Papper.Internal
                     if (parts.Length >= 2)
                     {
                         if (plcObject is PlcBool)
-                            plcObject.Offset.Bits = Int32.Parse(parts[1]);
+                            plcObject.Offset.Bits = int.Parse(parts[1]);
 
                         if (plcObject is PlcString)
-                            (plcObject as PlcString).StringLength = Int32.Parse(parts[1]);
+                            (plcObject as PlcString).StringLength = int.Parse(parts[1]);
 
                         if (!(plcObject is PlcBool) || parts.Length >= 3)
                         {
-                            var length = Int32.Parse(parts.Last());
+                            var length = int.Parse(parts.Last());
                             if (length > 0)
                                 length--;
                             plcObject = new PlcArray(value, plcObject, 0, length);
                         }
                     }
-                    plcObject.Offset.Bytes = Int32.Parse(parts[0]);
+                    plcObject.Offset.Bytes = int.Parse(parts[0]);
                     if (!plcObjects.ContainsKey(value))
                     {
-                        plcObjects.Add(value, new Tuple<int, PlcObject>(0, plcObject));
-                        updated = true;
+                        adds.Add(value, new Tuple<int, PlcObject>(0, plcObject));
                     }
+                }
+                else
+                {
+                    throw new InvalidVariableException($"{plcObj.Name}.{value}");
+                }
+            }
 
+            if(adds.Any())
+            {
+                updated = true;
+                foreach (var item in adds)
+                {
+                    plcObjects.Add(item.Key, item.Value);
                 }
             }
             return updated;
@@ -154,9 +166,11 @@ namespace Papper.Internal
             foreach (var value in values.Where( x => !plcObjects.ContainsKey(x)))
             {
                 var baseOffset = offset;
-                var item = value == "This" ? plcObj as PlcObject : plcObj.Get(PlcMetaDataTreePath.CreatePath(value.Split('.')), ref baseOffset) as PlcObject;
+                var item = value == "This" ? plcObj as PlcObject : plcObj.Get(new PlcMetaDataTreePath(value), ref baseOffset) as PlcObject;
                 if (item == null)
-                    continue;
+                {
+                    throw new InvalidVariableException($"{plcObj.Name}.{value}");
+                }
 
                 var key = prefix + value;
 
@@ -167,7 +181,9 @@ namespace Papper.Internal
                 }
 
                 if (item is PlcStruct plcStruct)
+                {
                     updated = AddPlcObjects(plcStruct, plcObjects, plcStruct.Childs.Select(child => child.Name), key + ".", baseOffset) || updated;
+                }
             }
             return updated;
         }

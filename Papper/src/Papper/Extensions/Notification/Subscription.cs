@@ -96,34 +96,26 @@ namespace Papper.Extensions.Notification
         /// Add items to the subscription. This items are active in the next watch cycle, so you will get a data change if the update was activated.
         /// </summary>
         /// <param name="vars">Vars to activate </param>
-        public bool AddItems(params PlcWatchReference[] vars) => AddItems(vars as IEnumerable<PlcWatchReference>);
+        public void AddItems(params PlcWatchReference[] vars) => AddItems(vars as IEnumerable<PlcWatchReference>);
 
         /// <summary>
         /// Add items to the subscription. This items are active in the next watch cycle, so you will get a data change if the update was activated.
         /// </summary>
         /// <param name="vars">Vars to activate </param>
-        public bool AddItems(IEnumerable<PlcWatchReference> vars)
-        {
-            using (new WriterGuard(_lock))
-            {
-                foreach (var variable in vars)
-                {
-                    if(_variables.TryGetValue(variable.Address, out var current))
-                    {
-                        if(current.WatchCycle > variable.WatchCycle)
-                        {
-                            _variables[variable.Address] = variable;
-                        }
-                    }
-                    else
-                    {
-                        _variables.Add(variable.Address, variable);
-                    }
-                }
-                UpdateWatchCycle(_variables.Values);
-                return _modified = true;
-            }
-        }
+        public bool TryAddItems(params PlcWatchReference[] vars) => TryAddItems(vars as IEnumerable<PlcWatchReference>);
+
+        /// <summary>
+        /// Add items to the subscription. This items are active in the next watch cycle, so you will get a data change if the update was activated.
+        /// </summary>
+        /// <param name="vars">Vars to activate </param>
+        public void AddItems(IEnumerable<PlcWatchReference> vars) => InternalAddItems(vars, true);
+
+        /// <summary>
+        /// Add items to the subscription. This items are active in the next watch cycle, so you will get a data change if the update was activated.
+        /// </summary>
+        /// <param name="vars">Vars to activate </param>
+        public bool TryAddItems(IEnumerable<PlcWatchReference> vars) => InternalAddItems(vars, false);
+
 
 
         /// <summary>
@@ -290,6 +282,49 @@ namespace Papper.Extensions.Notification
                 throw new InvalidOperationException("This operation is not allowed for this change detection strategy");
             }
         }
+
+        private bool InternalAddItems(IEnumerable<PlcWatchReference> vars, bool throwExceptions)
+        {
+            using (new WriterGuard(_lock))
+            {
+                var variables = new Dictionary<string, PlcWatchReference>();
+                foreach (var variable in vars)
+                {
+                    if (!_mapper.IsValidReference(variable))
+                    {
+                        if (throwExceptions)
+                        {
+                            throw new InvalidVariableException(variable.Address);
+                        }
+                        return false;
+                    }
+                    variables.Add(variable.Address, variable);
+                }
+
+                if (variables.Any())
+                {
+                    // After we validate all items, we add all
+                    // if one is not valiad non of them will be added, this is because of consistence
+                    foreach (var variable in variables.Values)
+                    {
+                        if (_variables.TryGetValue(variable.Address, out var current))
+                        {
+                            _variables[variable.Address] = variable;
+                        }
+                        else
+                        {
+                            _variables.Add(variable.Address, variable);
+                        }
+                    }
+
+
+                    UpdateWatchCycle(_variables.Values);
+                    return _modified = true;
+                }
+                return false;
+            }
+        }
+
 
         /// <summary>
         /// This filter detects which items are changed during the sleep  phase of the subscription and returns only the changed ones.

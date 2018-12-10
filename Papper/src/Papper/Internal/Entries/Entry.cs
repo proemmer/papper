@@ -103,7 +103,7 @@ namespace Papper.Internal
 
             foreach (var binding in bindingSnapshot)
             {
-                if (!result.TryGetValue(binding.Value.RawData, out Dictionary<string, PlcObjectBinding> entry))
+                if (!result.TryGetValue(binding.Value.RawData, out var entry))
                 {
                     entry = new Dictionary<string, PlcObjectBinding>();
                     result.Add(binding.Value.RawData, entry);
