@@ -50,7 +50,7 @@ namespace Papper.Internal
             return CreateExecutions(vars);
         }
 
-        protected void UpdateInternalState(IEnumerable<string> vars)
+        internal void UpdateInternalState(IEnumerable<string> vars)
         {
             if (AddObject(PlcObject, Variables, vars))
             {

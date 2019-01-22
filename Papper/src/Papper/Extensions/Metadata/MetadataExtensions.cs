@@ -60,7 +60,8 @@ namespace Papper.Extensions.Metadata
             var result = new Dictionary<string, object>();
             if (papper.EntriesByName.TryGetValue(var.Mapping, out IEntry entry))
             {
-                if (entry.Variables.TryGetValue(var.Variable, out Tuple<int, Types.PlcObject> varibleEntry))
+                if(entry is Entry e)  e.UpdateInternalState(new List<string>() { var.Variable });
+                if (entry.Variables.TryGetValue(var.Variable, out var varibleEntry))
                 {
                     return new PlcItemAddress(
                         varibleEntry.Item2.Selector,
