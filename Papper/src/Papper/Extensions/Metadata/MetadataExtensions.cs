@@ -58,15 +58,15 @@ namespace Papper.Extensions.Metadata
         public static PlcItemAddress GetAddressOf(this PlcDataMapper papper, IPlcReference var)
         {
             var result = new Dictionary<string, object>();
-            if (papper.EntriesByName.TryGetValue(var.Mapping, out IEntry entry))
+            if (papper.EntriesByName.TryGetValue(var.Mapping, out var entry))
             {
                 if(entry is Entry e)  e.UpdateInternalState(new List<string>() { var.Variable });
                 if (entry.Variables.TryGetValue(var.Variable, out var varibleEntry))
                 {
                     return new PlcItemAddress(
-                        varibleEntry.Item2.Selector,
+                        entry.PlcObject.Selector,
                         varibleEntry.Item2.ElemenType,
-                        varibleEntry.Item2.Offset,
+                        new PlcSize { Bytes = varibleEntry.Item1 + varibleEntry.Item2.ByteOffset, Bits = varibleEntry.Item2.BitOffset },
                         varibleEntry.Item2.Size
                         );
                 }

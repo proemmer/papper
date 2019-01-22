@@ -657,11 +657,11 @@ namespace UnitTestSuit
         public void TestGetAddressOf()
         {
             var mapping = "DB_Safety2";
-            var result = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}.SafeMotion.Header"));
+            var result = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}.SafeMotion.Slots"));
 
 
-            Assert.Equal(0, result.Offset.Bytes);
-            Assert.Equal(14, result.Size.Bytes);
+            Assert.Equal(14, result.Offset.Bytes);
+            Assert.Equal(8670, result.Size.Bytes);
 
         }
 
