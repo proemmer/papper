@@ -274,7 +274,16 @@ namespace Papper
                         buffer = ArrayPool<byte>.Shared.Rent(binding.RawData.MemoryAllocationSize);
                         dict.Add(binding.RawData, buffer);
                     }
-                    binding.ConvertToRaw(value, buffer);
+
+                    if (value is byte[] b && binding.Size == b.Length)
+                    {
+                        // we got raw data for the type, so we need not to convert them
+                        b.CopyTo(buffer, 0);
+                    }
+                    else
+                    {
+                        binding.ConvertToRaw(value, buffer);
+                    }
                     return buffer;
                 }
 

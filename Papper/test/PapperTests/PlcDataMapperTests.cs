@@ -666,6 +666,38 @@ namespace UnitTestSuit
         }
 
 
+        [Fact]
+        public void TestWriteRawDataToStruct()
+        {
+            var mapping = "DB_Safety2";
+            var header = new UDT_SafeMotionHeader
+            {
+                Generated = Normalize(DateTime.Now),
+                NumberOfActiveSlots = 2,
+                Commands = new UDT_SafeMotionHeader_Commands
+                {
+                    AllSlotsLocked = true,
+                    UpdateAllowed = true
+                },
+                States = new UDT_SafeMotionHeader_States
+                {
+                    ChecksumInvalid = true,
+                    UpdateRequested = true
+                }
+            };
+
+            var accessDict = new Dictionary<string, object> {
+                    { "SafeMotion.Header", header},
+                };
+
+            var s = new PlcDataMapperSerializer();
+            accessDict["SafeMotion.Header"] = s.Serialize(header);
+
+            var writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, accessDict.ToArray()).ToArray()).GetAwaiter().GetResult();
+        }
+
+
+
         #region Helper
 
 

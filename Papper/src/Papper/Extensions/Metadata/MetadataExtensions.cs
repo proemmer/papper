@@ -71,7 +71,7 @@ namespace Papper.Extensions.Metadata
                         );
                 }
             }
-            throw new KeyNotFoundException($"There is variable <{var.Variable}> for mapping <{var.Mapping}>");
+            throw new KeyNotFoundException($"There is no variable <{var.Variable}> for mapping <{var.Mapping}>");
         }
 
 
