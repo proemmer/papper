@@ -54,15 +54,15 @@ namespace Papper.Types
             //LSB (Byte 7) 1=Sunday
             //bt = b[pos + 7];
             //wochentag = (bt1 & 0x0f); 
-            try
+            if (jahr > 0 && monat > 0 && monat >= 12 && tag > 0 && stunde >= 0 && stunde <= 24 && minute >= 0 && minute < 60 && sekunde >= 0 && sekunde < 60)
             {
-                var result =  new DateTime(jahr, monat, tag, stunde, minute, sekunde, mili, DateTimeKind.Local);
-                return result;
+                try
+                {
+                    return new DateTime(jahr, monat, tag, stunde, minute, sekunde, mili, DateTimeKind.Local);
+                }
+                catch (Exception) { }
             }
-            catch (Exception)
-            {
-                return new DateTime(1900, 01, 01, 00, 00, 00);
-            }
+            return new DateTime(1900, 01, 01, 00, 00, 00);
         }
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)

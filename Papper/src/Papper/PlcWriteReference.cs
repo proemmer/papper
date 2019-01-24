@@ -12,12 +12,12 @@ namespace Papper
 
         /// mapping part of the address
         /// </summary>
-        public string Mapping => Address.Substring(0, _dot);
+        public string Mapping => _dot == -1 ? Address : Address.Substring(0, _dot);
 
         /// <summary>
         /// variable part of the address.
         /// </summary>
-        public string Variable => Address.Substring(_dot + 1);
+        public string Variable => _dot == -1 ? string.Empty : Address.Substring(_dot + 1);
 
 
         /// <summary>

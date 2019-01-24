@@ -6,6 +6,7 @@ using System;
 using System.Buffers.Binary;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
@@ -237,6 +238,34 @@ namespace UnitTestSuit
 
             // Assert.True(AreDataEqual(ToExpando(header), result2.Values.FirstOrDefault()));
         }
+
+
+        [Fact]
+        public void TestStructuralAllAccess()
+        {
+            var mapping = "DB_Safety2";
+
+            var t = new Stopwatch();
+            t.Start();
+            var result = _papper.ReadAsync(PlcReadReference.FromAddress($"{mapping}")).GetAwaiter().GetResult();
+            t.Stop();
+        }
+
+        [Fact]
+        public void TestStructuralAllWithSerializerAccess()
+        {
+            var mapping = "DB_Safety2";
+
+            var t = new Stopwatch();
+            var ser = new PlcDataMapperSerializer();
+            t.Start();
+            var address = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}")).RawAddress<byte>();
+            var result = _papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult().FirstOrDefault();
+            var x = ser.Deserialize<DB_Safety>((byte[])result.Value);
+            t.Stop();
+        }
+
+
 
         [Fact]
         public void TestDataChange()

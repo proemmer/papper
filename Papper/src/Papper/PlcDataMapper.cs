@@ -356,7 +356,7 @@ namespace Papper
         internal List<Execution> DetermineExecutions<T>(IEnumerable<T> vars) where T: IPlcReference
         {
             return vars.GroupBy(x => x.Mapping)
-                                .Select((execution) => GetOrAddMapping(execution.Key, out IEntry entry)
+                                .Select((execution) => GetOrAddMapping(execution.Key, out var entry)
                                                                 ? (execution, entry)
                                                                 : (null, null))
                                 .Where(x => x.execution != null)

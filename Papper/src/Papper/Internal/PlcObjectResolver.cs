@@ -116,7 +116,7 @@ namespace Papper.Internal
 
                 if (plcObject != null)
                 {
-                    var parts = value.Substring(dataType.Length).Split(new[] { "_" }, StringSplitOptions.RemoveEmptyEntries);
+                    var parts = value.Substring(dataType.Length).Split(new[] { "_", "," }, StringSplitOptions.RemoveEmptyEntries);
                     plcObject.Selector = plcObj.Name;
                     if (parts.Length >= 2)
                     {
@@ -129,8 +129,7 @@ namespace Papper.Internal
                         if (!(plcObject is PlcBool) || parts.Length >= 3)
                         {
                             var length = int.Parse(parts.Last());
-                            if (length > 0)
-                                length--;
+                            if (length > 0) length--;
                             plcObject = new PlcArray(value, plcObject, 0, length);
                         }
                     }

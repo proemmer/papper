@@ -13,7 +13,7 @@ namespace Papper
         public string Selector { get; private set; }
 
         /// <summary>
-        /// .Net thype of the item
+        /// .Net type of the item
         /// </summary>
         public Type Type { get; private set; }
 
@@ -40,6 +40,29 @@ namespace Papper
             Type = type;
             Offset = offset;
             Size = size;
+        }
+
+
+        public string RawAddress<T>() => $"{Selector}.{GetTypeSign<T>()}{Offset.Bytes},{Size.Bytes}";
+
+        private string GetTypeSign<T>()
+        {
+
+            var t = default(T);
+            switch (t)
+            {
+                case bool b: return "X";
+                case byte by: return "B";
+                case char c: return "C";
+                case int i: return "DI";
+                case uint i: return "DW";
+                case short i: return "I";
+                case ushort i: return "W";
+                case Single si: return "R";
+                case string s: return "S";
+            }
+
+            return "B";
         }
     }
 }
