@@ -5,13 +5,10 @@ namespace Papper.Internal
 {
     internal class PlcObjectBinding
     {
-        private readonly PlcRawData _rawData;
-        private readonly PlcObject _metaData;
-
         public PlcObjectBinding(PlcRawData rawData, PlcObject metaData, int offset, int validationTimeMs, bool fullType = false)
         {
-            _rawData = rawData;
-            _metaData = metaData;
+            RawData = rawData;
+            MetaData = metaData;
             Offset = offset;
             ValidationTimeInMs = validationTimeMs;
             FullType = fullType;
@@ -24,40 +21,34 @@ namespace Papper.Internal
 
         public Memory<byte> Data
         {
-            get { return _rawData.ReadDataCache; }
+            get { return RawData.ReadDataCache; }
         }
 
         public DateTime LastUpdate
         {
-            get { return _rawData.LastUpdate; }
+            get { return RawData.LastUpdate; }
         }
 
-        public PlcRawData RawData
-        {
-            get { return _rawData; }
-        }
+        public PlcRawData RawData { get; }
 
-        public PlcObject MetaData
-        {
-            get { return _metaData; }
-        }
+        public PlcObject MetaData { get; }
 
         public int Offset { get; private set; }
-        public int Size { get { return _metaData.Size.Bytes; } }
+        public int Size { get { return MetaData.Size.Bytes; } }
 
         public object ConvertFromRaw(Span<byte> data)
         {
-            return _metaData.ConvertFromRaw(this, data);
+            return MetaData.ConvertFromRaw(this, data);
         }
 
         public void ConvertToRaw(object obj, Span<byte> data)
         {
-            _metaData.ConvertToRaw(obj, this, data);
+            MetaData.ConvertToRaw(obj, this, data);
         }
 
         public Type GetMetaType()
         {
-            return _metaData.GetType();
+            return MetaData.GetType();
         }
     }
 }

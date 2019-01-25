@@ -31,11 +31,11 @@ namespace Papper.Internal
   
         public Entry(PlcDataMapper mapper, PlcObject plcObject, int readDataBlockSize, int validationTimeInMs)
         {
-            _mapper = mapper ?? throw new ArgumentNullException("mapper");
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             ReadDataBlockSize = readDataBlockSize;
             ValidationTimeMs = validationTimeInMs;
             Variables = new Dictionary<string, Tuple<int, PlcObject>>();
-            PlcObject = plcObject ?? throw new ArgumentNullException("plcObject");
+            PlcObject = plcObject ?? throw new ArgumentNullException(nameof(plcObject));
             Name = plcObject.Name;
         }
 

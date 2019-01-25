@@ -54,7 +54,7 @@ namespace Papper.Types
             //LSB (Byte 7) 1=Sunday
             //bt = b[pos + 7];
             //wochentag = (bt1 & 0x0f); 
-            if (jahr > 0 && monat > 0 && monat >= 12 && tag > 0 && stunde >= 0 && stunde <= 24 && minute >= 0 && minute < 60 && sekunde >= 0 && sekunde < 60)
+            if (jahr > 0 && monat > 0 && monat <= 12 && tag > 0 && stunde >= 0 && stunde <= 24 && minute >= 0 && minute < 60 && sekunde >= 0 && sekunde < 60)
             {
                 try
                 {
