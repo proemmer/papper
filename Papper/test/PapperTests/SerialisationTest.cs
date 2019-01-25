@@ -60,9 +60,10 @@ namespace UnitTestSuit
 
 
         [Fact]
-        public void TestSerialisationGetValue()
+        public void TestAccessorGetValue()
         {
             var s = new PlcDataMapperSerializer();
+            var accessor = new PlcDataAccessor();
             var tt = new StringArrayTestMapping
             {
                 TEST = "Hallo",
@@ -74,7 +75,7 @@ namespace UnitTestSuit
             var size = s.SerializedByteSize<StringArrayTestMapping>();
             var deserialized = s.Deserialize<StringArrayTestMapping>(serialized);
 
-            var value = s.GetValue<StringArrayTestMapping, TimeSpan[]>("Time", serialized);
+            var value = accessor.GetValue<StringArrayTestMapping, TimeSpan[]>("Time", serialized);
 
             Assert.Equal(tt.TEST, deserialized.TEST);
             Assert.Equal(tt.TEXT[0], deserialized.TEXT[0]);
@@ -83,6 +84,47 @@ namespace UnitTestSuit
             // Precision is not the same after conveting to the plc format
             var cmpVal = Convert.ToUInt32(tt.Time[0].TotalMilliseconds);
             Assert.Equal(cmpVal, deserialized.Time[0].TotalMilliseconds);
+        }
+
+
+        [Fact]
+        public void TestAccessorSetValue()
+        {
+            var s = new PlcDataMapperSerializer();
+            var accessor = new PlcDataAccessor();
+            var tt = new StringArrayTestMapping
+            {
+                TEST = "Hallo",
+                TEXT = new string[] { "HHHHHH" },
+                Time = new TimeSpan[] { DateTime.Now.TimeOfDay }
+            };
+
+            var serialized = s.Serialize(tt);
+            var size = s.SerializedByteSize<StringArrayTestMapping>();
+            var deserialized = s.Deserialize<StringArrayTestMapping>(serialized);
+
+            // Precision is not the same after conveting to the plc format
+            var cmpVal = Convert.ToUInt32(tt.Time[0].TotalMilliseconds);
+            Assert.Equal(cmpVal, deserialized.Time[0].TotalMilliseconds);
+
+            var value = accessor.GetValue<StringArrayTestMapping, TimeSpan[]>("Time", serialized);
+            var value1 = accessor.GetValue<StringArrayTestMapping, TimeSpan>("Time[1]", serialized);
+
+            Assert.Equal(tt.TEST, deserialized.TEST);
+            Assert.Equal(tt.TEXT[0], deserialized.TEXT[0]);
+            Assert.Equal(value[0], deserialized.Time[0]);
+            Assert.Equal(value1, deserialized.Time[0]);
+
+            accessor.SetValue<StringArrayTestMapping, TimeSpan>("Time[1]", DateTime.Now.TimeOfDay.Add(TimeSpan.FromMinutes(1)), serialized);
+
+            deserialized = s.Deserialize<StringArrayTestMapping>(serialized);
+            value = accessor.GetValue<StringArrayTestMapping, TimeSpan[]>("Time", serialized);
+            value1 = accessor.GetValue<StringArrayTestMapping, TimeSpan>("Time[1]", serialized);
+
+            Assert.Equal(value[0], deserialized.Time[0]);
+            Assert.Equal(value1, deserialized.Time[0]);
+
+
         }
 
 
