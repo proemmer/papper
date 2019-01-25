@@ -26,22 +26,16 @@ namespace Papper
         public string Address { get; }
 
         /// <summary>
-        /// The read result will not be converted to the correct type
-        /// </summary>
-        public bool AsRawData { get; }
-
-        /// <summary>
         /// 
         /// </summary>
         /// <param name="address"> [Mapping].[Variable]</param>
         /// <returns></returns>
-        public static PlcReadReference FromAddress(string address, bool asRawData = false) => new PlcReadReference(address, asRawData);
+        public static PlcReadReference FromAddress(string address) => new PlcReadReference(address);
 
 
-        public PlcReadReference(string address, bool asRawData = false)
+        public PlcReadReference(string address)
         {
             Address = address;
-            AsRawData = asRawData;
             _dot = address.IndexOf(".");
         }
 

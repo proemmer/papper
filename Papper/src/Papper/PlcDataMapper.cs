@@ -221,24 +221,19 @@ namespace Papper
         public Task<PlcReadResult[]> ReadAsync(params PlcReadReference[] vars) => ReadAsync(vars as IEnumerable<PlcReadReference>);
 
         /// <summary>
-        /// Read variables from an given mapping
+        /// Read variables from an given mapping as the mapping specified type
         /// </summary>
         /// <param name="vars"></param>
         /// <returns>return a dictionary with all variables and the read value</returns>
-        public async Task<PlcReadResult[]> ReadAsync(IEnumerable<PlcReadReference> vars)
-        {
-            // determine executions
-            var executions = DetermineExecutions(vars);
+        public Task<PlcReadResult[]> ReadAsync(IEnumerable<PlcReadReference> vars) => InternalReadAsync(vars, false);
 
-            // determine outdated
-            var needUpdate = UpdateableItems(executions, true);  // true = read some items from cache!!
+        /// <summary>
+        /// Read variables from an given mapping as byte[]
+        /// </summary>
+        /// <param name="vars"></param>
+        /// <returns>return a dictionary with all variables and the read value</returns>
+        public Task<PlcReadResult[]> ReadBytesAsync(IEnumerable<PlcReadReference> vars) => InternalReadAsync(vars, true);
 
-            // read from plc
-            await ReadFromPlcAsync(needUpdate);
-
-            // transform to result
-            return CreatePlcReadResults(executions, needUpdate);
-        }
 
         /// <summary>
         /// Write values to variables of an given mapping
@@ -368,7 +363,8 @@ namespace Papper
                                                       Dictionary<Execution, DataPack> needUpdate,
                                                       DateTime? changedAfter = null,
                                                       Func<IEnumerable<KeyValuePair<string, PlcObjectBinding>>, 
-                                                      IEnumerable<KeyValuePair<string, PlcObjectBinding>>> filter = null)
+                                                      IEnumerable<KeyValuePair<string, PlcObjectBinding>>> filter = null,
+                                                      bool doNotConvert = false)
         {
             if (filter == null)
             {
@@ -378,11 +374,13 @@ namespace Papper
                              .Where(exec => changedAfter == null || exec.LastChange > changedAfter) // filter by data area
                              .GroupBy(exec => exec.ExecutionResult) // Group by execution result
                              .SelectMany(group => filter(group.SelectMany(g => g.Bindings))
-                                                       .Select(b => new PlcReadResult(b.Key, 
-                                                                                      b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache.Span), 
+                                                       .Select(b => new PlcReadResult(b.Key,
+                                                                                      ConvertToResult(b.Key, b.Value, doNotConvert), 
                                                                                       group.Key)
                                                        )).ToArray();
         }
+
+
 
         internal PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions, IEnumerable<DataPack> packs)
         {
@@ -420,6 +418,27 @@ namespace Papper
                 (entry is MappingEntry && entry.PlcObject.Get(new PlcMetaDataTreePath(watchs.Variable)) != null) ||
                 (entry is RawEntry);
         #endregion
+
+        private async Task<PlcReadResult[]> InternalReadAsync(IEnumerable<PlcReadReference> vars, bool doNotConvert)
+        {
+            var variables = vars;
+            // determine executions
+            var executions = DetermineExecutions(variables);
+
+            // determine outdated
+            var needUpdate = UpdateableItems(executions, true);  // true = read some items from cache!!
+
+            // read from plc
+            await ReadFromPlcAsync(needUpdate);
+            // transform to result
+            return CreatePlcReadResults(executions, needUpdate, null, null, doNotConvert);
+        }
+
+        private object ConvertToResult(string key, PlcObjectBinding binding, bool doNotConvert = false)
+        {
+            if (doNotConvert) return binding.RawData.ReadDataCache.Slice(binding.Offset, binding.Size).ToArray();
+            return binding?.ConvertFromRaw(binding.RawData.ReadDataCache.Span);
+        }
 
         private bool GetOrAddMapping(string mapping, out IEntry entry)
         {

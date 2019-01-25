@@ -240,6 +240,45 @@ namespace UnitTestSuit
         }
 
 
+
+        [Fact]
+        public void TestStructuralAccessOfRawData()
+        {
+            var mapping = "DB_Safety2";
+            var header = new UDT_SafeMotionHeader
+            {
+                Generated = Normalize(DateTime.Now),
+                NumberOfActiveSlots = 2,
+                Commands = new UDT_SafeMotionHeader_Commands
+                {
+                    AllSlotsLocked = true,
+                    UpdateAllowed = true
+                },
+                States = new UDT_SafeMotionHeader_States
+                {
+                    ChecksumInvalid = true,
+                    UpdateRequested = true
+                }
+            };
+
+            var accessDict = new Dictionary<string, object> {
+                    { "SafeMotion.Header", header},
+                };
+
+            var result = _papper.ReadBytesAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
+            Assert.Equal(accessDict.Count, result.Length);
+            var writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, accessDict.ToArray()).ToArray()).GetAwaiter().GetResult();
+            foreach (var item in writeResults)
+            {
+                Assert.Equal(ExecutionResult.Ok, item.ActionResult);
+            }
+            var result2 = _papper.ReadBytesAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
+            Assert.Equal(accessDict.Count, result2.Length);
+            Assert.False(AreDataEqual(result, result2));
+
+        }
+
+
         [Fact]
         public void TestStructuralAllAccess()
         {
