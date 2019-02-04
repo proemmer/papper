@@ -344,7 +344,7 @@ namespace Papper
             try
             {
                 Int64 val = 0;
-                foreach (var b in hexString.ToLower().Replace("0x", ""))
+                foreach (var b in hexString.Replace("0x", ""))
                 {
                     val *= 16;
                     switch (b)
@@ -368,6 +368,14 @@ namespace Papper
                         case 'e':
                         case 'f':
                             val += (Int64)(b - 'a' + 10);
+                            break;
+                        case 'A':
+                        case 'B':
+                        case 'C':
+                        case 'D':
+                        case 'E':
+                        case 'F':
+                            val += (Int64)(b - 'A' + 10);
                             break;
                     }
                 }
@@ -472,7 +480,7 @@ namespace Papper
             if (newString.Length % 2 != 0)
             {
                 discarded++;
-                newString = new StringBuilder(newString.ToString().Substring(0, newString.Length - 1));
+                newString = new StringBuilder(newString.ToString(0, newString.Length - 1));
             }
 
             var byteLength = newString.Length / 2;
@@ -517,13 +525,13 @@ namespace Papper
             if (newString.Length % 2 != 0)
             {
                 discarded++;
-                newString = new StringBuilder(newString.ToString().Substring(0, newString.Length - 1));
+                newString = new StringBuilder(newString.ToString(0, newString.Length - 1));
             }
 
             var byteLength = newString.Length / 8;
             var bytes = new byte[byteLength];
             for (var i = 0; i < byteLength; ++i)
-                bytes[i] = Convert.ToByte(newString.ToString().Substring(8 * i, 8), 2);
+                bytes[i] = Convert.ToByte(newString.ToString(8 * i, 8), 2);
 
             return bytes;
         }

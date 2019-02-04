@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Papper.Internal;
 using Papper.Types;
 
 namespace Papper.Internal
@@ -52,10 +51,7 @@ namespace Papper.Internal
         public abstract void Accept(VisitNode visit);
         public abstract void ReverseAccept(VisitNode visit);
 
-        public override string ToString()
-        {
-            return string.Format("Name={0}", Name);
-        }
+        public override string ToString() => $"Name={Name}";
 
         public ITreePath GetPath()
         {
