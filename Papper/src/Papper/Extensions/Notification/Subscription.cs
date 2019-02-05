@@ -57,7 +57,7 @@ namespace Papper.Extensions.Notification
         /// <param name="defaultInterval">setup the default interval, if none was given by the <see cref="PlcWatchReference"/></param>
         public Subscription(PlcDataMapper mapper, ChangeDetectionStrategy changeDetectionStrategy = ChangeDetectionStrategy.Polling , IEnumerable<PlcWatchReference> vars = null, int defaultInterval = 1000)
         {
-            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _mapper = mapper ?? ExceptionThrowHelper.ThrowArgumentNullException<PlcDataMapper>(nameof(mapper));
             _changeDetectionStrategy = changeDetectionStrategy;
             _defaultInterval = defaultInterval;
             _lock = new ReaderWriterLockSlim();
@@ -168,7 +168,7 @@ namespace Papper.Extensions.Notification
             if (Interlocked.CompareExchange(ref _cts, cts, null) != null)
             {
                 cts.Dispose();
-                throw new InvalidOperationException($"More than one detection run at the same time is not supported!");
+                ExceptionThrowHelper.ThrowMultipleDetectionsAreNotSupportedException();
             }
 
             try
@@ -279,7 +279,7 @@ namespace Papper.Extensions.Notification
             }
             else
             {
-                throw new InvalidOperationException("This operation is not allowed for this change detection strategy");
+                ExceptionThrowHelper.ThrowOperationNotAllowedForCurrentChangeDetectionStrategy();
             }
         }
 
@@ -294,7 +294,7 @@ namespace Papper.Extensions.Notification
                     {
                         if (throwExceptions)
                         {
-                            throw new InvalidVariableException(variable.Address);
+                            ExceptionThrowHelper.ThrowInvalidVariableException(variable.Address);
                         }
                         return false;
                     }

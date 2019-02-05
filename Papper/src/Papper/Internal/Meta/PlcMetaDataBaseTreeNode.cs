@@ -35,7 +35,7 @@ namespace Papper.Internal
             internal set
             {
                 if (_parent != null && value != null)
-                    throw new ArgumentException("TreeNode: Attempt to assign a new parent.");
+                    ExceptionThrowHelper.ThrowAttemptToAssignNewParentException();
                 _parent = value;
                 if (_parent == null)
                     _savedPath = null;

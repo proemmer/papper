@@ -116,16 +116,17 @@ namespace Papper.Internal
                     ? new PlcObjectRef(string.Format("[{0}]", i), array.ArrayType)
                     : PlcObjectFactory.CreatePlcObjectForArrayIndex(array.ArrayType, i, array.From);
 
+                var name = $"{item.Key}[{i}]";
+                var elemName = string.IsNullOrWhiteSpace(dimension) ? name :  $"{dimension}[{i}]";
                 if (element is PlcArray)
                 {
-                    var elemName = string.IsNullOrWhiteSpace(dimension) ? string.Format("{0}[{1}]", item.Key, i) : dimension + string.Format("[{0}]", i);
+                    
                     pred.AddReference(elemName, arrayOffset, element);
-                    HandleArray(arrayOffset, element as PlcArray, item, pred, string.Format("{0}[{1}]", item.Key, i));
+                    HandleArray(arrayOffset, element as PlcArray, item, pred, name);
                     arrayOffset += array.ArrayType.Size.Bytes;
                 }
                 else
                 {
-                    var elemName = string.IsNullOrWhiteSpace(dimension) ? string.Format("{0}[{1}]", item.Key, i) : dimension + string.Format("[{0}]", i);
                     pred.AddReference(elemName, arrayOffset, element);
                     arrayOffset += array.ArrayType.Size.Bytes;
                 }

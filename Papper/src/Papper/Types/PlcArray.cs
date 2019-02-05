@@ -150,7 +150,7 @@ namespace Papper.Types
                                 ArrayType.ConvertToRaw(enumerator.Current, binding, data);
                             }
                             else
-                                throw new Exception("Array error");
+                                ExceptionThrowHelper.ThrowArrayIndexExeption(From + i);
                         }
                         else
                         {
@@ -196,8 +196,7 @@ namespace Papper.Types
                     var childEnumerator = Childs.OfType<PlcObject>().GetEnumerator();
                     for (var i = 0; i < ArrayLength; i++)
                     {
-                        if(!childEnumerator.MoveNext())
-                            throw new Exception("Array error");
+                        if (!childEnumerator.MoveNext()) ExceptionThrowHelper.ThrowArrayIndexExeption(idx);
                         var child = childEnumerator.Current;
                         var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + ((idx - From) * GetElementSizeForOffset()), plcObjectBinding.ValidationTimeInMs, fully);
                         list.SetValue(((T)ArrayType.ConvertFromRaw(binding, data)),i);
@@ -212,8 +211,7 @@ namespace Papper.Types
                     var childEnumerator = Childs.OfType<PlcObject>().GetEnumerator();
                     for (var i = 0; i < ArrayLength; i++)
                     {
-                        if (!childEnumerator.MoveNext())
-                            throw new Exception("Array error");
+                        if (!childEnumerator.MoveNext()) ExceptionThrowHelper.ThrowArrayIndexExeption(idx);
                         var child = childEnumerator.Current;
                         var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + ((idx - From) * GetElementSizeForOffset()), plcObjectBinding.ValidationTimeInMs, fully);
                         list[i] = ((T)ArrayType.ConvertFromRaw(binding, data));
@@ -222,7 +220,7 @@ namespace Papper.Types
                     return list;
                 }
             }
-            return new T[ArrayLength]; ;
+            return new T[ArrayLength];
         }
 
         /// <summary>

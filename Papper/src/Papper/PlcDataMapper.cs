@@ -116,8 +116,7 @@ namespace Papper
             _blockInfoHandler = blockInfoHandler;
             Optimizer = OptimizerFactory.CreateOptimizer(optimizer);
             ReadDataBlockSize = pduSize - _readDataHeaderLength;
-            if (ReadDataBlockSize <= 0)
-                throw new ArgumentException($"PDU size have to be greater then {_readDataHeaderLength}", "pduSize");
+            if (ReadDataBlockSize <= 0) ExceptionThrowHelper.ThrowInvalidPduSizeException(_readDataHeaderLength);
             PlcMetaDataTreePath.CreateAbsolutePath(PlcObjectResolver.RootNodeName);
         }
 
@@ -144,7 +143,8 @@ namespace Papper
             var result = new List<string>();
             if (EntriesByName.TryGetValue(mapping, out IEntry entry))
                 return PlcObjectResolver.GetLeafs(entry.PlcObject, result);
-            throw new KeyNotFoundException($"The mapping {mapping} does not exist.");
+            ExceptionThrowHelper.ThrowMappingNotFoundException(mapping);
+            return null;
         }
 
         /// <summary>
@@ -155,12 +155,11 @@ namespace Papper
         public bool AddMapping(Type type)
         {
             if (type == null)
-                throw new ArgumentNullException("type");
+                ExceptionThrowHelper.ThrowArgumentNullException<Type>(nameof(type));
 
             var mappingAttributes = type.GetTypeInfo().GetCustomAttributes<MappingAttribute>().ToList();
             if (!mappingAttributes.Any())
-                throw new ArgumentException("The given type has no MappingAttribute", "type");
-
+                ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type);
             return AddMappingsInternal(type, mappingAttributes);
         }
 
@@ -173,10 +172,10 @@ namespace Papper
         public bool AddMapping(Type type, params MappingAttribute[] mappingAttributes)
         {
             if (type == null)
-                throw new ArgumentNullException("type");
+                ExceptionThrowHelper.ThrowArgumentNullException<Type>(nameof(type));
 
             if (!mappingAttributes.Any())
-                throw new ArgumentException("No MappingAttributes given");
+                ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type);
 
             return AddMappingsInternal(type, mappingAttributes);
         }
@@ -189,11 +188,11 @@ namespace Papper
         public bool RemoveMappings(Type type)
         {
             if (type == null)
-                throw new ArgumentNullException("type");
+                ExceptionThrowHelper.ThrowArgumentNullException<Type>(nameof(type));
 
             var mappingAttributes = type.GetTypeInfo().GetCustomAttributes<MappingAttribute>().ToList();
             if (!mappingAttributes.Any())
-                throw new ArgumentException("The given type has no MappingAttribute", "type");
+                ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type);
 
             return RemoveMappingsInternal(mappingAttributes.Select(x => x.Name));
         }

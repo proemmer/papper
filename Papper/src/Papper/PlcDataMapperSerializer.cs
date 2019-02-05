@@ -47,7 +47,7 @@ namespace Papper
         public object Deserialize(Type t, byte[] data)
         {
             var binding = _mappingEntryProvider.GetMappingEntryForType(t).BaseBinding;
-            if (data.Length < binding.Size) ThrowArgumentOutOfRangeException(nameof(data));
+            if (data.Length < binding.Size) ExceptionThrowHelper.ThrowArgumentOutOfRangeException(nameof(data));
             return binding.ConvertFromRaw(data);
         }
 
@@ -68,11 +68,7 @@ namespace Papper
         public int SerializedByteSize(Type t) => _mappingEntryProvider.GetMappingEntryForType(t).PlcObject.ByteSize;
 
 
-        /// <summary>
-        /// Throw helper
-        /// </summary>
-        /// <param name="argumentName"></param>
-        private void ThrowArgumentOutOfRangeException(string argumentName) => throw new ArgumentOutOfRangeException(argumentName);
+
 
     }
 }

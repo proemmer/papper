@@ -41,20 +41,15 @@ namespace Papper.Types
             get { return _referencedObject.Childs; }
         }
 
-        public override void AddChild(ITreeNode child)
-        {
-            throw new NotSupportedException();
-        }
+        public override void AddChild(ITreeNode child) => ExceptionThrowHelper.ThrowNotSupportedException();
 
         public override ITreeNode RemoveChild(string name)
         {
-            throw new NotSupportedException();
+             ExceptionThrowHelper.ThrowNotSupportedException();
+            return default;
         }
 
-        public override void AddChild(ITreePath path, ITreeNode node)
-        {
-            throw new NotSupportedException();
-        }
+        public override void AddChild(ITreePath path, ITreeNode node) => ExceptionThrowHelper.ThrowNotSupportedException();
 
         public override ITreeNode GetChildByName(string name)
         {

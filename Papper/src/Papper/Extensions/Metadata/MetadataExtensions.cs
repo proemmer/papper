@@ -37,7 +37,7 @@ namespace Papper.Extensions.Metadata
                 }
                 else
                 {
-                    throw new KeyNotFoundException($"The mapping {mapping} does not exist.");
+                    ExceptionThrowHelper.ThrowMappingNotFoundException(mapping);
                 }
             }
 
@@ -71,7 +71,8 @@ namespace Papper.Extensions.Metadata
                         );
                 }
             }
-            throw new KeyNotFoundException($"There is no variable <{var.Variable}> for mapping <{var.Mapping}>");
+            ExceptionThrowHelper.ThrowInvalidVariableException($"{var.Mapping}.{var.Variable}");
+            return default;
         }
 
 

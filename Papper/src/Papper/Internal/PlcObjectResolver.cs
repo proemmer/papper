@@ -46,73 +46,13 @@ namespace Papper.Internal
             var updated = false;
             foreach (var value in values)
             {
-                PlcObject plcObject = null;
                 var dataType = new StringBuilder();
                 foreach (var c in value.TakeWhile(char.IsLetter))
                 {
                     dataType.Append(c);
                 }
 
-                switch (dataType.ToString())
-                {
-                    case "X":
-                    case "BIT":
-                        plcObject = new PlcBool(value);
-                        break;
-                    case "B":
-                    case "BYTE":
-                        plcObject = new PlcByte(value);
-                        break;
-                    case "C":
-                    case "CHAR":
-                        plcObject = new PlcChar(value);
-                        break;
-                    case "DATE":
-                        plcObject = new PlcDate(value);
-                        break;
-                    case "DT":
-                    case "DATETIME":
-                        plcObject = new PlcDateTime(value);
-                        break;
-                    case "DI":
-                    case "DINT":
-                        plcObject = new PlcDInt(value);
-                        break;
-                    case "DW":
-                    case "DWORD":
-                        plcObject = new PlcDWord(value);
-                        break;
-                    case "I":
-                    case "INT":
-                        plcObject = new PlcInt(value);
-                        break;
-                    case "R":
-                    case "REAL":
-                        plcObject = new PlcReal(value);
-                        break;
-                    case "TIMEBCD":
-                        plcObject = new PlcS5Time(value);
-                        break;
-                    case "S":
-                    case "STRING":
-                        plcObject = new PlcString(value);
-                        break;
-                    case "T":
-                    case "TIME":
-                        plcObject = new PlcTime(value);
-                        break;
-                    case "TOD":
-                        plcObject = new PlcTimeOfDay(value);
-                        break;
-                    case "W":
-                    case "WORD":
-                        plcObject = new PlcWord(value);
-                        break;
-                    case "CT":
-                    case "COUNT":
-                        plcObject = new PlcS7Counter(value);
-                        break;
-                }
+                var plcObject = DataTypeToPlcObject(value, dataType);
 
                 if (plcObject != null)
                 {
@@ -141,11 +81,11 @@ namespace Papper.Internal
                 }
                 else
                 {
-                    throw new InvalidVariableException($"{plcObj.Name}.{value}");
+                    ExceptionThrowHelper.ThrowInvalidVariableException($"{plcObj.Name}.{value}");
                 }
             }
 
-            if(adds.Any())
+            if (adds.Any())
             {
                 updated = true;
                 foreach (var item in adds)
@@ -154,6 +94,73 @@ namespace Papper.Internal
                 }
             }
             return updated;
+        }
+
+        private static PlcObject DataTypeToPlcObject(string value, StringBuilder dataType)
+        {
+            PlcObject plcObject = null;
+            switch (dataType.ToString())
+            {
+                case "X":
+                case "BIT":
+                    plcObject = new PlcBool(value);
+                    break;
+                case "B":
+                case "BYTE":
+                    plcObject = new PlcByte(value);
+                    break;
+                case "C":
+                case "CHAR":
+                    plcObject = new PlcChar(value);
+                    break;
+                case "DATE":
+                    plcObject = new PlcDate(value);
+                    break;
+                case "DT":
+                case "DATETIME":
+                    plcObject = new PlcDateTime(value);
+                    break;
+                case "DI":
+                case "DINT":
+                    plcObject = new PlcDInt(value);
+                    break;
+                case "DW":
+                case "DWORD":
+                    plcObject = new PlcDWord(value);
+                    break;
+                case "I":
+                case "INT":
+                    plcObject = new PlcInt(value);
+                    break;
+                case "R":
+                case "REAL":
+                    plcObject = new PlcReal(value);
+                    break;
+                case "TIMEBCD":
+                    plcObject = new PlcS5Time(value);
+                    break;
+                case "S":
+                case "STRING":
+                    plcObject = new PlcString(value);
+                    break;
+                case "T":
+                case "TIME":
+                    plcObject = new PlcTime(value);
+                    break;
+                case "TOD":
+                    plcObject = new PlcTimeOfDay(value);
+                    break;
+                case "W":
+                case "WORD":
+                    plcObject = new PlcWord(value);
+                    break;
+                case "CT":
+                case "COUNT":
+                    plcObject = new PlcS7Counter(value);
+                    break;
+            }
+
+            return plcObject;
         }
 
         /// <summary>
@@ -168,7 +175,7 @@ namespace Papper.Internal
                 var item = value == "This" ? plcObj as PlcObject : plcObj.Get(new PlcMetaDataTreePath(value), ref baseOffset) as PlcObject;
                 if (item == null)
                 {
-                    throw new InvalidVariableException($"{plcObj.Name}.{value}");
+                    ExceptionThrowHelper.ThrowInvalidVariableException($"{plcObj.Name}.{value}");
                 }
 
                 var key = prefix + value;
@@ -245,8 +252,7 @@ namespace Papper.Internal
         /// </summary>
         internal static PlcObject GetMapping(string name, ITree tree, Type t, bool allowAddingWithoutMappingAttribute = false)
         {
-            if (string.IsNullOrWhiteSpace(name))
-                return null;
+            if (string.IsNullOrWhiteSpace(name)) return null;
             var nodePathStack = new Stack<string>();
             nodePathStack.Push(RootNodeName);
             nodePathStack.Push(InstancesNodeName);
@@ -257,8 +263,7 @@ namespace Papper.Internal
             var offset = 0;
             if (!tree.TryGet(path, ref offset, out ITreeNode obj, true))
             {
-                if (t == null)
-                    throw new ArgumentNullException("t");
+                if (t == null) ExceptionThrowHelper.ThrowArgumentNullException(nameof(t));
 
                 var mapping = t.GetTypeInfo().GetCustomAttributes<MappingAttribute>().FirstOrDefault(m => m.Name == name);
                 if (mapping != null)
@@ -281,7 +286,7 @@ namespace Papper.Internal
                 }
                 else
                 {
-                    throw new ArgumentException("Given name is not declared!");
+                    ExceptionThrowHelper.ThrowInvalidMappingNameException(name);
                 }
             }
             return obj as PlcObject;

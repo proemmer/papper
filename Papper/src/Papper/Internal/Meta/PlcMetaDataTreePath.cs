@@ -21,14 +21,11 @@ namespace Papper.Internal
         {
             if (nodeNames.Skip(1).Any(node => node.IndexOf(Separator, StringComparison.Ordinal) >= 0)
                 || (nodeNames[0].Length > 1 && nodeNames[0].IndexOf(Separator, StringComparison.Ordinal) > 0))
-                throw new ArgumentException("Path: Node collection must not contain a separator!");
+                ExceptionThrowHelper.ThrowInvalidNodePathCollectionException();
             return new PlcMetaDataTreePath(nodeNames);
         }
 
-        public static PlcMetaDataTreePath CreateNodePath(ITreePath path, PlcObject plcObject)
-        {
-            return path.Extend(plcObject.Name) as PlcMetaDataTreePath;
-        }
+        public static PlcMetaDataTreePath CreateNodePath(ITreePath path, PlcObject plcObject) => path.Extend(plcObject.Name) as PlcMetaDataTreePath;
 
         public PlcMetaDataTreePath(string path)
         {
@@ -44,10 +41,7 @@ namespace Papper.Internal
                 _nodes.AddRange(path.Split(_splitSeparator, StringSplitOptions.None));
         }
 
-        private PlcMetaDataTreePath(IEnumerable<string> nodes)
-        {
-            _nodes.AddRange(nodes);
-        }
+        private PlcMetaDataTreePath(IEnumerable<string> nodes) => _nodes.AddRange(nodes);
 
         private static string Normalize(string path)
         {
@@ -69,20 +63,11 @@ namespace Papper.Internal
             }
         }
 
-        public IEnumerable<string> Nodes
-        {
-            get { return _nodes; }
-        }
+        public IEnumerable<string> Nodes => _nodes;
 
-        public bool IsPathToRoot
-        {
-            get { return _nodes.Count() == 1 && _nodes[0] == Separator; }
-        }
+        public bool IsPathToRoot => _nodes.Count == 1 && _nodes[0] == Separator; 
 
-        public bool IsPathToCurrent
-        {
-            get { return !_nodes.Any(); }
-        }
+        public bool IsPathToCurrent => !_nodes.Any();
 
         public bool IsPathIndexed
         {
@@ -121,20 +106,13 @@ namespace Papper.Internal
             }
         }
 
-        public bool IsAbsolute
-        {
-            get { return !IsRelative; }
-        }
+        public bool IsAbsolute => !IsRelative;
 
-        public bool IsRelative
-        {
-            get { return !_nodes.Any() || _nodes[0] != Separator; }
-        }
+        public bool IsRelative =>  !_nodes.Any() || _nodes[0] != Separator; 
 
         public ITreePath StepDown()
         {
-            if (!_nodes.Any())
-                throw new Exception("Path: Cannot step down in empty path!");
+            if (!_nodes.Any()) ExceptionThrowHelper.ThrowEmptyNodePathCollectionException();
             return new PlcMetaDataTreePath(_nodes.Skip(1));
         }
 

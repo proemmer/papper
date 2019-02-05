@@ -24,7 +24,7 @@ namespace Papper.Internal
         public override void AddChild(ITreeNode child)
         {
             if (GetChildByName(child.Name) != null)
-                throw new ArgumentException(string.Format("TreeNode: A child with name {0} already exists!", child.Name));
+                ExceptionThrowHelper.ThrowChildNodeException(child.Name, true);
             if (child is PlcMetaDataBaseTreeNode baseTreeNode) baseTreeNode.Parent = this;
             _childs.Add(child);
         }
@@ -33,7 +33,7 @@ namespace Papper.Internal
         {
             var child = GetChildByName(name);
             if (child == null)
-                throw new ArgumentException(string.Format("TreeNode: A child with name {0} does not exist!", name));
+                ExceptionThrowHelper.ThrowChildNodeException(name, false);
             _childs.Remove(child);
             if (child is PlcMetaDataBaseTreeNode baseTreeNode) baseTreeNode.Parent = null;
             return child;

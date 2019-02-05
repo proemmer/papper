@@ -15,10 +15,8 @@ namespace Papper.Attributes
 
         public MappingAttribute(string name, string selector, int offset = 0, int observationRate = 0)
         {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("The given argument could not be null or whitespace.", "name");
-            if (string.IsNullOrWhiteSpace(selector))
-                throw new ArgumentException("The given argument could not be null or whitespace.", "selector");
+            if (string.IsNullOrWhiteSpace(name)) ExceptionThrowHelper.ThrowArgumentCouldNotBeNullOrWhitespaceException(nameof(name));
+            if (string.IsNullOrWhiteSpace(selector)) ExceptionThrowHelper.ThrowArgumentCouldNotBeNullOrWhitespaceException(nameof(selector));
             Name = name;
             Selector = selector;
             Offset = offset;

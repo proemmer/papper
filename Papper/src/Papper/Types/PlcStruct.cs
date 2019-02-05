@@ -39,7 +39,7 @@ namespace Papper.Types
         public PlcStruct(string name, Type structType) 
             : base(name)
         {
-            _structType = structType ?? throw new ArgumentNullException(nameof(structType));
+            _structType = structType ?? ExceptionThrowHelper.ThrowArgumentNullException<Type>(nameof(structType));
         }
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)

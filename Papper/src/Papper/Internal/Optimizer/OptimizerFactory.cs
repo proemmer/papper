@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Papper.Internal
+﻿namespace Papper.Internal
 {
     internal static class OptimizerFactory
     {
@@ -13,7 +11,8 @@ namespace Papper.Internal
                 case OptimizerType.Items:
                     return new ItemBasedReadOperationOptimizer();
                 default:
-                    throw new ArgumentException($"Unknown optimizer type given!");
+                    ExceptionThrowHelper.ThrowUnknownOptimizrException(type);
+                    return null;
             }
             
         }

@@ -18,6 +18,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PapperCmd", "sample\PapperCmd\PapperCmd.csproj", "{0FBA763A-1CA5-4F21-BDC2-837363323D23}"
 EndProject
 Global
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -43,5 +46,8 @@ Global
 		{AD09B8AF-6803-4CD7-9692-C31BEFD364AD} = {3FB1D2A8-9F36-4FCB-897B-A938935616C0}
 		{FB1E87BB-2473-45C8-A192-A84210D54675} = {DF6137D3-9031-49AE-9FC9-89E1AC359685}
 		{0FBA763A-1CA5-4F21-BDC2-837363323D23} = {77B9FE00-D1A2-44A9-BF6D-C041CE3BF78C}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {68C9688A-2CC8-455B-B446-9841784A9723}
 	EndGlobalSection
 EndGlobal

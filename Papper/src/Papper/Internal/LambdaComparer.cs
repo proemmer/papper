@@ -33,9 +33,9 @@ namespace Papper.Internal
 
         public LambdaComparer(Func<T, T, int> lambdaCompare, Func<T, T, bool> lambdaEquals, Func<T, int> lambdaHash)
         {
-            _lambdaCompare = lambdaCompare ?? throw new ArgumentNullException("lambdaCompare");
-            _lambdaEquals = lambdaEquals ?? throw new ArgumentNullException("lambdaEquals");
-            _lambdaHash = lambdaHash ?? throw new ArgumentNullException("lambdaHash");
+            _lambdaCompare = lambdaCompare ?? ExceptionThrowHelper.ThrowArgumentNullException<Func<T, T, int>>(nameof(lambdaCompare));
+            _lambdaEquals = lambdaEquals ?? ExceptionThrowHelper.ThrowArgumentNullException<Func<T, T, bool>>(nameof(lambdaEquals));
+            _lambdaHash = lambdaHash ?? ExceptionThrowHelper.ThrowArgumentNullException<Func<T, int>>(nameof(lambdaHash));
         }
 
         public int Compare(T x, T y)

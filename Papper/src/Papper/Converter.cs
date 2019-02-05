@@ -90,10 +90,10 @@ namespace Papper
         public static bool SequenceEqual<TSource>(this IEnumerable<TSource> first, int firstStartIndex, IEnumerable<TSource> second, int secondStartIndex, int length = -1, IEqualityComparer<TSource> comparer = null)
         {
             if (comparer == null) comparer = EqualityComparer<TSource>.Default; ;
-            if (first == null) throw new ArgumentNullException("first");
-            if (second == null) throw new ArgumentNullException("second");
-            using (IEnumerator<TSource> e1 = first.GetEnumerator())
-            using (IEnumerator<TSource> e2 = second.GetEnumerator())
+            if (first == null) ExceptionThrowHelper.ThrowArgumentNullException(nameof(first));
+            if (second == null) ExceptionThrowHelper.ThrowArgumentNullException(nameof(second));
+            using (var e1 = first.GetEnumerator())
+            using (var e2 = second.GetEnumerator())
             {
                 var skip = Math.Max(firstStartIndex, secondStartIndex);
                 for (int i = 0; i < skip; i++)

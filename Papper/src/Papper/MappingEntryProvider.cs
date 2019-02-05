@@ -19,7 +19,7 @@ namespace Papper
 
             public MappingEntry(PlcObject plcObject)
             {
-                PlcObject = plcObject ?? throw new ArgumentNullException(nameof(plcObject));
+                PlcObject = plcObject ?? ExceptionThrowHelper.ThrowArgumentNullException<PlcObject>(nameof(plcObject));
                 BaseBinding = new PlcObjectBinding(new PlcRawData(plcObject.ByteSize), plcObject, 0, 0, true);
                 Variables = new Dictionary<string, Tuple<int, PlcObject>>();
                 Bindings = new Dictionary<string, PlcObjectBinding>();

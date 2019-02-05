@@ -14,8 +14,8 @@ namespace Papper.Internal
         public MappingEntry(PlcDataMapper mapper, MappingAttribute mapping, Type type, PlcMetaDataTree tree, int readDataBlockSize, int validationTimeInMs)
             : base(mapper, PlcObjectResolver.GetMapping(mapping?.Name, tree, type), readDataBlockSize, validationTimeInMs)
         {
-            Mapping = mapping ?? throw new ArgumentNullException("mapping");
-            Type = type ?? throw new ArgumentNullException("type");
+            Mapping = mapping ?? ExceptionThrowHelper.ThrowArgumentNullException<MappingAttribute>(nameof(mapping));
+            Type = type ?? ExceptionThrowHelper.ThrowArgumentNullException<Type>(nameof(type));
         }
 
         protected override bool AddObject(ITreeNode plcObj, Dictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values)
