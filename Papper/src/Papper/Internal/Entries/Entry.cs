@@ -60,17 +60,6 @@ namespace Papper.Internal
                 {
                     if (rawDataBlock.References.Any())
                     {
-                        //if (rawDataBlock.ReadDataCache == null || rawDataBlock.Size > rawDataBlock.ReadDataCache.Length)
-                        //{
-                        //    var current = rawDataBlock.ReadDataCache != null ? rawDataBlock.ReadDataCache.Length : 0;
-                        //    Debug.WriteLine($"{rawDataBlock.ReadDataCache != null}, needed size:{rawDataBlock.Size}, current size:{current}");
-                        //    lock (rawDataBlock)
-                        //    {
-                        //        if(rawDataBlock.ReadDataCache == null || rawDataBlock.Size > rawDataBlock.ReadDataCache.Length)
-                        //            rawDataBlock.ReadDataCache = new byte[CalcRawDataSize(rawDataBlock.MemoryAllocationSize)];
-                        //    }
-                        //}
-
                         foreach (var reference in rawDataBlock.References)
                             bindings.Add(reference.Key, new PlcObjectBinding(rawDataBlock, reference.Value.Item2, reference.Value.Item1, ValidationTimeMs));
                     }

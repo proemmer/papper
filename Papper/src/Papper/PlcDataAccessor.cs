@@ -66,6 +66,7 @@ namespace Papper
             if (mappingEntry.Bindings.TryGetValue(variable, out var binding))
             {
                 binding.ConvertToRaw(value, data);
+                return true;
             }
             return false;
         }

@@ -7,6 +7,7 @@ namespace Papper.Internal
 {
     internal class PlcRawData
     {
+        private readonly object _lock = new object(); 
         private Memory<byte> _data = Memory<byte>.Empty;
         private readonly int _partitionSize;
         private readonly int _readDataBlockSize;
@@ -54,7 +55,13 @@ namespace Papper.Internal
             {
                 _data = value;
                 if (!Partitons.Any())
-                    CreatePartitions();
+                {
+                    lock (_lock)
+                    {
+                        if (!Partitons.Any())
+                            CreatePartitions();
+                    }
+                }
             }
         }
 

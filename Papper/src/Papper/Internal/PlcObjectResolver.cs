@@ -166,7 +166,7 @@ namespace Papper.Internal
         /// <summary>
         /// Adds the meta data of requested variables to the dictionary 
         /// </summary>
-        internal static bool AddPlcObjects(ITreeNode plcObj, Dictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values, string prefix = "", int offset = 0)
+        internal static bool AddPlcObjects(ITreeNode plcObj, IDictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values, string prefix = "", int offset = 0)
         {
             var updated = false;
             foreach (var value in values.Where( x => !plcObjects.ContainsKey(x)))
@@ -182,7 +182,15 @@ namespace Papper.Internal
 
                 if (!plcObjects.ContainsKey(key))
                 {
-                    plcObjects.Add(key, new Tuple<int, PlcObject>(baseOffset, item));
+                    try
+                    {
+                        plcObjects.Add(key, new Tuple<int, PlcObject>(baseOffset, item));
+                    }
+                    catch(Exception)
+                    {
+                        // This could throw an exception if another thread has already added the object.
+                        // but we could ignore this, becuase this would be the same object
+                    }
                     updated = true;
                 }
 

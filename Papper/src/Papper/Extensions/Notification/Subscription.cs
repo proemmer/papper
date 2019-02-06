@@ -304,7 +304,7 @@ namespace Papper.Extensions.Notification
                 if (variables.Any())
                 {
                     // After we validate all items, we add all
-                    // if one is not valiad non of them will be added, this is because of consistence
+                    // if one is not valid non of them will be added, this is because of consistence
                     foreach (var variable in variables.Values)
                     {
                         if (_variables.TryGetValue(variable.Address, out var current))
@@ -339,7 +339,7 @@ namespace Papper.Extensions.Notification
             {
                 var objBinding = binding.Value;
                 var size = objBinding.Size == 0 ? 1 : objBinding.Size;
-                if (!_lruCache.TryGetValue(binding.Key, out LruState saved) ||
+                if (!_lruCache.TryGetValue(binding.Key, out var saved) ||
                     (objBinding.Size == 0
                         ? objBinding.Data.Span[objBinding.Offset].GetBit(objBinding.MetaData.Offset.Bits) != saved.Data.Span[0].GetBit(objBinding.MetaData.Offset.Bits)
                         : !objBinding.Data.Slice(objBinding.Offset, size).Span.SequenceEqual(saved.Data.Slice(0, size).Span)))
