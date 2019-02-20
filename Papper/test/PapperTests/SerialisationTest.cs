@@ -5,7 +5,7 @@ using System.Text;
 using UnitTestSuit.Mappings;
 using Xunit;
 
-namespace UnitTestSuit
+namespace DataTypeTests
 {
     public class SerialisationTest
     {

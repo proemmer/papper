@@ -19,7 +19,7 @@ using Xunit.Abstractions;
 
 //run in sequence because of db sharing
 [assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
-namespace UnitTestSuit
+namespace DataTypeTests
 {
     // This project can output the Class library as a NuGet Package.
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
@@ -332,6 +332,38 @@ namespace UnitTestSuit
             sub.Dispose();
             t.Stop();
         }
+
+        [Fact]
+        public async Task MixedAccessWithDataChangeTest2()
+        {
+            var mapping = "DB_Safety2";
+
+            var t = new Stopwatch();
+            t.Start();
+            short value = -1;
+            await _papper.WriteAsync(PlcWriteReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", (short)0));
+
+            var result2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress($"{mapping}.SafeMotion") });
+            var sub = _papper.SubscribeDataChanges((s, e) =>
+            {
+                value = (short)e[$"{mapping}.SafeMotion.Header.NumberOfActiveSlots"];
+            }, PlcWatchReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", 10),
+                                                                  PlcWatchReference.FromAddress($"{mapping}.SafeMotion.Header.States.ChecksumInvalid", 10));
+            
+
+            await _papper.WriteAsync(PlcWriteReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", (short)1));
+
+            await Task.Delay(2000);
+
+            Assert.Equal((short)1, value);
+
+            sub.Dispose();
+            t.Stop();
+        }
+
+
+
+
 
         [Fact]
         public void TestStructuralAllWithSerializerAccess()

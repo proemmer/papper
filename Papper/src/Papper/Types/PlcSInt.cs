@@ -1,27 +1,27 @@
 ﻿using System;
-using System.Buffers.Binary;
 using Papper.Internal;
 
 namespace Papper.Types
 {
-    internal class PlcDWord : PlcObject
+    internal class PlcSInt : PlcObject
     {
-        public PlcDWord(string name) :
-            base(name)
+        public PlcSInt(string name) : 
+            base(name )
         {
-            Size = new PlcSize { Bytes = 4 };
+            Size = new PlcSize { Bytes = 1 };
         }
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             if (data.IsEmpty)
                 return default;
-            return BinaryPrimitives.ReadUInt32BigEndian(data.Slice(plcObjectBinding.Offset));
+            return unchecked((sbyte)data[plcObjectBinding.Offset]);
         }
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            BinaryPrimitives.WriteUInt32BigEndian(data.Slice(plcObjectBinding.Offset), Convert.ToUInt32(value));
+            
+            data[plcObjectBinding.Offset] = (byte)unchecked((sbyte)value);
         }
     }
 }
