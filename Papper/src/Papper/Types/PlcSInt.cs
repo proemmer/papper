@@ -9,6 +9,7 @@ namespace Papper.Types
             base(name )
         {
             Size = new PlcSize { Bytes = 1 };
+            AllowOddByteOffsetInArray = true;
         }
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)

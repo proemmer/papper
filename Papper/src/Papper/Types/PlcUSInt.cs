@@ -1,15 +1,15 @@
 ﻿using System;
-using System.Buffers.Binary;
+using System.Linq;
 using Papper.Internal;
 
 namespace Papper.Types
 {
-    internal class PlcInt : PlcObject
+    internal class PlcUSInt : PlcObject
     {
-        public PlcInt(string name) : 
-            base(name )
+        public PlcUSInt(string name) :  base(name)
         {
-            Size = new PlcSize { Bytes = 2 };
+            Size = new PlcSize {Bytes = 1};
+            AllowOddByteOffsetInArray = true;
         }
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
@@ -17,12 +17,13 @@ namespace Papper.Types
             if (data.IsEmpty)
                 return default;
 
-            return BinaryPrimitives.ReadInt16BigEndian(data.Slice(plcObjectBinding.Offset));
+            return data[plcObjectBinding.Offset];
         }
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            BinaryPrimitives.WriteInt16BigEndian(data.Slice(plcObjectBinding.Offset), Convert.ToInt16(value));
+            var s = value as string;
+            data[plcObjectBinding.Offset] = s != null ? Convert.ToByte(s.FirstOrDefault()) : Convert.ToByte(value);
         }
     }
 }
