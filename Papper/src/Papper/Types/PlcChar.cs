@@ -6,6 +6,9 @@ namespace Papper.Types
 {
     internal class PlcChar : PlcObject
     {
+
+        public override Type DotNetType => typeof(char);
+
         public PlcChar(string name) :
             base(name)
         {

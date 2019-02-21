@@ -12,6 +12,9 @@ namespace Papper.Types
         private readonly byte _defaultFillByte;
         private readonly PlcSize _size = new PlcSize();
 
+        public override Type DotNetType => typeof(string);
+
+
         public int StringLength
         {
             get { return _size.Bytes; }
@@ -39,13 +42,13 @@ namespace Papper.Types
 
             var maxLength = BinaryPrimitives.ReadInt16BigEndian(data.Slice(plcObjectBinding.Offset));
             var curLength = BinaryPrimitives.ReadInt16BigEndian(data.Slice(plcObjectBinding.Offset + 2));
-            var take = Math.Min(Math.Min(maxLength, curLength), Size.Bytes - 4);
-            return Encoding.Unicode.GetString(data.ToArray(), plcObjectBinding.Offset + 4, take);
+            var take = Math.Min(Math.Min(maxLength, curLength), Size.Bytes - 4) * 2;
+            return Encoding.Unicode.GetString(data.Slice(plcObjectBinding.Offset + 4, take).ToArray());
         }
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            var maxLength = Convert.ToInt16(Size.Bytes - 2);
+            var maxLength = Convert.ToInt16((Size.Bytes / 2) - 2);
             var i = plcObjectBinding.Offset;
             BinaryPrimitives.TryWriteInt16BigEndian(data.Slice(i, 2), maxLength);
             i += 2;
@@ -55,7 +58,7 @@ namespace Papper.Types
             {
                 var str = value.ToString();
                 var curLength = Convert.ToInt16(str.Length);
-                var take = Math.Min(maxLength, curLength);
+                var take = (short)(Math.Min(maxLength, curLength));
                 fill = str.Substring(0, take);
 
                 BinaryPrimitives.TryWriteInt16BigEndian(data.Slice(i, 2), take);

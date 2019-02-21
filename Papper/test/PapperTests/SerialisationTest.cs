@@ -4,11 +4,23 @@ using System;
 using System.Text;
 using UnitTestSuit.Mappings;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace DataTypeTests
 {
     public class SerialisationTest
     {
+
+        private readonly ITestOutputHelper _testOutputHelper;
+
+        public SerialisationTest(ITestOutputHelper testOutputHelper)
+        {
+            _testOutputHelper = testOutputHelper;
+            var converter = new ConsoleOutputConverter(testOutputHelper);
+            Console.SetOut(converter);
+        }
+
+
         [Fact]
         public void TestSerialisation()
         {

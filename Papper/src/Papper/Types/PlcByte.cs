@@ -6,6 +6,9 @@ namespace Papper.Types
 {
     internal class PlcByte : PlcObject
     {
+        public override Type DotNetType => typeof(byte);
+
+
         public PlcByte(string name) : 
             base(name)
         {
@@ -14,12 +17,7 @@ namespace Papper.Types
         }
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
-        {
-            if (data.IsEmpty)
-                return default;
-
-            return data[plcObjectBinding.Offset];
-        }
+         => data.IsEmpty ?  default : data[plcObjectBinding.Offset];
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {

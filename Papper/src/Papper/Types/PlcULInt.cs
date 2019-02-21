@@ -6,6 +6,8 @@ namespace Papper.Types
 {
     internal class PlcULInt : PlcObject
     {
+        public override Type DotNetType => typeof(ulong);
+
         public PlcULInt(string name) : base(name)
             => Size = new PlcSize { Bytes = 8 };
 

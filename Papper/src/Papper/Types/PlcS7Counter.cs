@@ -1,11 +1,13 @@
 ﻿using System;
-using System.Linq;
 using Papper.Internal;
 
 namespace Papper.Types
 {
     internal class PlcS7Counter : PlcObject
     {
+
+        public override Type DotNetType => typeof(int);
+
         public PlcS7Counter(string name) : 
             base(name )
         {
@@ -13,12 +15,7 @@ namespace Papper.Types
         }
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
-        {
-            if (data == null || data.IsEmpty)
-                return default;
-
-            return data.GetBcdWord(plcObjectBinding.Offset);
-        }
+         => (data == null || data.IsEmpty) ? default : data.GetBcdWord(plcObjectBinding.Offset);
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {

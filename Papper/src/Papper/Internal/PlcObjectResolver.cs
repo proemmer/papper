@@ -132,12 +132,36 @@ namespace Papper.Internal
                 case "INT":
                     plcObject = new PlcInt(value);
                     break;
+                case "LDT":
+                case "LDATETIME":
+                    plcObject = new PlcLDateTime(value);
+                    break;
+                case "LI":
+                case "LINT":
+                    plcObject = new PlcLInt(value);
+                    break;
+                case "LT":
+                case "LTIME":
+                    plcObject = new PlcTime(value);
+                    break;
+                case "LW":
+                case "LWORD":
+                    plcObject = new PlcWord(value);
+                    break;
                 case "R":
                 case "REAL":
                     plcObject = new PlcReal(value);
                     break;
                 case "TIMEBCD":
                     plcObject = new PlcS5Time(value);
+                    break;
+                case "CT":
+                case "COUNT":
+                    plcObject = new PlcS7Counter(value);
+                    break;
+                case "SI":
+                case "SINT":
+                    plcObject = new PlcSInt(value);
                     break;
                 case "S":
                 case "STRING":
@@ -150,14 +174,35 @@ namespace Papper.Internal
                 case "TOD":
                     plcObject = new PlcTimeOfDay(value);
                     break;
+                case "UDI":
+                case "UDINT":
+                    plcObject = new PlcUDInt(value);
+                    break;
+                case "UI":
+                case "UINT":
+                    plcObject = new PlcUInt(value);
+                    break;
+                case "ULI":
+                case "ULINT":
+                    plcObject = new PlcULInt(value);
+                    break;
+                case "USI":
+                case "USINT":
+                    plcObject = new PlcUSInt(value);
+                    break;
+                case "WC":
+                case "WCHAR":
+                    plcObject = new PlcWChar(value);
+                    break;
                 case "W":
                 case "WORD":
                     plcObject = new PlcWord(value);
                     break;
-                case "CT":
-                case "COUNT":
-                    plcObject = new PlcS7Counter(value);
+                case "WS":
+                case "WSTRING":
+                    plcObject = new PlcWString(value);
                     break;
+
             }
 
             return plcObject;

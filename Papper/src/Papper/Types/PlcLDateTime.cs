@@ -7,6 +7,7 @@ namespace Papper.Types
     internal class PlcLDateTime : PlcObject
     {
         private static readonly DateTime _epochTime = new DateTime(1900, 01, 01, 00, 00, 00);
+        public override Type DotNetType => typeof(DateTime);
 
         public PlcLDateTime(string name) : base(name)
             => Size = new PlcSize {Bytes = 8};

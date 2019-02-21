@@ -1,11 +1,12 @@
 ﻿using System;
-using System.Linq;
 using Papper.Internal;
 
 namespace Papper.Types
 {
     internal class PlcS5Time : PlcObject
     {
+
+        public override Type DotNetType => typeof(TimeSpan);
         public PlcS5Time(string name) :
             base(name)
         {

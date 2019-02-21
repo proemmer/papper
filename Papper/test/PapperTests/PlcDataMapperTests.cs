@@ -384,7 +384,7 @@ namespace DataTypeTests
         [Fact]
         public void TestDataChange()
         {
-            var sleepTime = 1000;
+            var sleepTime = 4000;
             var mapping = "DB_Safety";
             var intiState = true;
             var originData = new Dictionary<string, object> {

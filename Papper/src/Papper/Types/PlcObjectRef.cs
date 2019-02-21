@@ -10,6 +10,8 @@ namespace Papper.Types
         private readonly PlcObject _referencedObject;
         //private int _offset = 0;
 
+        public override Type DotNetType => _referencedObject.DotNetType;
+
         public override PlcSize Size
         {
             get { return _referencedObject.Size; }
@@ -27,14 +29,10 @@ namespace Papper.Types
         }
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
-        {
-            return _referencedObject.ConvertFromRaw(plcObjectBinding, data);
-        }
+         => _referencedObject.ConvertFromRaw(plcObjectBinding, data);
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
-        {
-            _referencedObject.ConvertToRaw(value, plcObjectBinding, data);
-        }
+         => _referencedObject.ConvertToRaw(value, plcObjectBinding, data);
 
         public override IEnumerable<ITreeNode> Childs
         {

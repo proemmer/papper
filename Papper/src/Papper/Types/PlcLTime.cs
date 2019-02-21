@@ -6,6 +6,8 @@ namespace Papper.Types
 {
     internal class PlcLTime : PlcObject
     {
+
+        public override Type DotNetType => typeof(TimeSpan);
         public PlcLTime(string name) :
             base(name)
          => Size = new PlcSize { Bytes = 8 };

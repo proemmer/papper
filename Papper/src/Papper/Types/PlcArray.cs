@@ -10,6 +10,11 @@ namespace Papper.Types
 {
     internal class PlcArray : PlcObject
     {
+
+        public override Type DotNetType => typeof(ExpandoObject);
+
+
+        private readonly Dictionary<Type, object> _typeInstances = new Dictionary<Type, object>();
         private readonly Dictionary<int, ITreeNode> _indexCache = new Dictionary<int, ITreeNode>(); 
         private readonly PlcSize _size = new PlcSize();
         private PlcObject _arrayType;
@@ -82,55 +87,75 @@ namespace Papper.Types
             To = to;
         }
 
+
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            if (ArrayType is PlcByte)
-                return InternalConvert(plcObjectBinding, new byte(), data);
-            if (ArrayType is PlcString)
-                return InternalConvert(plcObjectBinding, string.Empty, data);
-            if (ArrayType is PlcInt)
-                return InternalConvert(plcObjectBinding, new Int16(), data);
-            if (ArrayType is PlcBool)
-                return InternalConvert(plcObjectBinding, new bool(), data);
-            if (ArrayType is PlcDInt)
-                return InternalConvert(plcObjectBinding, new Int32(), data);
-            if (ArrayType is PlcWord)
-                return InternalConvert(plcObjectBinding, new UInt16(), data);
-            if (ArrayType is PlcDWord)
-                return InternalConvert(plcObjectBinding, new UInt32(), data);
-            if (ArrayType is PlcDate || ArrayType is PlcDateTime)
-                return InternalConvert(plcObjectBinding, new DateTime(), data);
-            if (ArrayType is PlcS5Time || ArrayType is PlcTime || ArrayType is PlcTimeOfDay)
-                return InternalConvert(plcObjectBinding, new TimeSpan(), data);
-            if (ArrayType is PlcReal)
-                return InternalConvert(plcObjectBinding, new Single(), data);
-            if (ArrayType is PlcChar)
-                return InternalConvert(plcObjectBinding, new char(), data);
-            if (ArrayType is PlcArray)
+
+            var type = ArrayType.GetType();
+
+            if (type == typeof(PlcByte) || type == typeof(PlcUSInt))
+                return InternalConvert<byte>(plcObjectBinding, data);
+            if (type == typeof(PlcBool))
+                return InternalConvert<bool>(plcObjectBinding, data);
+            if (type == typeof(PlcChar))
+                return InternalConvert<char>(plcObjectBinding, data);
+            if (type == typeof(PlcString) || type == typeof(PlcWString) || type == typeof(PlcWChar))
+                return InternalConvert<string>(plcObjectBinding, data);
+            if (type == typeof(PlcSInt))
+                return InternalConvert<sbyte>(plcObjectBinding, data);
+            if (type == typeof(PlcInt))
+                return InternalConvert<short>(plcObjectBinding, data);
+            if (type == typeof(PlcUInt) || type == typeof(PlcWord))
+                return InternalConvert<ushort>(plcObjectBinding, data);
+            if (type == typeof(PlcDInt) || type == typeof(PlcS7Counter))
+                return InternalConvert<int>(plcObjectBinding, data);
+            if (type == typeof(PlcUDInt) || type == typeof(PlcDWord))
+                return InternalConvert<uint>(plcObjectBinding, data);
+            if (type == typeof(PlcLInt))
+                return InternalConvert<long>(plcObjectBinding, data);
+            if (type == typeof(PlcULInt) || type == typeof(PlcLWord))
+                return InternalConvert<ulong>(plcObjectBinding, data);
+            if (type == typeof(PlcDate) || type == typeof(PlcDateTime) || type == typeof(PlcLDateTime))
+                return InternalConvert<DateTime>(plcObjectBinding, data);
+            if (type == typeof(PlcS5Time) || type == typeof(PlcTime) || type == typeof(PlcTimeOfDay) || type == typeof(PlcLTime))
+                return InternalConvert<TimeSpan>(plcObjectBinding, data);
+            if (type == typeof(PlcReal))
+                return InternalConvert<float>(plcObjectBinding, data);
+
+            if (type == typeof(PlcArray))
                 return ArrayType.ConvertFromRaw(plcObjectBinding, data);
             if (plcObjectBinding.FullType)
-                return InternalConvert(plcObjectBinding, Activator.CreateInstance(plcObjectBinding.MetaData.ElemenType), data, true, plcObjectBinding.MetaData.ElemenType);
-            return InternalConvert(plcObjectBinding, new ExpandoObject(), data);
+            {
+                if (!_typeInstances.TryGetValue(plcObjectBinding.MetaData.ElemenType, out var instance))
+                {
+                    instance = Activator.CreateInstance(plcObjectBinding.MetaData.ElemenType);
+                    _typeInstances.Add(plcObjectBinding.MetaData.ElemenType, instance);
+                }
+                return InternalConvert(plcObjectBinding, instance, data, true, plcObjectBinding.MetaData.ElemenType);
+            }
+            return InternalConvert<ExpandoObject>(plcObjectBinding, data);
 
         }
+
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             var list = value as IEnumerable;
+            var type = ArrayType.GetType();
 
             //handle byte array for Json --- TODO:  not so beautiful here
-            if (list is string convert && (ArrayType is PlcByte || ArrayType.ElemenType == typeof(byte)))
+            if (list is string convert && (type == typeof(PlcByte) || ArrayType.ElemenType == typeof(byte)))
                 value = list = Convert.FromBase64String(convert);
 
             if (list != null)
             {
                 //Special handling for byte and char, because of performance (specially with big data)
-                if (ArrayType is PlcByte &&  (value is byte[] || value is Memory<byte>))
+                if (type == typeof(PlcByte) &&  (value is byte[] || value is Memory<byte>))
                 {
                     var byteArray = value as byte[];
                     byteArray.CopyTo(data.Slice(plcObjectBinding.Offset, byteArray.Length));
                 }
-                else if (ArrayType is PlcChar && (value is char[] || value is Memory<char>))
+                else if (type == typeof(PlcChar) && (value is char[] || value is Memory<char>))
                 {
                     var charArray = value as char[];
                     Encoding.ASCII.GetBytes(charArray).CopyTo(data.Slice(plcObjectBinding.Offset, charArray.Length));
@@ -171,16 +196,27 @@ namespace Papper.Types
         /// <param name="type">instance of target type</param>
         /// <returns></returns>
         private object InternalConvert<T>(PlcObjectBinding plcObjectBinding, T type, Span<byte> data, bool fully = false, Type t = null)
+            => InternalConvert<T>(plcObjectBinding, data, fully, t);
+
+        /// <summary>
+        /// This method converts the given binding data to the correct representation data type
+        /// </summary>
+        /// <typeparam name="T">Target type</typeparam>
+        /// <param name="plcObjectBinding"></param>
+        /// <param name="type">instance of target type</param>
+        /// <returns></returns>
+        private object InternalConvert<T>(PlcObjectBinding plcObjectBinding, Span<byte> data, bool fully = false, Type t = null)
         {
             
             if (!data.IsEmpty)
             {
+                var type = typeof(T);
                 //special handling of byte and char, because of performance (specially with big data)
-                if (type is byte)
+                if (type == typeof(byte))
                 {
                     return data.Slice(plcObjectBinding.Offset, ArrayLength).ToArray();
                 }
-                else if(type is char)
+                else if(type == typeof(char))
                 {
                     var d = data.Slice(plcObjectBinding.Offset, ArrayLength).ToArray();
                     return Encoding.ASCII.GetChars(d);
@@ -188,8 +224,8 @@ namespace Papper.Types
                 else if (fully && t != null)
                 {
                     //Special handlying for object types
-                    Type generic = typeof(List<>);
-                    Type constructed = typeof(T).MakeArrayType();
+                    var generic = typeof(List<>);
+                    var constructed = typeof(T).MakeArrayType();
 
                     var list = Array.CreateInstance(t, ArrayLength);
                     var idx = From;
@@ -331,7 +367,8 @@ namespace Papper.Types
 
         private void CalculateSize()
         {
-            Size.Bits = _arrayType is PlcBool ? ArrayLength * _arrayType.Size.Bits : 0;
+            var isBoolean = _arrayType is PlcBool;
+            Size.Bits = isBoolean ? ArrayLength * _arrayType.Size.Bits : 0;
             if (_arrayType is PlcString && _arrayType.Size.Bytes % 2 != 0)
             {
                 var result = 0;
@@ -344,9 +381,9 @@ namespace Papper.Types
                 Size.Bytes = result;
             }
             else
-                Size.Bytes = _arrayType is PlcBool ? 0 : ArrayLength * _arrayType.Size.Bytes;
+                Size.Bytes = isBoolean ? 0 : ArrayLength * _arrayType.Size.Bytes;
 
-            if (_arrayType is PlcBool)
+            if (isBoolean)
             {
                 Size.Bytes = Size.Bits / 8;
                 Size.Bits = Size.Bits - Size.Bytes * 8;

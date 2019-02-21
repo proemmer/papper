@@ -30,6 +30,8 @@ namespace Papper.Types
         public virtual int ByteSize { get { return Size.Bytes; } }
         public virtual int BitSize { get { return Size.Bits; } }
 
+        public abstract Type DotNetType { get; }
+
         public IEnumerable<IPlcObject> ChildVars { get { return Childs.OfType<IPlcObject>(); } }
 
         public virtual PlcSize Size { get; protected set; }

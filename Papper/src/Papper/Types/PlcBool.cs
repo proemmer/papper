@@ -6,6 +6,10 @@ namespace Papper.Types
 {
     internal class PlcBool : PlcObject
     {
+
+        public override Type DotNetType => typeof(bool);
+
+
         public PlcBool(string name) : 
             base(name)
         {

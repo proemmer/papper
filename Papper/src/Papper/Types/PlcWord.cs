@@ -6,6 +6,8 @@ namespace Papper.Types
 {
     internal class PlcWord : PlcObject
     {
+        public override Type DotNetType => typeof(ushort);
+
         public PlcWord(string name) :   base(name)
          => Size = new PlcSize { Bytes = 2 };
 

@@ -1,32 +1,22 @@
 ﻿using System;
 using System.Buffers.Binary;
-using System.Linq;
 using Papper.Internal;
 
 namespace Papper.Types
 {
     internal class PlcDate : PlcObject
     {
-        public PlcDate(string name) :
-            base(name)
-        {
-            Size = new PlcSize { Bytes = 2 };
-        }
+        private static readonly DateTime _epochTime = new DateTime(1900, 01, 01, 00, 00, 00);
+        public override Type DotNetType => typeof(DateTime);
+
+
+        public PlcDate(string name) : base(name)
+            => Size = new PlcSize { Bytes = 2 };
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
-        {
-            var date = new DateTime(1990, 1, 1);
-            if (data.IsEmpty)
-                return date;
-           
-            return date.AddDays(BinaryPrimitives.ReadInt16BigEndian(data.Slice(plcObjectBinding.Offset)));
-        }
+            => data.IsEmpty ? _epochTime : _epochTime.AddDays(BinaryPrimitives.ReadInt16BigEndian(data.Slice(plcObjectBinding.Offset)));
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
-        {
-            var dateVal = (DateTime)value;
-            var date = new DateTime(1990, 1, 1);
-            BinaryPrimitives.WriteUInt16BigEndian(data.Slice(plcObjectBinding.Offset), Convert.ToUInt16(dateVal.Subtract(date).Days));
-        }
+            => BinaryPrimitives.WriteUInt16BigEndian(data.Slice(plcObjectBinding.Offset), Convert.ToUInt16(((DateTime)value).Subtract(_epochTime).Days));
     }
 }

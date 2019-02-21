@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Description>Papper (Plc Data Mapper) is a library to map C# data structures to S7-Plc data structures.</Description>
     <Copyright>Copyright © Benjamin Proemmer 2016-2018</Copyright>
-    <Version>2.0.1-alpha1</Version>
+    <Version>2.0.1-alpha2</Version>
     <AssemblyTitle>papper</AssemblyTitle>
     <Authors>Benjamin Proemmer</Authors>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -34,6 +34,7 @@
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
     <PackageReference Include="System.Buffers" Version="4.5.0" />
     <PackageReference Include="System.Memory" Version="4.5.1" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
     <PackageReference Include="System.Reflection.TypeExtensions" Version="4.5.1" />
     <PackageReference Include="System.Threading.Thread" Version="4.3.0" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />

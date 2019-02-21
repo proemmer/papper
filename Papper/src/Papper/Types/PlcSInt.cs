@@ -5,6 +5,8 @@ namespace Papper.Types
 {
     internal class PlcSInt : PlcObject
     {
+        public override Type DotNetType => typeof(sbyte);
+
         public PlcSInt(string name) : 
             base(name )
         {
@@ -13,16 +15,11 @@ namespace Papper.Types
         }
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
-        {
-            if (data.IsEmpty)
-                return default;
-            return unchecked((sbyte)data[plcObjectBinding.Offset]);
-        }
+            => data.IsEmpty ? default : unchecked((sbyte)data[plcObjectBinding.Offset]);
+
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
-        {
-            
-            data[plcObjectBinding.Offset] = (byte)unchecked((sbyte)value);
-        }
+         => data[plcObjectBinding.Offset] = (byte)unchecked((sbyte)value);
+
     }
 }

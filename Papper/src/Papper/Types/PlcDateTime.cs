@@ -1,11 +1,14 @@
 ﻿using System;
-using System.Linq;
 using Papper.Internal;
 
 namespace Papper.Types
 {
     internal class PlcDateTime : PlcObject
     {
+        private static readonly DateTime _epochTime = new DateTime(1900, 01, 01, 00, 00, 00);
+        public override Type DotNetType => typeof(DateTime);
+
+
         public PlcDateTime(string name) :
             base(name)
         {
@@ -15,7 +18,7 @@ namespace Papper.Types
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             if (data.IsEmpty)
-                return new DateTime(1900, 01, 01, 00, 00, 00);
+                return _epochTime;
             
             int bt = data[plcObjectBinding.Offset];
             //BCD Umwandlung
@@ -62,7 +65,7 @@ namespace Papper.Types
                 }
                 catch (Exception) { }
             }
-            return new DateTime(1900, 01, 01, 00, 00, 00);
+            return _epochTime;
         }
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)

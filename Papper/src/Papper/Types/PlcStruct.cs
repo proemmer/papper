@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
-using System.Reflection;
 using Papper.Internal;
 using System;
 
@@ -11,6 +10,8 @@ namespace Papper.Types
     {
         public const int AlignmentInBytes = 2;
         private readonly Type _structType;
+
+        public override Type DotNetType => _structType;
 
         public override PlcSize Size
         {

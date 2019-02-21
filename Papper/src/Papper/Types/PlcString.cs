@@ -11,6 +11,8 @@ namespace Papper.Types
         private readonly byte _defaultFillByte;
         private readonly PlcSize _size = new PlcSize();
 
+        public override Type DotNetType => typeof(string);
+
         public int StringLength
         {
             get { return _size.Bytes; }
