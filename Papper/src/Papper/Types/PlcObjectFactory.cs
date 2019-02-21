@@ -43,7 +43,7 @@ namespace Papper.Types
             {"ULInt", typeof (PlcULInt)},
             {"Word", typeof (PlcWord)},
             {"DWord", typeof (PlcDWord)},
-            {"LWord", typeof (PlcDWord)},
+            {"LWord", typeof (PlcLWord)},
             {"DateTime", typeof (PlcDateTime)},
             {"LDateTime", typeof (PlcLDateTime)},
             {"Time", typeof (PlcTime)},
