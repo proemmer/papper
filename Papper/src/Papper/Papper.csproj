@@ -48,6 +48,9 @@
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>PapperTests, PublicKey=00240000048000009400000006020000002400005253413100040000010001004d7b7937fd940b136a6832b7e826eeb11f27afbb635dfd9346d05c1277ce9d1a278a9a9933367f122266f26fdc1c3cebdaee0a3f33c131304fadb9d9b854b984f0dad0b3e51960d598ce65742e927b003c0dd6d5b6090c27b432dd257cc32534a1a35244ec494b6abf60bdd8f399981eaf2bc46999ec960570e8898e4d5ca8d1</_Parameter1>
     </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>Benchmarks, PublicKey=00240000048000009400000006020000002400005253413100040000010001004d7b7937fd940b136a6832b7e826eeb11f27afbb635dfd9346d05c1277ce9d1a278a9a9933367f122266f26fdc1c3cebdaee0a3f33c131304fadb9d9b854b984f0dad0b3e51960d598ce65742e927b003c0dd6d5b6090c27b432dd257cc32534a1a35244ec494b6abf60bdd8f399981eaf2bc46999ec960570e8898e4d5ca8d1</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 
 </Project>
