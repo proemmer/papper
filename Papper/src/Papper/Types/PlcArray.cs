@@ -369,7 +369,7 @@ namespace Papper.Types
         {
             var isBoolean = _arrayType is PlcBool;
             Size.Bits = isBoolean ? ArrayLength * _arrayType.Size.Bits : 0;
-            if (_arrayType is PlcString && _arrayType.Size.Bytes % 2 != 0)
+            if (_arrayType is ISupportStringLengthAttribute && _arrayType.Size.Bytes % 2 != 0)
             {
                 var result = 0;
                 for (int i = 0; i < ArrayLength; i++)

@@ -63,10 +63,10 @@ namespace Papper.Internal
                         if (plcObject is PlcBool)
                             plcObject.Offset.Bits = int.Parse(parts[1]);
 
-                        if (plcObject is PlcString)
-                            (plcObject as PlcString).StringLength = int.Parse(parts[1]);
+                        if (plcObject is ISupportStringLengthAttribute plcs)
+                            plcs.StringLength = int.Parse(parts[1]);
 
-                        if (!(plcObject is PlcBool) || parts.Length >= 3)
+                        if (!(plcObject is PlcBool || plcObject is ISupportStringLengthAttribute) || parts.Length >= 3)
                         {
                             var length = int.Parse(parts.Last());
                             if (length > 0) length--;

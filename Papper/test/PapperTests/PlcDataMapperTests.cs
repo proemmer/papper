@@ -35,6 +35,7 @@ namespace DataTypeTests
             _papper.AddMapping(typeof(ArrayTestMapping));
             _papper.AddMapping(typeof(StringArrayTestMapping));
             _papper.AddMapping(typeof(PrimitiveValuesMapping));
+            _papper.AddMapping(typeof(DB_MotionHMI));
 
             var vars = _papper.GetVariablesOf(nameof(DB_Safety));
             Assert.Equal(4596, vars.Count());
@@ -801,6 +802,19 @@ namespace DataTypeTests
         {
             var mapping = "DB_Safety2";
             var result = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}.SafeMotion.Slots"));
+
+
+            Assert.Equal(14, result.Offset.Bytes);
+            Assert.Equal(8670, result.Size.Bytes);
+
+        }
+
+
+        [Fact]
+        public void TestGetAddressOfWString()
+        {
+            var mapping = "DB_MotionHMI";
+            var result = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}.HMI.MotionLine[8].Txt.Position[1]"));
 
 
             Assert.Equal(14, result.Offset.Bytes);

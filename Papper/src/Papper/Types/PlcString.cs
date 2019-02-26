@@ -4,7 +4,7 @@ using Papper.Internal;
 
 namespace Papper.Types
 {
-    internal class PlcString : PlcObject
+    internal class PlcString : PlcObject, ISupportStringLengthAttribute
     {
         private const int DefaultStringLength = 255;
         private const char DefaultFillChar = '\0';
@@ -72,7 +72,7 @@ namespace Papper.Types
         }
 
 
-        public void AssigneLengthFrom(PlcString s)
+        public void AssigneLengthFrom(ISupportStringLengthAttribute s)
         {
             if(s != null) _size.Bytes = s.StringLength;
         }

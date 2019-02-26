@@ -136,15 +136,25 @@ namespace Papper.Types
         public static PlcObject CreatePlcObjectForArrayIndex(PlcObject obj, int? arrayIndex, int from)
         {
             var plcType = obj.GetType();
-            var arrayElement = obj as PlcArray;
-            var plcObject = arrayElement != null  ?
+            var plcObject = obj is PlcArray arrayElement ?
                 Activator.CreateInstance(plcType, arrayIndex == null ? obj.Name : obj.Name + string.Format("[{0}]", arrayIndex), arrayElement.ArrayType, arrayElement.From, arrayElement.To) as PlcObject :
                 Activator.CreateInstance(plcType, arrayIndex == null ? obj.Name : obj.Name + string.Format("[{0}]", arrayIndex)) as PlcObject;
 
             if (plcObject != null && arrayIndex != null)
             {
-                (plcObject as PlcBool)?.AssigneOffsetFrom(((int)arrayIndex - @from) * obj.Size.Bits);
-                (plcObject as PlcString)?.AssigneLengthFrom(obj as PlcString);
+                switch(plcObject)
+                {
+                    case PlcBool plcbool:
+                        {
+                            plcbool.AssigneOffsetFrom(((int)arrayIndex - @from) * obj.Size.Bits);
+                        }
+                        break;
+                    case ISupportStringLengthAttribute plcString:
+                        {
+                            plcString.AssigneLengthFrom(obj as ISupportStringLengthAttribute);
+                        }
+                        break;
+                }
             }
             return plcObject;
         }
@@ -160,11 +170,11 @@ namespace Papper.Types
 
         private static void UpdateSize(MemberInfo pi, PlcObject plcObject, int dimension = 0)
         {
-            if (plcObject is PlcString)
+            if(plcObject is ISupportStringLengthAttribute s)
             {
                 var stringLength = pi.GetCustomAttributes<StringLengthAttribute>().FirstOrDefault();
                 if (stringLength != null)
-                    (plcObject as PlcString).StringLength = stringLength.MaximumLength;
+                    s.StringLength = stringLength.MaximumLength;
             }
             else if (plcObject is PlcArray)
             {
