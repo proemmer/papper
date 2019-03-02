@@ -43,7 +43,7 @@ namespace Papper.Types
             var maxLength = BinaryPrimitives.ReadInt16BigEndian(data.Slice(plcObjectBinding.Offset));
             var curLength = BinaryPrimitives.ReadInt16BigEndian(data.Slice(plcObjectBinding.Offset + 2));
             var take = Math.Min(Math.Min(maxLength, curLength), Size.Bytes - 4) * 2;
-            return Encoding.Unicode.GetString(data.Slice(plcObjectBinding.Offset + 4, take).ToArray());
+            return Encoding.BigEndianUnicode.GetString(data.Slice(plcObjectBinding.Offset + 4, take).ToArray());
         }
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
@@ -65,7 +65,7 @@ namespace Papper.Types
                 i += 2;
 
 
-                foreach (var c in Encoding.Unicode.GetBytes(fill))
+                foreach (var c in Encoding.BigEndianUnicode.GetBytes(fill))
                     data[i++] = c;
             }
             else

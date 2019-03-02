@@ -12,12 +12,12 @@ namespace Papper.Types
          =>  Size = new PlcSize { Bytes = 2 };
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
-         => data.IsEmpty ? default : Encoding.Unicode.GetString(data.Slice(plcObjectBinding.Offset, 2).ToArray());
+         => data.IsEmpty ? default : Encoding.BigEndianUnicode.GetString(data.Slice(plcObjectBinding.Offset, 2).ToArray());
         
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            Span<byte> s = Encoding.Unicode.GetBytes(value as string);
+            Span<byte> s = Encoding.BigEndianUnicode.GetBytes(value as string);
             s.Slice(0,2).CopyTo(data.Slice(plcObjectBinding.Offset, 2)); 
         }
     }

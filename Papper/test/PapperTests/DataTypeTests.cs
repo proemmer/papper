@@ -189,5 +189,19 @@ namespace PapperTests
             var result1 = (string)type.ConvertFromRaw(binding, data);
             Assert.Equal(value, result1);
         }
+
+        [Fact]
+        public void TestWStringNormal()
+        {
+            string value = "Test123";
+
+            var type = new PlcWString("TEST");
+            var data = new byte[type.Size.Bytes];
+            var binding = new PlcObjectBinding(new PlcRawData(1024), type, 0, 0);
+
+            type.ConvertToRaw(value, binding, data);
+            var result1 = (string)type.ConvertFromRaw(binding, data);
+            Assert.Equal(value, result1);
+        }
     }
 }
