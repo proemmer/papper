@@ -71,6 +71,7 @@ namespace Papper.Types
             else
             {
                 BinaryPrimitives.TryWriteInt16BigEndian(data.Slice(i, 2), 0);  //currentLength
+                i += 2;
             }
 
             for (var j = 0; j < (maxLength - fill.Length) * 2; j++)
