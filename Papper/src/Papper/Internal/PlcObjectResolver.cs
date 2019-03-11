@@ -87,10 +87,13 @@ namespace Papper.Internal
 
             if (adds.Any())
             {
-                updated = true;
                 foreach (var item in adds)
                 {
-                    plcObjects.Add(item.Key, item.Value);
+                    if (!plcObjects.ContainsKey(item.Key))
+                    {
+                        updated = true;
+                        plcObjects.Add(item.Key, item.Value);
+                    }
                 }
             }
             return updated;
