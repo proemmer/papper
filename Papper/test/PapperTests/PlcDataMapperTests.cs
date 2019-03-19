@@ -817,8 +817,8 @@ namespace DataTypeTests
             var result = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}.HMI.MotionLine[8].Txt.Position[1]"));
 
 
-            Assert.Equal(14, result.Offset.Bytes);
-            Assert.Equal(8670, result.Size.Bytes);
+            Assert.Equal(9442, result.Offset.Bytes);
+            Assert.Equal(54, result.Size.Bytes);
 
         }
 

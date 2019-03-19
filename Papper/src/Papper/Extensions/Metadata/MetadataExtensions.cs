@@ -1,8 +1,6 @@
 ﻿using Papper.Internal;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Papper.Extensions.Metadata
@@ -26,8 +24,7 @@ namespace Papper.Extensions.Metadata
             var results = new List<MetaDataPack>();
             foreach (var mapping in mappings)
             {
-
-                if (papper.EntriesByName.TryGetValue(mapping, out IEntry entry))
+                if (papper.EntriesByName.TryGetValue(mapping, out var entry))
                 {
                     results.Add(new MetaDataPack
                     {
@@ -57,10 +54,9 @@ namespace Papper.Extensions.Metadata
         /// <returns></returns>
         public static PlcItemAddress GetAddressOf(this PlcDataMapper papper, IPlcReference var)
         {
-            var result = new Dictionary<string, object>();
             if (papper.EntriesByName.TryGetValue(var.Mapping, out var entry))
             {
-                if(entry is Entry e)  e.UpdateInternalState(new List<string>() { var.Variable });
+                if (entry is Entry e) e.UpdateInternalState(new List<string>() { var.Variable });
                 if (entry.Variables.TryGetValue(var.Variable, out var varibleEntry))
                 {
                     return new PlcItemAddress(

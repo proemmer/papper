@@ -3,7 +3,6 @@ using Papper.Internal;
 using Papper.Extensions.Notification;
 using System;
 using System.Buffers;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -11,7 +10,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Papper.Extensions.Metadata;
-using Papper.Types;
 
 namespace Papper
 {
@@ -47,8 +45,7 @@ namespace Papper
         #endregion
 
         #region Fields
-        private HashSet<Subscription> _subscriptions = new HashSet<Subscription>();
-        private const int _pduSizeDefault = 480;
+        private readonly HashSet<Subscription> _subscriptions = new HashSet<Subscription>();
         private const int _readDataHeaderLength = 18;
         private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
         private readonly ReaderWriterLockSlim _mappingsLock = new ReaderWriterLockSlim();
@@ -64,7 +61,7 @@ namespace Papper
         public int PduSize { get; private set; }
         internal IReadOperationOptimizer Optimizer { get; }
 
-        internal ConcurrentDictionary<string, IEntry> EntriesByName { get; } = new ConcurrentDictionary<string, IEntry>();
+        internal Dictionary<string, IEntry> EntriesByName { get; } = new Dictionary<string, IEntry>();
 
         #endregion
 
@@ -374,7 +371,7 @@ namespace Papper
                              .GroupBy(exec => exec.ExecutionResult) // Group by execution result
                              .SelectMany(group => filter(group.SelectMany(g => g.Bindings))
                                                        .Select(b => new PlcReadResult(b.Key,
-                                                                                      ConvertToResult(b.Key, b.Value, doNotConvert), 
+                                                                                      ConvertToResult(b.Value, doNotConvert), 
                                                                                       group.Key)
                                                        )).ToArray();
         }
@@ -429,11 +426,12 @@ namespace Papper
 
             // read from plc
             await ReadFromPlcAsync(needUpdate);
+
             // transform to result
             return CreatePlcReadResults(executions, needUpdate, null, null, doNotConvert);
         }
 
-        private object ConvertToResult(string key, PlcObjectBinding binding, bool doNotConvert = false)
+        private object ConvertToResult(PlcObjectBinding binding, bool doNotConvert = false)
         {
             if (doNotConvert) return binding.RawData.ReadDataCache.Slice(binding.Offset, binding.Size).ToArray();
             return binding?.ConvertFromRaw(binding.RawData.ReadDataCache.Span);
@@ -463,7 +461,7 @@ namespace Papper
                                 entry = new RawEntry(this, mapping, ReadDataBlockSize, 0);
                                 using (upgradeableGuard.UpgradeToWriterLock())
                                 {
-                                    EntriesByName.TryAdd(mapping, entry);
+                                    EntriesByName.Add(mapping, entry);
                                 }
                             }
                         }
@@ -487,7 +485,9 @@ namespace Papper
                         return false; // mapping is invlaid, because it exists for a nother type
                     }
                     using (upgradeableGuard.UpgradeToWriterLock())
-                        EntriesByName.TryAdd(mapping.Name, new MappingEntry(this, mapping, type, _tree, ReadDataBlockSize, mapping.ObservationRate));
+                    {
+                        EntriesByName.Add(mapping.Name, new MappingEntry(this, mapping, type, _tree, ReadDataBlockSize, mapping.ObservationRate));
+                    }
                 }
             }
             return true;
@@ -505,7 +505,7 @@ namespace Papper
                         {
                             using (upgradeableGuard.UpgradeToWriterLock())
                             {
-                                if(!EntriesByName.TryRemove(mapping, out var removed))
+                                if(!EntriesByName.Remove(mapping))
                                 {
                                     return false;
                                 }
