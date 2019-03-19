@@ -51,15 +51,15 @@ namespace Papper
             var t = default(T);
             switch (t)
             {
-                case bool b: return "X";
-                case byte by: return "B";
-                case char c: return "C";
-                case int i: return "DI";
-                case uint i: return "DW";
-                case short i: return "I";
-                case ushort i: return "W";
-                case Single si: return "R";
-                case string s: return "S";
+                case bool _: return "X";
+                case byte _: return "B";
+                case char _: return "C";
+                case int _: return "DI";
+                case uint _: return "DW";
+                case short _: return "I";
+                case ushort _: return "W";
+                case float _: return "R";
+                case string _: return "S";
             }
 
             return "B";

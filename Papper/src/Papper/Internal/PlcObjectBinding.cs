@@ -19,36 +19,19 @@ namespace Papper.Internal
 
         public bool FullType { get; private set; }
 
-        public Memory<byte> Data
-        {
-            get { return RawData.ReadDataCache; }
-        }
-
-        public DateTime LastUpdate
-        {
-            get { return RawData.LastUpdate; }
-        }
+        public Memory<byte> Data => RawData.ReadDataCache;
 
         public PlcRawData RawData { get; }
 
         public PlcObject MetaData { get; }
 
         public int Offset { get; private set; }
-        public int Size { get { return MetaData.Size.Bytes; } }
+        public int Size => MetaData.Size.Bytes;
 
-        public object ConvertFromRaw(Span<byte> data)
-        {
-            return MetaData.ConvertFromRaw(this, data);
-        }
+        public object ConvertFromRaw(Span<byte> data) => MetaData.ConvertFromRaw(this, data);
 
-        public void ConvertToRaw(object obj, Span<byte> data)
-        {
-            MetaData.ConvertToRaw(obj, this, data);
-        }
+        public void ConvertToRaw(object obj, Span<byte> data) => MetaData.ConvertToRaw(obj, this, data);
 
-        public Type GetMetaType()
-        {
-            return MetaData.GetType();
-        }
+        public Type GetMetaType() => MetaData.GetType();
     }
 }

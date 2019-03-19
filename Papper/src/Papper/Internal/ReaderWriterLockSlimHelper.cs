@@ -11,17 +11,14 @@ namespace Papper.Internal
             _readerWriterLock = readerWriterLock;
             _readerWriterLock.EnterReadLock();
         }
-        public void Dispose()
-        {
-            _readerWriterLock.ExitReadLock();
-        }
+        public void Dispose() => _readerWriterLock.ExitReadLock();
     }
 
 
     internal class WriterGuard : IDisposable
     {
         private ReaderWriterLockSlim _readerWriterLock;
-        private bool IsDisposed { get { return _readerWriterLock == null; } }
+        private bool IsDisposed => _readerWriterLock == null;
         public WriterGuard(ReaderWriterLockSlim readerWriterLock)
         {
             _readerWriterLock = readerWriterLock;
@@ -30,7 +27,7 @@ namespace Papper.Internal
         public void Dispose()
         {
             if (IsDisposed)
-                ExceptionThrowHelper.ThrowObjectDisposedException(this.ToString());
+                ExceptionThrowHelper.ThrowObjectDisposedException(ToString());
             _readerWriterLock.ExitWriteLock();
             _readerWriterLock = null;
         }
@@ -42,8 +39,8 @@ namespace Papper.Internal
 
         private class UpgradedGuard : IDisposable
         {
-            private UpgradeableGuard _parentGuard;
-            private WriterGuard _writerLock;
+            private readonly UpgradeableGuard _parentGuard;
+            private readonly WriterGuard _writerLock;
             public UpgradedGuard(UpgradeableGuard parentGuard)
             {
                 _parentGuard = parentGuard;

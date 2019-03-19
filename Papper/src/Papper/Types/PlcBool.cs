@@ -1,19 +1,20 @@
-﻿using System.Linq;
-using Papper.Internal;
+﻿using Papper.Internal;
 using System;
 
 namespace Papper.Types
 {
     internal class PlcBool : PlcObject
     {
+        // Use share size for this datatype, we will never change the size
+        private static readonly PlcSize _size = new PlcSize { Bits = 1 };
 
         public override Type DotNetType => typeof(bool);
 
 
-        public PlcBool(string name) : 
+        public PlcBool(string name) :
             base(name)
         {
-            Size = new PlcSize { Bits = 1 };
+            Size = _size;
             AllowOddByteOffsetInArray = true;
         }
 
@@ -38,7 +39,7 @@ namespace Papper.Types
         {
             var offsetBits = bitoffset;
             var offsetByte = offsetBits / 8;
-            offsetBits = offsetBits - offsetByte * 8;
+            offsetBits -= offsetByte * 8;
 
             Offset.Bytes += offsetByte;
             Offset.Bits += offsetBits;

@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Papper.Internal;
+using System;
 using System.Text;
-using Papper.Internal;
 
 namespace Papper.Types
 {
     internal class PlcString : PlcObject, ISupportStringLengthAttribute
     {
-        private const int DefaultStringLength = 255;
-        private const char DefaultFillChar = '\0';
+        private const int _defaultStringLength = 255;
+        private const char _defaultFillChar = '\0';
         private readonly byte _defaultFillByte;
         private readonly PlcSize _size = new PlcSize();
 
@@ -15,22 +15,22 @@ namespace Papper.Types
 
         public int StringLength
         {
-            get { return _size.Bytes; }
-            set { _size.Bytes = value + 2; }
+            get => _size.Bytes;
+            set => _size.Bytes = value + 2;
         }
 
         public override PlcSize Size
         {
-            get { return _size; }
-            protected set { ; } 
+            get => _size;
+            protected set {; }
         }
 
 
-        public PlcString(string name) 
+        public PlcString(string name)
             : base(name)
         {
-            _defaultFillByte = Convert.ToByte(DefaultFillChar);
-            StringLength = DefaultStringLength;
+            _defaultFillByte = Convert.ToByte(_defaultFillChar);
+            StringLength = _defaultStringLength;
         }
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
@@ -39,9 +39,9 @@ namespace Papper.Types
                 return string.Empty;
 
             var maxLength = data[plcObjectBinding.Offset];
-            var curLength = data[plcObjectBinding.Offset+1];
-            var take = Math.Min(Math.Min(maxLength, curLength), Size.Bytes-2);
-            return Encoding.ASCII.GetString(data.ToArray(), plcObjectBinding.Offset + 2,take);
+            var curLength = data[plcObjectBinding.Offset + 1];
+            var take = Math.Min(Math.Min(maxLength, curLength), Size.Bytes - 2);
+            return Encoding.ASCII.GetString(data.ToArray(), plcObjectBinding.Offset + 2, take);
         }
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
@@ -74,7 +74,7 @@ namespace Papper.Types
 
         public void AssigneLengthFrom(ISupportStringLengthAttribute s)
         {
-            if(s != null) _size.Bytes = s.StringLength;
+            if (s != null) _size.Bytes = s.StringLength;
         }
 
     }

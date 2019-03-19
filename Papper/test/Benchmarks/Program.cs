@@ -3,9 +3,9 @@ using System;
 
 namespace Benchmarks
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             Console.WriteLine("Hint:   Disable assembly signing!!");
             var summary = BenchmarkRunner.Run<Benchmarks>();

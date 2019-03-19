@@ -1,6 +1,5 @@
-﻿using System;
+﻿using Papper.Types;
 using System.Collections.Generic;
-using Papper.Types;
 
 namespace Papper.Internal
 {
@@ -11,27 +10,15 @@ namespace Papper.Internal
         private ITreeNode _parent;
         public PlcObject Data { get; set; }
 
-        protected PlcMetaDataBaseTreeNode(string name)
-        {
-            _name = name;
-        }
+        protected PlcMetaDataBaseTreeNode(string name) => _name = name;
 
-        public string Name
-        {
-            get { return _name; }
-        }
+        public string Name => _name;
 
-        public ITreeNode Root
-        {
-            get
-            {
-                return (_parent == null) ? this : _parent.Root;
-            }
-        }
+        public ITreeNode Root => (_parent == null) ? this : _parent.Root;
 
         public ITreeNode Parent
         {
-            get { return _parent; }
+            get => _parent;
             internal set
             {
                 if (_parent != null && value != null)

@@ -1,17 +1,15 @@
-﻿using System;
-using Papper.Internal;
+﻿using Papper.Internal;
+using System;
 
 namespace Papper.Types
 {
     internal class PlcS5Time : PlcObject
     {
-
+        // Use share size for this datatype, we will never change the size
+        private static readonly PlcSize _size = new PlcSize { Bytes = 2 };
         public override Type DotNetType => typeof(TimeSpan);
         public PlcS5Time(string name) :
-            base(name)
-        {
-            Size = new PlcSize { Bytes = 2 };
-        }
+            base(name) => Size = _size;
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {

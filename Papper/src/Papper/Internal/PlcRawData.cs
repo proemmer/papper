@@ -1,36 +1,37 @@
-﻿using System;
+﻿using Papper.Types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Papper.Types;
 
 namespace Papper.Internal
 {
     internal class PlcRawData
     {
-        private readonly object _lock = new object(); 
+        private readonly object _lock = new object();
+        private int _size;
         private Memory<byte> _data = Memory<byte>.Empty;
         private readonly int _partitionSize;
         private readonly int _readDataBlockSize;
         private DateTime _lastUpdate;
+        private Dictionary<int, Partiton> _partitons;
+
         public IDictionary<string, Tuple<int, PlcObject>> References { get; private set; }
-        private Dictionary<int,Partiton> Partitons { get; set; }
+        
         public string Selector { get; set; }
         public int Offset { get; set; }
-        public int Size {
-            get
-            {
-                return _size;
-            }
+        public int Size
+        {
+            get => _size;
             set
             {
                 _size = value;
-                _allocation = CalcRawDataSize(value);
+                MemoryAllocationSize = CalcRawDataSize(value);
             }
         }
 
-        private int _size;
-        private int _allocation;
-        public int MemoryAllocationSize => _allocation;
+        
+
+        public int MemoryAllocationSize { get; private set; }
 
         private int CalcRawDataSize(int size)
         {
@@ -42,23 +43,22 @@ namespace Papper.Internal
 
         public PlcRawData(int readDataBlockSize)
         {
-            _readDataBlockSize = _allocation = readDataBlockSize;
+            _readDataBlockSize = MemoryAllocationSize = readDataBlockSize;
             _partitionSize = _readDataBlockSize;
             References = new Dictionary<string, Tuple<int, PlcObject>>();
-            Partitons = new Dictionary<int, Partiton>();
         }
 
         public Memory<byte> ReadDataCache
         {
-            get { return _data; }
+            get => _data;
             set
             {
                 _data = value;
-                if (!Partitons.Any())
+                if (_partitons == null || !_partitons.Any())
                 {
                     lock (_lock)
                     {
-                        if (!Partitons.Any())
+                        if (_partitons == null || !_partitons.Any())
                             CreatePartitions();
                     }
                 }
@@ -67,11 +67,12 @@ namespace Papper.Internal
 
         public DateTime LastUpdate
         {
-            get { return _lastUpdate; }
+            get => _lastUpdate;
             set
             {
                 _lastUpdate = value;
-                foreach (var p in Partitons)
+                if (_partitons == null) return;
+                foreach (var p in _partitons)
                 {
                     p.Value.LastUpdate = value;
                 }
@@ -87,7 +88,7 @@ namespace Papper.Internal
             }
         }
 
-        public IList<Partiton> GetPartitonsByOffset(IEnumerable<Tuple<int,int>> offsets)
+        public IList<Partiton> GetPartitonsByOffset(IEnumerable<Tuple<int, int>> offsets)
         {
             var partitions = new List<Partiton>();
             foreach (var item in offsets)
@@ -105,6 +106,7 @@ namespace Papper.Internal
 
         public IList<Partiton> GetPartitonsByOffset(int offset, int size)
         {
+            if (_partitons == null) return new List<Partiton>();
             if (!ReadDataCache.IsEmpty && ReadDataCache.Length > _partitionSize && size != ReadDataCache.Length)
             {
                 var partitions = new List<Partiton>();
@@ -112,7 +114,7 @@ namespace Papper.Internal
                 do
                 {
                     var partitionId = index / _partitionSize;
-                    if (Partitons.TryGetValue(partitionId, out Partiton partiton) && !partitions.Contains(partiton))
+                    if (_partitons.TryGetValue(partitionId, out var partiton) && !partitions.Contains(partiton))
                     {
                         partitions.Add(partiton);
                         var off = offset > 0 ? ((partiton.Offset + partiton.Size) - offset) : partiton.Size;
@@ -134,14 +136,15 @@ namespace Papper.Internal
                 } while (size > 0);
                 return partitions;
             }
-			
-            return Partitons.Values.ToList();
+
+            return _partitons.Values.ToList();
         }
 
         private void CreatePartitions()
         {
+            if (_partitons == null) _partitons = new Dictionary<int, Partiton>();
             var length = ReadDataCache.Length;
-            var numberOfPartitons = ReadDataCache.Length/ _partitionSize;
+            var numberOfPartitons = ReadDataCache.Length / _partitionSize;
             if ((length % _partitionSize) > 0)
                 numberOfPartitons++;
 
@@ -149,7 +152,7 @@ namespace Papper.Internal
             for (var i = 0; i < numberOfPartitons; i++)
             {
                 var size = length >= _partitionSize ? _partitionSize : length;
-                Partitons.Add(i, new Partiton
+                _partitons.Add(i, new Partiton
                 {
                     LastUpdate = DateTime.MinValue,
                     Offset = offset,

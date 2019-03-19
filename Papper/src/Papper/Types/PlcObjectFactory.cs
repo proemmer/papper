@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Papper.Attributes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Papper.Attributes;
 
 namespace Papper.Types
 {
@@ -96,11 +96,13 @@ namespace Papper.Types
                     for (var i = dimensions; i > 0; i--)
                     {
                         element = Activator.CreateInstance(typeof(PlcArray), string.Empty, element, 0, 0) as PlcObject;
-                        UpdateSize(pi, element,i);
+                        UpdateSize(pi, element, i);
                     }
                 }
                 else
-                    element = Activator.CreateInstance(typeof (PlcStruct), name, pi.PropertyType) as PlcObject;
+                {
+                    element = Activator.CreateInstance(typeof(PlcStruct), name, pi.PropertyType) as PlcObject;
+                }
 
                 instance = Activator.CreateInstance(typeof(PlcArray), name, element, 0, 0) as PlcObject;
                 if (instance != null)
@@ -123,7 +125,9 @@ namespace Papper.Types
                     UpdateSize(pi, instance);
                 }
                 else
+                {
                     instance = Activator.CreateInstance(typeof(PlcStruct), arrayIndex == null ? name : name + string.Format("[{0}]", arrayIndex), pi.PropertyType) as PlcObject;
+                }
 
                 if (instance != null)
                     instance.ElemenType = pi.PropertyType;
@@ -142,7 +146,7 @@ namespace Papper.Types
 
             if (plcObject != null && arrayIndex != null)
             {
-                switch(plcObject)
+                switch (plcObject)
                 {
                     case PlcBool plcbool:
                         {
@@ -170,7 +174,7 @@ namespace Papper.Types
 
         private static void UpdateSize(MemberInfo pi, PlcObject plcObject, int dimension = 0)
         {
-            if(plcObject is ISupportStringLengthAttribute s)
+            if (plcObject is ISupportStringLengthAttribute s)
             {
                 var stringLength = pi.GetCustomAttributes<StringLengthAttribute>().FirstOrDefault();
                 if (stringLength != null)
@@ -204,7 +208,7 @@ namespace Papper.Types
             var mappingOffsets = pi.GetCustomAttributes<MappingOffsetAttribute>().FirstOrDefault();
             if (mappingOffsets != null)
             {
-                var off =  mappingOffsets.ByteOffset;
+                var off = mappingOffsets.ByteOffset;
                 if (byteOffset != off)
                 {
                     byteOffset = off;
@@ -224,15 +228,12 @@ namespace Papper.Types
             var attribute = pi.GetCustomAttributes<PlcTypeAttribute>().FirstOrDefault();
             if (attribute != null)
             {
-                if (TypeNameMatch.TryGetValue(attribute.Name, out Type plcType))
+                if (TypeNameMatch.TryGetValue(attribute.Name, out var plcType))
                     return plcType;
             }
             return null;
         }
 
-        public static Type GetTypeForPlcObject(Type plcObjectType)
-        {
-            return ReverseTypeMatch.TryGetValue(plcObjectType, out Type retType) ? retType : typeof(object);
-        }
+        public static Type GetTypeForPlcObject(Type plcObjectType) => ReverseTypeMatch.TryGetValue(plcObjectType, out var retType) ? retType : typeof(object);
     }
 }

@@ -7,8 +7,9 @@ namespace Papper.Internal
 {
     internal class PlcMetaDataTreeNode : PlcMetaDataBaseTreeNode
     {
-        private readonly List<ITreeNode> _childs = new List<ITreeNode>();
-        private Dictionary<string, ITreeNode> _childByNameCache = new Dictionary<string, ITreeNode>();
+        private static readonly List<ITreeNode> _empty = new List<ITreeNode>();
+        private List<ITreeNode> _childs;
+        private Dictionary<string, ITreeNode> _childByNameCache;
 
 
         public PlcMetaDataTreeNode(string name)
@@ -18,7 +19,7 @@ namespace Papper.Internal
 
         public override IEnumerable<ITreeNode> Childs
         {
-            get { return _childs; }
+            get { return _childs ?? _empty; }
         }
 
         public override void AddChild(ITreeNode child)
@@ -26,6 +27,8 @@ namespace Papper.Internal
             if (GetChildByName(child.Name) != null)
                 ExceptionThrowHelper.ThrowChildNodeException(child.Name, true);
             if (child is PlcMetaDataBaseTreeNode baseTreeNode) baseTreeNode.Parent = this;
+
+            if (_childs == null) _childs = new List<ITreeNode>();
             _childs.Add(child);
         }
 
@@ -34,7 +37,7 @@ namespace Papper.Internal
             var child = GetChildByName(name);
             if (child == null)
                 ExceptionThrowHelper.ThrowChildNodeException(name, false);
-            _childs.Remove(child);
+            _childs?.Remove(child);
             if (child is PlcMetaDataBaseTreeNode baseTreeNode) baseTreeNode.Parent = null;
             return child;
         }
@@ -47,7 +50,7 @@ namespace Papper.Internal
             else if (_childByNameCache.TryGetValue(name, out tn))
                 return tn;
 
-            tn = _childs.Find(node => node.Name == name);
+            tn = _childs?.Find(node => node.Name == name);
 
             if (tn != null)
                 _childByNameCache[name] = tn;
@@ -58,8 +61,11 @@ namespace Papper.Internal
         {
             if (visit(this))
             {
-                foreach (var childNode in _childs)
-                    childNode.Accept(visit);
+                if (_childs != null)
+                {
+                    foreach (var childNode in _childs)
+                        childNode.Accept(visit);
+                }
             }
         }
 
