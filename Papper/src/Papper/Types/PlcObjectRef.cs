@@ -1,32 +1,25 @@
-﻿using System;
+﻿using Papper.Internal;
+using System;
 using System.Collections.Generic;
-using Papper.Internal;
 
 namespace Papper.Types
 {
     internal class PlcObjectRef : PlcObject
     {
-        internal const string RefMarker = "\\";
+        internal const string _refMarker = "\\";
         private readonly PlcObject _referencedObject;
-        //private int _offset = 0;
 
         public override Type DotNetType => _referencedObject.DotNetType;
 
-        public override PlcSize Size
-        {
-            get { return _referencedObject.Size; }
-        }
+        public override PlcSize Size => _referencedObject.Size;
 
-        public override int ByteOffset { get { return Offset.Bytes; } }
-        public override int BitOffset { get { return Offset.Bits; } }
-        public override int ByteSize { get { return Size.Bytes; } }
-        public override int BitSize { get { return Size.Bits; } }
+        public override int ByteOffset => Offset.Bytes;
+        public override int BitOffset => Offset.Bits;
+        public override int ByteSize => Size.Bytes;
+        public override int BitSize => Size.Bits;
 
         public PlcObjectRef(string name, PlcObject reference) :
-            base(name)
-        {
-            _referencedObject = reference;
-        }
+            base(name) => _referencedObject = reference;
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
          => _referencedObject.ConvertFromRaw(plcObjectBinding, data);
@@ -34,49 +27,33 @@ namespace Papper.Types
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
          => _referencedObject.ConvertToRaw(value, plcObjectBinding, data);
 
-        public override IEnumerable<ITreeNode> Childs
-        {
-            get { return _referencedObject.Childs; }
-        }
+        public override IEnumerable<ITreeNode> Childs => _referencedObject.Childs;
 
         public override void AddChild(ITreeNode child) => ExceptionThrowHelper.ThrowNotSupportedException();
 
         public override ITreeNode RemoveChild(string name)
         {
-             ExceptionThrowHelper.ThrowNotSupportedException();
+            ExceptionThrowHelper.ThrowNotSupportedException();
             return default;
         }
 
         public override void AddChild(ITreePath path, ITreeNode node) => ExceptionThrowHelper.ThrowNotSupportedException();
 
-        public override ITreeNode GetChildByName(string name)
-        {
-            return _referencedObject.GetChildByName(name);
-        }
+        public override ITreeNode GetChildByName(string name) => _referencedObject.GetChildByName(name);
 
         public override ITreeNode Get(ITreePath path, ref int offset, bool getRef = false)
         {
-            //_offset = offset;
             offset += Offset.Bytes;
             if (path.IsPathToCurrent && getRef)
                 return this;
             return _referencedObject.Get(path, ref offset);
         }
 
-        public override void Accept(VisitNode visit)
-        {
-            _referencedObject.Accept(visit);
-        }
+        public override void Accept(VisitNode visit) => _referencedObject.Accept(visit);
 
-        public override void ReverseAccept(VisitNode visit)
-        {
-            _referencedObject.ReverseAccept(visit);
-        }
+        public override void ReverseAccept(VisitNode visit) => _referencedObject.ReverseAccept(visit);
 
-        public override void ClearCache()
-        {
-            _referencedObject.ClearCache();
-        }
+        public override void ClearCache() => _referencedObject.ClearCache();
 
     }
 }

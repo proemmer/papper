@@ -1,16 +1,18 @@
-﻿using System;
-using Papper.Internal;
+﻿using Papper.Internal;
+using System;
 
 namespace Papper.Types
 {
     internal class PlcSInt : PlcObject
     {
+        // Use share size for this datatype, we will never change the size
+        private static readonly PlcSize _size = new PlcSize { Bytes = 1 };
         public override Type DotNetType => typeof(sbyte);
 
-        public PlcSInt(string name) : 
-            base(name )
+        public PlcSInt(string name) :
+            base(name)
         {
-            Size = new PlcSize { Bytes = 1 };
+            Size = _size;
             AllowOddByteOffsetInArray = true;
         }
 

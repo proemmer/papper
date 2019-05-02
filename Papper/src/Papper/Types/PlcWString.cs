@@ -1,14 +1,14 @@
-﻿using System;
+﻿using Papper.Internal;
+using System;
 using System.Buffers.Binary;
 using System.Text;
-using Papper.Internal;
 
 namespace Papper.Types
 {
     internal class PlcWString : PlcObject, ISupportStringLengthAttribute
     {
-        private const int DefaultStringLength = 254;
-        private const char DefaultFillChar = '\0';
+        private const int _defaultStringLength = 254;
+        private const char _defaultFillChar = '\0';
         private readonly byte _defaultFillByte;
         private readonly PlcSize _size = new PlcSize();
 
@@ -17,22 +17,22 @@ namespace Papper.Types
 
         public int StringLength
         {
-            get { return _size.Bytes; }
-            set { _size.Bytes = (value * 2) + 4; }
+            get => _size.Bytes;
+            set => _size.Bytes = (value * 2) + 4;
         }
 
         public override PlcSize Size
         {
-            get { return _size; }
-            protected set { ; } 
+            get => _size;
+            protected set {; }
         }
 
 
-        public PlcWString(string name) 
+        public PlcWString(string name)
             : base(name)
         {
-            _defaultFillByte = Convert.ToByte(DefaultFillChar);
-            StringLength = DefaultStringLength;
+            _defaultFillByte = Convert.ToByte(_defaultFillChar);
+            StringLength = _defaultStringLength;
         }
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
@@ -58,7 +58,7 @@ namespace Papper.Types
             {
                 var str = value.ToString();
                 var curLength = Convert.ToInt16(str.Length);
-                var take = (short)(Math.Min(maxLength, curLength));
+                var take = Math.Min(maxLength, curLength);
                 fill = str.Substring(0, take);
 
                 BinaryPrimitives.TryWriteInt16BigEndian(data.Slice(i, 2), take);
@@ -71,6 +71,7 @@ namespace Papper.Types
             else
             {
                 BinaryPrimitives.TryWriteInt16BigEndian(data.Slice(i, 2), 0);  //currentLength
+                i += 2;
             }
 
             for (var j = 0; j < (maxLength - fill.Length) * 2; j++)

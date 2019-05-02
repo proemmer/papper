@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Papper.Internal;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using Papper.Internal;
-using System.Text;
 using System.Dynamic;
+using System.Linq;
+using System.Text;
 
 namespace Papper.Types
 {
@@ -15,7 +15,7 @@ namespace Papper.Types
 
 
         private readonly Dictionary<Type, object> _typeInstances = new Dictionary<Type, object>();
-        private readonly Dictionary<int, ITreeNode> _indexCache = new Dictionary<int, ITreeNode>(); 
+        private readonly Dictionary<int, ITreeNode> _indexCache = new Dictionary<int, ITreeNode>();
         private readonly PlcSize _size = new PlcSize();
         private PlcObject _arrayType;
         private int _from;
@@ -24,7 +24,7 @@ namespace Papper.Types
 
         public int From
         {
-            get { return _from; }
+            get => _from;
             set
             {
                 if (_from != value)
@@ -40,7 +40,7 @@ namespace Papper.Types
 
         public int To
         {
-            get { return _to; }
+            get => _to;
             set
             {
                 if (_to != value)
@@ -54,14 +54,11 @@ namespace Papper.Types
             }
         }
 
-        public int ArrayLength
-        {
-            get { return To - From + 1; }
-        }
+        public int ArrayLength => To - From + 1;
 
         public PlcObject ArrayType
         {
-            get { return _arrayType; }
+            get => _arrayType;
             set
             {
                 if (_arrayType != value)
@@ -74,12 +71,9 @@ namespace Papper.Types
 
         public PlcObject LeafElementType { get; set; }
 
-        public override PlcSize Size
-        {
-            get { return _size; }
-        }
+        public override PlcSize Size => _size;
 
-        public PlcArray(string name, PlcObject arrayType, int from = 0, int to = 0) 
+        public PlcArray(string name, PlcObject arrayType, int from = 0, int to = 0)
             : base(name)
         {
             ArrayType = arrayType;
@@ -150,7 +144,7 @@ namespace Papper.Types
             if (list != null)
             {
                 //Special handling for byte and char, because of performance (specially with big data)
-                if (type == typeof(PlcByte) &&  (value is byte[] || value is Memory<byte>))
+                if (type == typeof(PlcByte) && (value is byte[] || value is Memory<byte>))
                 {
                     var byteArray = value as byte[];
                     byteArray.CopyTo(data.Slice(plcObjectBinding.Offset, byteArray.Length));
@@ -175,7 +169,9 @@ namespace Papper.Types
                                 ArrayType.ConvertToRaw(enumerator.Current, binding, data);
                             }
                             else
+                            {
                                 ExceptionThrowHelper.ThrowArrayIndexExeption(From + i);
+                            }
                         }
                         else
                         {
@@ -207,7 +203,7 @@ namespace Papper.Types
         /// <returns></returns>
         private object InternalConvert<T>(PlcObjectBinding plcObjectBinding, Span<byte> data, bool fully = false, Type t = null)
         {
-            
+
             if (!data.IsEmpty)
             {
                 var type = typeof(T);
@@ -216,7 +212,7 @@ namespace Papper.Types
                 {
                     return data.Slice(plcObjectBinding.Offset, ArrayLength).ToArray();
                 }
-                else if(type == typeof(char))
+                else if (type == typeof(char))
                 {
                     var d = data.Slice(plcObjectBinding.Offset, ArrayLength).ToArray();
                     return Encoding.ASCII.GetChars(d);
@@ -224,9 +220,6 @@ namespace Papper.Types
                 else if (fully && t != null)
                 {
                     //Special handlying for object types
-                    var generic = typeof(List<>);
-                    var constructed = typeof(T).MakeArrayType();
-
                     var list = Array.CreateInstance(t, ArrayLength);
                     var idx = From;
                     var childEnumerator = Childs.OfType<PlcObject>().GetEnumerator();
@@ -235,7 +228,7 @@ namespace Papper.Types
                         if (!childEnumerator.MoveNext()) ExceptionThrowHelper.ThrowArrayIndexExeption(idx);
                         var child = childEnumerator.Current;
                         var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + ((idx - From) * GetElementSizeForOffset()), plcObjectBinding.ValidationTimeInMs, fully);
-                        list.SetValue(((T)ArrayType.ConvertFromRaw(binding, data)),i);
+                        list.SetValue(((T)ArrayType.ConvertFromRaw(binding, data)), i);
                         idx++;
                     }
                     return list;
@@ -267,10 +260,8 @@ namespace Papper.Types
         /// <returns></returns>
         public override bool AreDataEqual(object obj1, object obj2)
         {
-            var list1 = obj1 as IEnumerable;
-            var list2 = obj2 as IEnumerable;
 
-            if (list1 != null && list2 != null)
+            if (obj1 is IEnumerable list1 && obj2 is IEnumerable list2)
             {
                 var enumerator1 = list1.GetEnumerator();
                 var enumerator2 = list2.GetEnumerator();
@@ -282,11 +273,16 @@ namespace Papper.Types
                             return false;
                     }
                     else
+                    {
                         break;
+                    }
                 }
             }
             else
+            {
                 return base.AreDataEqual(obj1, obj2);
+            }
+
             return true;
         }
 
@@ -309,10 +305,7 @@ namespace Papper.Types
         /// </summary>
         /// <param name="name">Name of the child</param>
         /// <returns></returns>
-        public override ITreeNode GetChildByName(string name)
-        {
-            return base.GetChildByName(name);
-        }
+        public override ITreeNode GetChildByName(string name) => base.GetChildByName(name);
 
         /// <summary>
         /// Get a Node by it's path recursively
@@ -328,8 +321,8 @@ namespace Papper.Types
             var idx = path.ArrayIndizes[0];
             if (idx >= From && idx <= To)
             {
-                offset += Offset.Bytes + ((idx - From)* GetElementSizeForOffset());
-                return (_indexCache.TryGetValue(idx, out ITreeNode ret) ?
+                offset += Offset.Bytes + ((idx - From) * GetElementSizeForOffset());
+                return (_indexCache.TryGetValue(idx, out var ret) ?
                             ret :
                             GetIndex(idx)).Get(CreateSubPath(path), ref offset);
             }
@@ -357,13 +350,12 @@ namespace Papper.Types
                 return new PlcMetaDataTreePath(nodes.Aggregate((a, b) => a + PlcMetaDataTreePath.Separator + b));
             }
             else
+            {
                 return path.StepDown();
+            }
         }
 
-        public override void Accept(VisitNode visit)
-        {
-            base.Accept(visit);
-        }
+        public override void Accept(VisitNode visit) => base.Accept(visit);
 
         private void CalculateSize()
         {
@@ -372,7 +364,7 @@ namespace Papper.Types
             if (_arrayType is ISupportStringLengthAttribute && _arrayType.Size.Bytes % 2 != 0)
             {
                 var result = 0;
-                for (int i = 0; i < ArrayLength; i++)
+                for (var i = 0; i < ArrayLength; i++)
                 {
                     if (result % 2 != 0)
                         result++;
@@ -381,7 +373,9 @@ namespace Papper.Types
                 Size.Bytes = result;
             }
             else
+            {
                 Size.Bytes = isBoolean ? 0 : ArrayLength * _arrayType.Size.Bytes;
+            }
 
             if (isBoolean)
             {
@@ -394,7 +388,7 @@ namespace Papper.Types
         {
             lock (_indexCache)
             {
-                if (_indexCache.TryGetValue(idx, out ITreeNode ret))
+                if (_indexCache.TryGetValue(idx, out var ret))
                     return ret as PlcObject;
                 ret = ArrayType is PlcStruct
                     ? new PlcObjectRef(string.Format("[{0}]", idx), ArrayType)

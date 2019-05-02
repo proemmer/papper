@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using Papper.Internal;
+using System;
+using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
-using Papper.Internal;
-using System;
 
 namespace Papper.Types
 {
@@ -17,7 +17,7 @@ namespace Papper.Types
         {
             get
             {
-                int byteOffset = 0;
+                var byteOffset = 0;
                 if (Childs.Any())
                 {
                     var first = Childs.OfType<PlcObject>().FirstOrDefault();
@@ -37,11 +37,8 @@ namespace Papper.Types
         }
 
 
-        public PlcStruct(string name, Type structType) 
-            : base(name)
-        {
-            _structType = structType ?? ExceptionThrowHelper.ThrowArgumentNullException<Type>(nameof(structType));
-        }
+        public PlcStruct(string name, Type structType)
+            : base(name) => _structType = structType ?? ExceptionThrowHelper.ThrowArgumentNullException<Type>(nameof(structType));
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
@@ -76,7 +73,7 @@ namespace Papper.Types
                 foreach (var child in plcObjectBinding.MetaData.Childs.OfType<PlcObject>())
                 {
                     var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes, plcObjectBinding.ValidationTimeInMs);
-                    if (properties.TryGetValue(child.Name, out object prop))
+                    if (properties.TryGetValue(child.Name, out var prop))
                         child.ConvertToRaw(prop, binding, data);
                 }
             }

@@ -87,10 +87,13 @@ namespace Papper.Internal
 
             if (adds.Any())
             {
-                updated = true;
                 foreach (var item in adds)
                 {
-                    plcObjects.Add(item.Key, item.Value);
+                    if (!plcObjects.ContainsKey(item.Key))
+                    {
+                        updated = true;
+                        plcObjects.Add(item.Key, item.Value);
+                    }
                 }
             }
             return updated;
@@ -214,7 +217,7 @@ namespace Papper.Internal
         internal static bool AddPlcObjects(ITreeNode plcObj, IDictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values, string prefix = "", int offset = 0)
         {
             var updated = false;
-            foreach (var value in values.Where( x => !plcObjects.ContainsKey(x)))
+            foreach (var value in values.Where(x => !plcObjects.ContainsKey(x)))
             {
                 var baseOffset = offset;
                 var item = value == "This" ? plcObj as PlcObject : plcObj.Get(new PlcMetaDataTreePath(value), ref baseOffset) as PlcObject;
@@ -231,7 +234,7 @@ namespace Papper.Internal
                     {
                         plcObjects.Add(key, new Tuple<int, PlcObject>(baseOffset, item));
                     }
-                    catch(Exception)
+                    catch (Exception)
                     {
                         // This could throw an exception if another thread has already added the object.
                         // but we could ignore this, becuase this would be the same object
@@ -295,7 +298,9 @@ namespace Papper.Internal
 
                 }
                 else
+                {
                     list.Add(PlcMetaDataTreePath.CreateAbsolutePath(path.Skip(1).ToArray()).Path.Substring(1));
+                }
             }
             return list;
         }
@@ -314,7 +319,7 @@ namespace Papper.Internal
 
             var path = PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse().ToArray());
             var offset = 0;
-            if (!tree.TryGet(path, ref offset, out ITreeNode obj, true))
+            if (!tree.TryGet(path, ref offset, out var obj, true))
             {
                 if (t == null) ExceptionThrowHelper.ThrowArgumentNullException(nameof(t));
 
@@ -330,7 +335,7 @@ namespace Papper.Internal
                     PlcObject.AddPlcObjectToTree(plcObj, tree, PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse().ToArray()));
                     obj = plcObj;
                 }
-                else if(allowAddingWithoutMappingAttribute)
+                else if (allowAddingWithoutMappingAttribute)
                 {
                     nodePathStack.Pop();
                     var plcObj = new PlcObjectRef(name, GetMetaData(tree, t));
@@ -349,7 +354,7 @@ namespace Papper.Internal
         private static string NormalizeTypeName(string name)
         {
             var result = new StringBuilder();
-            foreach (char c in name.Where(c => c != '.'))
+            foreach (var c in name.Where(c => c != '.'))
             {
                 result.Append(c);
             }
@@ -370,7 +375,7 @@ namespace Papper.Internal
             nodePathStack.Push(name);
             var path = PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse().ToArray());
             var offset = 0;
-            if (!tree.TryGet(path, ref offset, out ITreeNode obj))
+            if (!tree.TryGet(path, ref offset, out var obj))
             {
                 var byteOffset = 0;
                 var bitOffset = 0;
@@ -380,7 +385,7 @@ namespace Papper.Internal
                 nodePathStack.Push(parent.Name);
                 PlcObject pred = null;
                 DebugOutPut("{0}{{", name);
-                
+
                 foreach (var pi in t.GetTypeInfo().DeclaredProperties)
                 {
                     var plcObject = PlcObjectFactory.CreatePlcObject(pi);
@@ -407,7 +412,7 @@ namespace Papper.Internal
         /// </summary>
         private static void AddPlcObject(ITree tree, PlcObject pred, PlcObject plcObject, IEnumerable<string> nodePathStack, ref int byteOffset, ref int bitOffset, bool hasCustomOffset)
         {
-            if(!hasCustomOffset)
+            if (!hasCustomOffset)
                 CalculateOffset(pred, plcObject, ref byteOffset, ref bitOffset);
             plcObject.Offset.Bytes = byteOffset;
             plcObject.Offset.Bits = bitOffset;
@@ -459,9 +464,6 @@ namespace Papper.Internal
 
 
         [Conditional("DEBUG")]
-        private static void DebugOutPut(string format, params object[] attributes)
-        {
-            Debug.WriteLine(format, attributes);
-        }
+        private static void DebugOutPut(string format, params object[] attributes) => Debug.WriteLine(format, attributes);
     }
 }

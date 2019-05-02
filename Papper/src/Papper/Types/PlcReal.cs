@@ -1,14 +1,16 @@
-﻿using System;
-using Papper.Internal;
+﻿using Papper.Internal;
+using System;
 
 namespace Papper.Types
 {
     internal class PlcReal : PlcObject
     {
+        // Use share size for this datatype, we will never change the size
+        private static readonly PlcSize _size = new PlcSize { Bytes = 4 };
         public override Type DotNetType => typeof(float);
 
         public PlcReal(string name) : base(name)
-            => Size = new PlcSize { Bytes = 4 };
+            => Size = _size;
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
          => data.IsEmpty ? default : Converter.ReadSingleBigEndian(data.Slice(plcObjectBinding.Offset));

@@ -112,12 +112,13 @@ namespace Papper.Internal
             var arrayOffset = offset;
             for (var i = array.From; i <= array.To; i++)
             {
+                var index = $"[{i}]";
                 var element = array.ArrayType is PlcStruct
-                    ? new PlcObjectRef(string.Format("[{0}]", i), array.ArrayType)
+                    ? new PlcObjectRef(index, array.ArrayType)
                     : PlcObjectFactory.CreatePlcObjectForArrayIndex(array.ArrayType, i, array.From);
 
-                var name = $"{item.Key}[{i}]";
-                var elemName = string.IsNullOrWhiteSpace(dimension) ? name :  $"{dimension}[{i}]";
+                var name = $"{item.Key}{index}";
+                var elemName = string.IsNullOrWhiteSpace(dimension) ? name :  $"{dimension}{index}";
                 if (element is PlcArray)
                 {
                     

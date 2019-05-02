@@ -1,25 +1,24 @@
-﻿using System;
-using Papper.Internal;
+﻿using Papper.Internal;
+using System;
 
 namespace Papper.Types
 {
     internal class PlcDateTime : PlcObject
     {
+        // Use share size for this datatype, we will never change the size
+        private static readonly PlcSize _size = new PlcSize { Bytes = 8 };
         private static readonly DateTime _epochTime = new DateTime(1900, 01, 01, 00, 00, 00);
         public override Type DotNetType => typeof(DateTime);
 
 
         public PlcDateTime(string name) :
-            base(name)
-        {
-            Size = new PlcSize {Bytes = 8};
-        }
+            base(name) => Size = _size;
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             if (data.IsEmpty)
                 return _epochTime;
-            
+
             int bt = data[plcObjectBinding.Offset];
             //BCD Umwandlung
             bt = (((bt >> 4)) * 10) + ((bt & 0x0f));
@@ -27,29 +26,29 @@ namespace Papper.Types
             jahr += bt;
 
             //Monat
-            bt = data[plcObjectBinding.Offset+1];
+            bt = data[plcObjectBinding.Offset + 1];
             var monat = (((bt >> 4)) * 10) + ((bt & 0x0f));
 
             //Tag
-            bt = data[plcObjectBinding.Offset+2];
+            bt = data[plcObjectBinding.Offset + 2];
             var tag = (((bt >> 4)) * 10) + ((bt & 0x0f));
 
             //Stunde
-            bt = data[plcObjectBinding.Offset+3];
+            bt = data[plcObjectBinding.Offset + 3];
             var stunde = (((bt >> 4)) * 10) + ((bt & 0x0f));
 
             //Minute
-            bt = data[plcObjectBinding.Offset+4];
+            bt = data[plcObjectBinding.Offset + 4];
             var minute = (((bt >> 4)) * 10) + ((bt & 0x0f));
 
             //Sekunde
-            bt = data[plcObjectBinding.Offset+5];
+            bt = data[plcObjectBinding.Offset + 5];
             var sekunde = (((bt >> 4)) * 10) + ((bt & 0x0f));
 
             //Milisekunden
             //Byte 6 BCD + MSB (Byte 7)
-            bt = data[plcObjectBinding.Offset+6];
-            int bt1 = data[plcObjectBinding.Offset+7];
+            bt = data[plcObjectBinding.Offset + 6];
+            int bt1 = data[plcObjectBinding.Offset + 7];
             var mili = (((bt >> 4)) * 10) + ((bt & 0x0f));
             mili = mili * 10 + (bt1 >> 4);
 
@@ -70,7 +69,7 @@ namespace Papper.Types
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            var dateTime = (DateTime) value;
+            var dateTime = (DateTime)value;
 
             var tmp = dateTime.Year - ((dateTime.Year / 100) * 100);
             data[plcObjectBinding.Offset] = Convert.ToByte((tmp / 10) << 4 | tmp % 10);

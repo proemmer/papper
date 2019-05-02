@@ -53,28 +53,31 @@ namespace Papper.Internal
 
         internal void UpdateInternalState(IEnumerable<string> vars)
         {
-            if (AddObject(PlcObject, Variables, vars))
+            using (var guard = new UpgradeableGuard(_bindingLock))
             {
-                var bindings = new Dictionary<string, PlcObjectBinding>();
-                foreach (var rawDataBlock in _mapper.Optimizer.CreateRawReadOperations(PlcObject.Selector, Variables, ReadDataBlockSize))
+                if (AddObject(PlcObject, Variables, vars))
                 {
-                    if (rawDataBlock.References.Any())
+                    var bindings = new Dictionary<string, PlcObjectBinding>();
+                    foreach (var rawDataBlock in _mapper.Optimizer.CreateRawReadOperations(PlcObject.Selector, Variables, ReadDataBlockSize))
                     {
-                        foreach (var reference in rawDataBlock.References)
-                            bindings.Add(reference.Key, new PlcObjectBinding(rawDataBlock, reference.Value.Item2, reference.Value.Item1, ValidationTimeMs));
+                        if (rawDataBlock.References.Any())
+                        {
+                            foreach (var reference in rawDataBlock.References)
+                                bindings.Add(reference.Key, new PlcObjectBinding(rawDataBlock, reference.Value.Item2, reference.Value.Item1, ValidationTimeMs));
+                        }
                     }
-                }
 
-                if (bindings.Any())
-                {
-                    using (var guard = new WriterGuard(_bindingLock))
+                    if (bindings.Any())
                     {
-                        //extend bindings with the new created ones
-                        _bindings = _bindings != null
-                                        ? _bindings.Union(bindings
-                                            .Where(kvp => !_bindings.ContainsKey(kvp.Key))
-                                            ).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
-                                        : bindings;
+                        using (var writeGuard = guard.UpgradeToWriterLock())
+                        {
+                            //extend bindings with the new created ones
+                            _bindings = _bindings != null
+                                            ? _bindings.Union(bindings
+                                                .Where(kvp => !_bindings.ContainsKey(kvp.Key))
+                                                ).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+                                            : bindings;
+                        }
                     }
                 }
             }

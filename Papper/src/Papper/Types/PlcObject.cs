@@ -1,47 +1,37 @@
-﻿using System;
+﻿using Papper.Internal;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
-using Papper.Internal;
 
 namespace Papper.Types
 {
     internal abstract class PlcObject : PlcMetaDataTreeNode, IPlcObject
     {
-        private const string RootNodeName = "Plc";
-        private readonly PlcSize _offset = new PlcSize();
         public string Selector { get; set; }
         public Type ElemenType { get; set; }
         public bool AllowOddByteOffsetInArray { get; set; }
 
-        public PlcSize Offset
-        {
-            get
-            {
-                return _offset;
-            }
-        }
+        public PlcSize Offset { get; } = new PlcSize();
 
         public bool IsReadOnly { get; internal set; }
 
-        public virtual int ByteOffset { get { return Offset.Bytes; } }
-        public virtual int BitOffset { get { return Offset.Bits; } }
-        public virtual int ByteSize { get { return Size.Bytes; } }
-        public virtual int BitSize { get { return Size.Bits; } }
+        public virtual int ByteOffset => Offset.Bytes;
+        public virtual int BitOffset => Offset.Bits;
+        public virtual int ByteSize => Size.Bytes;
+        public virtual int BitSize => Size.Bits;
 
         public abstract Type DotNetType { get; }
 
-        public IEnumerable<IPlcObject> ChildVars { get { return Childs.OfType<IPlcObject>(); } }
+        public IEnumerable<IPlcObject> ChildVars => Childs.OfType<IPlcObject>();
 
         public virtual PlcSize Size { get; protected set; }
 
         public static PlcObject AddPlcObjectToTree(PlcObject obj, ITree tree, ITreePath path)
         {
-            var offset = obj.Offset.Bytes;
             var node = PlcMetaDataTreePath.CreateNodePath(path, obj);
-            var metaDataNode = tree.Get(node) as PlcObject;
-            if (metaDataNode == null)
+            if (!(tree.Get(node) is PlcObject metaDataNode))
             {
                 lock (tree.Root)
                 {
@@ -61,10 +51,7 @@ namespace Papper.Types
         {
         }
 
-        public override string ToString()
-        {
-            return GetType().ToString();
-        }
+        public override string ToString() => GetType().ToString();
 
 
         public abstract object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data);
@@ -87,17 +74,14 @@ namespace Papper.Types
             var t1 = obj1.GetType();
             var t2 = obj2.GetType();
 
-            if (t1 == t2){ return t1 != typeof (ExpandoObject) ? ElementEqual(obj1, obj2) : DynamicObjectCompare(obj1, obj2); }
-            try{ return ElementEqual(obj1, Convert.ChangeType(obj2, t1));} catch{ }
+            if (t1 == t2) { return t1 != typeof(ExpandoObject) ? ElementEqual(obj1, obj2) : DynamicObjectCompare(obj1, obj2); }
+            try { return ElementEqual(obj1, Convert.ChangeType(obj2, t1)); } catch { }
             return false;
         }
 
         private bool ElementEqual(object obj1, object obj2)
         {
-            var list1 = obj1 as IEnumerable;
-            var list2 = obj2 as IEnumerable;
-
-            if (list1 != null && list2 != null)
+            if (obj1 is IEnumerable list1 && obj2 is IEnumerable list2)
             {
                 var enumerator1 = list1.GetEnumerator();
                 var enumerator2 = list2.GetEnumerator();
@@ -111,7 +95,9 @@ namespace Papper.Types
                             return false;
                     }
                     else
+                    {
                         return e1 == e2; //Length not the same?
+                    }
                 }
             }
             return obj1.Equals(obj2);
@@ -119,14 +105,12 @@ namespace Papper.Types
 
         private bool DynamicObjectCompare(object obj1, object obj2)
         {
-            var dictionary1 = obj1 as IDictionary<string, object>;
-            var dictionary2 = obj2 as IDictionary<string, object>;
 
-            if (dictionary1 != null && dictionary2 != null)
+            if (obj1 is IDictionary<string, object> dictionary1 && obj2 is IDictionary<string, object> dictionary2)
             {
                 foreach (var o1 in dictionary1)
                 {
-                    if (!dictionary2.TryGetValue(o1.Key, out object o2) || !AreDataEqual(o1.Value, o2))
+                    if (!dictionary2.TryGetValue(o1.Key, out var o2) || !AreDataEqual(o1.Value, o2))
                         return false;
 
                 }
