@@ -10,16 +10,25 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: '**/*.sln'
+  corever: '2.2.104'
+  solution: 'INAX/**/*.sln'
+  projects: 'INAX/**/*.csproj'
+  nugetConfig: 'INAX/nuget.config '
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
 steps:
-- task: NuGetToolInstaller@0
-
-- task: NuGetCommand@2
+- task: DotNetCoreInstaller@0
   inputs:
-    restoreSolution: '$(solution)'
+    version: '$(corever)' # replace this value with the version that you need for your project
+
+- task: DotNetCoreCLI@2
+  displayName: Restore
+  inputs:
+    command: restore
+    projects: '$(projects)'
+    feedsToUse: config
+    nugetConfigPath: '$(nugetConfig)'
 
 - task: VSBuild@1
   inputs:
