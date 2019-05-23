@@ -74,6 +74,7 @@ namespace UnitTestSuit.Mappings
 
     [Mapping("DB_Safety", "DB15", 0)]
     [Mapping("DB_Safety2", "DB16", 0)]
+    [Mapping("DB_Safety_NotExisting", "DB999", 0)]
     public class DB_Safety
     {
         public UDT_SafeMotion SafeMotion { get; set; }

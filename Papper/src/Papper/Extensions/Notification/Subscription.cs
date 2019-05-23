@@ -338,28 +338,32 @@ namespace Papper.Extensions.Notification
             foreach (var binding in all)
             {
                 var objBinding = binding.Value;
-                var size = objBinding.Size == 0 ? 1 : objBinding.Size;
-                if (!_lruCache.TryGetValue(binding.Key, out var saved) ||
-                    (objBinding.Size == 0
-                        ? objBinding.Data.Span[objBinding.Offset].GetBit(objBinding.MetaData.Offset.Bits) != saved.Data.Span[0].GetBit(objBinding.MetaData.Offset.Bits)
-                        : !objBinding.Data.Slice(objBinding.Offset, size).Span.SequenceEqual(saved.Data.Slice(0, size).Span)))
+
+                // only work on valid items
+                if (!objBinding.Data.IsEmpty)
                 {
-                    result.Add(binding);
-                    var data = objBinding.Data.Slice(objBinding.Offset, size);
-                    if (saved == null)
+                    var size = objBinding.Size == 0 ? 1 : objBinding.Size;
+                    if (!_lruCache.TryGetValue(binding.Key, out var saved) ||
+                        (objBinding.Size == 0
+                            ? objBinding.Data.Span[objBinding.Offset].GetBit(objBinding.MetaData.Offset.Bits) != saved.Data.Span[0].GetBit(objBinding.MetaData.Offset.Bits)
+                            : !objBinding.Data.Slice(objBinding.Offset, size).Span.SequenceEqual(saved.Data.Slice(0, size).Span)))
                     {
-                        saved = _lruCache.Create(binding.Key, data, detect, objBinding.ValidationTimeInMs);
+                        result.Add(binding);
+                        var data = objBinding.Data.Slice(objBinding.Offset, size);
+                        if (saved == null)
+                        {
+                            saved = _lruCache.Create(binding.Key, data, detect, objBinding.ValidationTimeInMs);
+                        }
+                        else
+                        {
+                            _lruCache.Update(saved, data, detect);
+                        }
                     }
                     else
                     {
-                        _lruCache.Update(saved, data, detect);
+                        _lruCache.Update(saved, detect);
                     }
                 }
-                else
-                {
-                    _lruCache.Update(saved, detect);
-                }
-                
             }
 
             _lruCache.RemoveUnused(detect);

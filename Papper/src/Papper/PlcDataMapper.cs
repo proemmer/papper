@@ -369,6 +369,7 @@ namespace Papper
             return executions.Select(exec => needUpdate.TryGetValue(exec, out var pack) ? exec.ApplyDataPack(pack) : exec)
                              .Where(exec => changedAfter == null || exec.LastChange > changedAfter) // filter by data area
                              .GroupBy(exec => exec.ExecutionResult) // Group by execution result
+                             .Where(res => res.Key == ExecutionResult.Ok) // filter by OK results
                              .SelectMany(group => filter(group.SelectMany(g => g.Bindings))
                                                        .Select(b => new PlcReadResult(b.Key,
                                                                                       ConvertToResult(b.Value, doNotConvert), 
@@ -385,6 +386,7 @@ namespace Papper
                                                                 pack.Length == (x.PlcRawData.Size > 0 ? x.PlcRawData.Size : 1))?.ApplyDataPack(pack))
                         .Where(exec => exec != null)
                         .GroupBy(exec => exec.ExecutionResult) // Group by execution result
+                        .Where(res => res.Key == ExecutionResult.Ok) // filter by OK results
                         .SelectMany(group => group.SelectMany(g => g.Bindings)
                                                     .Select(b => new PlcReadResult(b.Key,
                                                                     b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache.Span),
