@@ -1,0 +1,68 @@
+
+parameters:
+  solution: ''
+  publishProject: ''
+  artifactNamePrefix: ''
+  framework: ''
+  runTests: 'True'
+  dotnetCoreSdk: ''
+  nugetConfig: './NuGet.Config'
+  
+  
+steps:
+
+- script: "echo Build.SourceBranch: $(Build.SourceBranch); buildConfiguration: $(buildConfiguration); solution: ${{ parameters.solution }}; publishProject: ${{ parameters.publishProject }}; framework: ${{ parameters.framework }}; pushAsRelease: $(pushAsRelease)"
+
+
+- ${{ if ne(parameters['dotnetCoreSdk'], '') }}:
+  - task: UseDotNet@2
+    displayName: 'Use .NET Core sdk'
+    inputs:
+      packageType: sdk
+      version: '${{ parameters.dotnetCoreSdk }}'
+      installationPath: $(Agent.ToolsDirectory)/dotnet
+    
+- template: templates/dotnet-build.yml 
+  parameters: 
+    solution: '${{ parameters.solution }}'
+    nugetConfig: '${{ parameters.nugetConfig }}'
+
+- ${{ if eq(parameters['runTests'], 'True') }}:
+  - template: templates/dotnet-test.yml
+    parameters: 
+      solution: '${{ parameters.solution }}'
+      framework: '${{ parameters.framework }}'
+
+# publish a win-x64 project if some is configured
+- ${{ if ne(parameters['publishProject'], '') }}:
+  - template: templates/dotnet-publish.yml
+    parameters: 
+      runtime: 'win-x64'
+      publishProject: '${{ parameters.publishProject }}'
+      artifactNamePrefix: '${{ parameters.artifactNamePrefix }}'
+      framework: '${{ parameters.framework }}'
+
+# publish a win-x86 project if some is configured
+- ${{ if ne(parameters['publishProject'], '') }}:
+  - template: templates/dotnet-publish.yml
+    parameters: 
+      runtime: 'win-x86'
+      publishProject: '${{ parameters.publishProject }}'
+      artifactNamePrefix: '${{ parameters.artifactNamePrefix }}'
+      framework: '${{ parameters.framework }}'
+
+# if this comes from master branch, create a CI build on the dev feed
+- ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
+  - template: templates/dotnet-pack.yml
+    parameters: 
+      versionSuffix: '$(Build.BuildNumber)'
+      feed: 'dev'
+      solution: '${{ parameters.solution }}'
+
+# if this comes from a release branch, create a CI build on the public feed
+- ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/releases/') }}:
+  - template: templates/dotnet-pack.yml
+    parameters: 
+      versionSuffix: ''
+      feed: 'public'
+      solution: '${{ parameters.solution }}'

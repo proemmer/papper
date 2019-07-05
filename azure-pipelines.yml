@@ -1,0 +1,40 @@
+# ASP.NET Core
+# Build and test ASP.NET Core projects targeting .NET Core.
+# Add steps that run tests, create a NuGet package, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+# specify triggers
+trigger:
+  branches:
+    include:
+    - master
+    - releases/*
+  paths:
+    exclude:
+    - data/*
+    - Samples/*
+    - licenses/*
+    - docfx/*
+
+pr:
+  - master
+  - releases/*
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  pushAsRelease: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/releases/')]
+  runTests: 'False'
+  
+steps:
+- template: eng/run.yml
+  parameters: 
+    solution: './papper/Papper.sln'
+    publishProject: ''
+    artifactNamePrefix: 'papper'
+    framework: 'netstandard2.0'
+    runTests: '$(runTests)'
+    dotnetCoreSdk: '2.2.300'
+    nugetConfig: './ILS/NuGet.Config'

@@ -1,0 +1,13 @@
+
+parameters:
+  framework: ''
+  solution: ''
+  
+steps:
+
+# run tests on test projects
+- task: DotNetCoreCLI@2
+  inputs:
+    command: test
+    arguments: '--configuration $(buildConfiguration) --framework ${{ parameters.framework }} ${{ parameters.solution }} --collect "Code coverage" --no-restore '
+  displayName: 'dotnet test --configuration $(buildConfiguration) --framework ${{ parameters.framework }} ${{ parameters.solution }} --collect "Code coverage"'
