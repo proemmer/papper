@@ -5,8 +5,8 @@
     <AssemblyName>PapperTests</AssemblyName>
     <PackageId>UnitTestSuit</PackageId>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>C:\Projects\Tools\signatures\papper\papper.pfx</AssemblyOriginatorKeyFile>
+    <!--<SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>C:\Projects\Tools\signatures\papper\papper.pfx</AssemblyOriginatorKeyFile>-->
   </PropertyGroup>
 
   <ItemGroup>
