@@ -37,4 +37,5 @@ steps:
     framework: 'netstandard2.0'
     runTests: '$(runTests)'
     dotnetCoreSdk: '2.2.300'
-    nugetConfig: './ILS/NuGet.Config'
+    nugetConfig: './papper/nuget.config'
+    addNugetAuthentication: 'False'

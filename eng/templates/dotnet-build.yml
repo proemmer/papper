@@ -2,15 +2,17 @@
 parameters:
   solution: ''
   nugetConfig: 'nuget.config'
+  addAuthentication: 'True'
   
 steps:
 
-# update credentials
-- task: NuGetCommand@2
-  displayName: 'Authenticate with Azure DevOps NuGet'
-  inputs:
-    command: custom
-    arguments: sources update -Name "dev" -Username "vsts" -Password "$(System.AccessToken)" -StorePasswordInClearText -ConfigFile ${{ parameters.nugetConfig }}
+- ${{ if eq(parameters['addAuthentication'], 'True') }}:
+  # update credentials
+  - task: NuGetCommand@2
+    displayName: 'Authenticate with Azure DevOps NuGet'
+    inputs:
+      command: custom
+      arguments: sources update -Name "dev" -Username "vsts" -Password "$(System.AccessToken)" -StorePasswordInClearText -ConfigFile ${{ parameters.nugetConfig }}
 
 # restore nuget packages for the solution
 - script: dotnet restore --configfile  ${{ parameters.nugetConfig }} ${{ parameters.solution }}
