@@ -17,8 +17,8 @@
     <RepositoryUrl>https://github.com/proemmer/papper.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <IncludeSymbols>true</IncludeSymbols>
-    <SignAssembly>false</SignAssembly>
-    <AssemblyOriginatorKeyFile>C:\Projects\Tools\signatures\papper\papper.pfx</AssemblyOriginatorKeyFile>
+    <!--<SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>C:\Projects\Tools\signatures\papper\papper.pfx</AssemblyOriginatorKeyFile>-->
     <PackageReleaseNotes>* fixed some bugs according to multiple access</PackageReleaseNotes>
   </PropertyGroup>
 
