@@ -15,7 +15,7 @@ namespace Papper.Extensions.Notification
         /// <summary>
         /// Subscribe to changes of variables
         /// </summary>
-        /// <param name="mapper">Reference to plc Datampper</param>
+        /// <param name="mapper">Reference to plc Data mapper</param>
         /// <param name="callback">Callback method</param>
         /// <param name="items">items to watch</param>
         /// <returns></returns>
@@ -25,7 +25,7 @@ namespace Papper.Extensions.Notification
         /// <summary>
         /// Subscribe to changes of variables
         /// </summary>
-        /// <param name="mapper">Reference to plc Datampper</param>
+        /// <param name="mapper">Reference to plc data mapper</param>
         /// <param name="callback">Callback method</param>
         /// <param name="items">items to watch</param>
         /// <returns></returns>
@@ -35,10 +35,10 @@ namespace Papper.Extensions.Notification
         /// <summary>
         /// Subscribe to changes of variables
         /// </summary>
-        /// <param name="mapper">Reference to plc Datampper</param>
+        /// <param name="mapper">Reference to plc data mapper</param>
         /// <param name="callback">Callback method</param>
         /// <param name="items">items to watch</param>
-        /// <param name="changeDetectionStrategy">seup the starategy to detect changes. <see cref="ChangeDetectionStrategy"/>. This setting depends on the access library.</param>
+        /// <param name="changeDetectionStrategy">setup the strategy to detect changes. <see cref="ChangeDetectionStrategy"/>. This setting depends on the access library.</param>
         /// <returns></returns>
         public static Subscription SubscribeDataChanges(this PlcDataMapper mapper, 
                                                         OnChangeEventHandler callback, 
@@ -49,10 +49,10 @@ namespace Papper.Extensions.Notification
         /// <summary>
         /// Subscribe to changes of variables
         /// </summary>
-        /// <param name="mapper">Reference to plc Datampper</param>
+        /// <param name="mapper">Reference to plc data mapper</param>
         /// <param name="callback">Callback method</param>
         /// <param name="items">items to watch</param>
-        /// <param name="changeDetectionStrategy">seup the starategy to detect changes. <see cref="ChangeDetectionStrategy"/>. This setting depends on the access library.</param>
+        /// <param name="changeDetectionStrategy">setup the strategy to detect changes. <see cref="ChangeDetectionStrategy"/>. This setting depends on the access library.</param>
         /// <returns></returns>
         public static Subscription SubscribeDataChanges(this PlcDataMapper mapper,
                                                         OnChangeEventHandler callback,
@@ -77,7 +77,7 @@ namespace Papper.Extensions.Notification
         }
 
         /// <summary>
-        /// Resume the change detetcion
+        /// Resume the change detection
         /// </summary>
         /// <param name="subscription"></param>
         /// <param name="callback"></param>
