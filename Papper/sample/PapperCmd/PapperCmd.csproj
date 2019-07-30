@@ -8,6 +8,8 @@
     <AssemblyName>PapperCmd</AssemblyName>
     <OutputType>Exe</OutputType>
     <PackageId>PapperCmd</PackageId>
+    <IsPackable>false</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
