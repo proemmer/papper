@@ -45,6 +45,7 @@ namespace Papper.Types
             {"DWord", typeof (PlcDWord)},
             {"LWord", typeof (PlcLWord)},
             {"DateTime", typeof (PlcDateTime)},
+            {"Date", typeof (PlcDate)},
             {"LDateTime", typeof (PlcLDateTime)},
             {"Time", typeof (PlcTime)},
             {"LTime", typeof (PlcLTime)},
