@@ -30,8 +30,14 @@ namespace Papper
         {
             if (!_entries.TryGetValue(type, out var mappingEntry))
             {
-                mappingEntry = new MappingEntry(PlcObjectResolver.GetMapping(type.Name, _tree, type, true));
-                _entries.Add(type, mappingEntry);
+                lock (_entries)
+                {
+                    if (!_entries.TryGetValue(type, out mappingEntry))
+                    {
+                        mappingEntry = new MappingEntry(PlcObjectResolver.GetMapping(type.Name, _tree, type, true));
+                        _entries.Add(type, mappingEntry);
+                    }
+                }
             }
             return mappingEntry;
         }
