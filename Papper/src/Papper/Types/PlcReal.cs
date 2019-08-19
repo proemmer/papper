@@ -5,7 +5,7 @@ namespace Papper.Types
 {
     internal class PlcReal : PlcObject
     {
-        // Use share size for this datatype, we will never change the size
+        // Use share size for this data type, we will never change the size
         private static readonly PlcSize _size = new PlcSize { Bytes = 4 };
         public override Type DotNetType => typeof(float);
 

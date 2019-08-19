@@ -1,25 +1,23 @@
 ﻿namespace Papper
 {
     /// <summary>
-    /// This struct represents the result of a write command. It includes the written metadata and 
+    /// This structure represents the result of a write command. It includes the written meta data and 
     /// the <see cref="ExecutionResult"/> of the write operation.
     /// </summary>
     public struct PlcWriteResult
     {
-        private string _address;
-        private ExecutionResult _executionResult;
-        private int _dot;
+        private readonly int _dot;
 
 
         /// <summary>
         /// Full address is composed of mapping and variable
         /// </summary>
-        public string Address => _address;
+        public string Address { get; }
 
         /// <summary>
         /// The result of an Executed action
         /// </summary>
-        public ExecutionResult ActionResult => _executionResult;
+        public ExecutionResult ActionResult { get; }
 
         /// <summary>
         /// mapping part of the address
@@ -36,11 +34,11 @@
         /// Create an instance of a PlcWriteResult
         /// </summary>
         /// <param name="address">The address of a variable. e.g. [Mapping].[Variable]</param>
-        /// <param name="executionResult">The result itselve. <see cref="ExecutionResult"/></param>
+        /// <param name="executionResult">The result itself. <see cref="ExecutionResult"/></param>
         public PlcWriteResult(string address, ExecutionResult executionResult)
         {
-            _address = address;
-            _executionResult = executionResult;
+            Address = address;
+            ActionResult = executionResult;
             _dot = address.IndexOf(".");
         }
 

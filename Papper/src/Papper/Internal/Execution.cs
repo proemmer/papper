@@ -5,7 +5,7 @@ using System.Linq;
 namespace Papper.Internal
 {
     /// <summary>
-    /// Holds the execution operaton
+    /// Holds the execution operation
     /// </summary>
     internal class Execution
     {
@@ -32,7 +32,7 @@ namespace Papper.Internal
             {
                 if(PlcRawData.ReadDataCache.IsEmpty || !PlcRawData.ReadDataCache.Span.SequenceEqual(pack.Data.Span))
                 {
-                    LastChange = DateTime.Now; // We detected a change in this data area -> bindungs have to thes the position by themselves.
+                    LastChange = DateTime.Now; // We detected a change in this data area 
                 }
                 PlcRawData.ReadDataCache = pack.Data;
                 PlcRawData.LastUpdate = DateTime.Now;
@@ -42,7 +42,7 @@ namespace Papper.Internal
         }
 
         /// <summary>
-        /// After a write we can invalidate the data area, so the subscriber reads befor the validation time is over
+        /// After a write we can invalidate the data area, so the subscriber reads before the validation time is over
         /// </summary>
         public void Invalidate()
         {

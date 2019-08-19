@@ -219,7 +219,7 @@ namespace Papper.Types
                 }
                 else if (fully && t != null)
                 {
-                    //Special handlying for object types
+                    //Special handling for object types
                     var list = Array.CreateInstance(t, ArrayLength);
                     var idx = From;
                     var childEnumerator = Childs.OfType<PlcObject>().GetEnumerator();
@@ -391,7 +391,7 @@ namespace Papper.Types
                 if (_indexCache.TryGetValue(idx, out var ret))
                     return ret as PlcObject;
                 ret = ArrayType is PlcStruct
-                    ? new PlcObjectRef(string.Format("[{0}]", idx), ArrayType)
+                    ? new PlcObjectRef($"[{idx}]", ArrayType)
                     : PlcObjectFactory.CreatePlcObjectForArrayIndex(ArrayType, idx, From);
                 _indexCache.Add(idx, ret);
                 return ret as PlcObject;

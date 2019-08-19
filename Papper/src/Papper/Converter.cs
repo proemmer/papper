@@ -10,7 +10,7 @@ namespace Papper
 {
     public static class Converter
     {
-        private const string HexDigits = "0123456789ABCDEF";
+        private const string _hexDigits = "0123456789ABCDEF";
 
         /// <summary>
         /// Reads an Single out of a read-only span of bytes as big endian.
@@ -453,7 +453,7 @@ namespace Papper
 
         private static bool IsHexDigit(char c)
         {
-            return HexDigits.IndexOf(c) >= 0;
+            return _hexDigits.IndexOf(c) >= 0;
         }
 
         /// <summary>

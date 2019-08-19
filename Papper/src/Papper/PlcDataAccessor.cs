@@ -12,9 +12,9 @@ namespace Papper
         }
 
         /// <summary>
-        /// Get a value from the structs binary data
+        /// Get a value from the structure binary data
         /// </summary>
-        /// <typeparam name="TStruct">The struct of the given byte array</typeparam>
+        /// <typeparam name="TStruct">The structure of the given byte array</typeparam>
         /// <typeparam name="TValue">The type of the value to read</typeparam>
         /// <param name="data"></param>
         /// <param name="variable"></param>
@@ -23,7 +23,7 @@ namespace Papper
             => GetValue<TValue>(typeof(TStruct), variable, data);
 
         /// <summary>
-        /// Get a value from the structs binary data
+        /// Get a value from the structure binary data
         /// </summary>
         /// <typeparam name="TValue"></typeparam>
         /// <param name="type"></param>
@@ -39,9 +39,9 @@ namespace Papper
 
 
         /// <summary>
-        /// Set a value to the structs binary data
+        /// Set a value to the structure binary data
         /// </summary>
-        /// <typeparam name="TStruct">The struct of the given byte array</typeparam>
+        /// <typeparam name="TStruct">The structure of the given byte array</typeparam>
         /// <typeparam name="TValue">The type of the value to write</typeparam>
         /// <param name="variable"></param>
         /// <param name="data"></param>
@@ -51,7 +51,7 @@ namespace Papper
             => SetValue(typeof(TStruct), variable, value, data);
 
         /// <summary>
-        /// Set a value to the structs binary data
+        /// Set a value to the structure binary data
         /// </summary>
         /// <typeparam name="TValue"></typeparam>
         /// <param name="type"></param>

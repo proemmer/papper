@@ -44,7 +44,7 @@ namespace Papper
         /// Create a couple of <see cref="PlcReadReference"/> by a given variable root, and some sub variables of the root.
         /// This method can used if you will read more than one variable of the same data block.
         /// </summary>
-        /// <param name="root">Rootpart of a variable</param>
+        /// <param name="root">Root part of a variable</param>
         /// <param name="variables">variables</param>
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="PlcReadReference"/></returns>
         public static IEnumerable<PlcReadReference> FromRoot(string root, params string[] variables) => FromRoot(root, variables as IEnumerable<string>);
@@ -53,7 +53,7 @@ namespace Papper
         /// Create a couple of <see cref="PlcReadReference"/> by a given variable root, and some sub variables of the root.
         /// This method can used if you will read more than one variable of the same data block.
         /// </summary>
-        /// <param name="root">Rootpart of a variable</param>
+        /// <param name="root">Root part of a variable</param>
         /// <param name="variables">variables</param>
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="PlcReadReference"/></returns>
         public static IEnumerable<PlcReadReference> FromRoot(string root, IEnumerable<string> variables)

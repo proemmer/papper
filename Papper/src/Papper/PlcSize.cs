@@ -16,7 +16,7 @@
         public int Bits{ get; internal set; }
 
         /// <summary>
-        /// operator to add plcsizes
+        /// operator to add plc sizes
         /// </summary>
         /// <param name="a"></param>
         /// <param name="b"></param>

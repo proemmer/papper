@@ -3,7 +3,7 @@
 namespace Papper
 {
     /// <summary>
-    /// This struct represents the result of a read command. It includes the read metadata and 
+    /// This structure represents the result of a read command. It includes the read meta data and 
     /// the <see cref="ExecutionResult"/> of the read operation.
     /// </summary>
     public struct PlcReadResult
@@ -41,7 +41,7 @@ namespace Papper
         /// </summary>
         /// <param name="address">The address of a variable. e.g. [Mapping].[Variable]</param>
         /// <param name="value">The read value.</param>
-        /// <param name="executionResult">The result itselve. <see cref="ExecutionResult"/></param>
+        /// <param name="executionResult">The result itself. <see cref="ExecutionResult"/></param>
         public PlcReadResult(string address, object value, ExecutionResult executionResult)
         {
             Address = address;
@@ -50,16 +50,13 @@ namespace Papper
             _dot = address.IndexOf(".");
         }
 
-        
+
         /// <summary>
-        /// Determine if this reasul is part of the given mapping
+        /// Determine if this result is part of the given mapping
         /// </summary>
         /// <param name="mapping">mapping to test</param>
         /// <returns></returns>
-        public bool IsPartOfMapping(string mapping)
-        {
-            return mapping.AsSpan().SequenceEqual(Address.AsSpan().Slice(0, Address.IndexOf(".")));
-        }
+        public bool IsPartOfMapping(string mapping) => mapping.AsSpan().SequenceEqual(Address.AsSpan().Slice(0, Address.IndexOf(".")));
 
     }
 }

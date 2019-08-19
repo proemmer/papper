@@ -6,10 +6,7 @@ namespace Papper
     {
         private readonly MappingEntryProvider _mappingEntryProvider;
 
-        public PlcDataMapperSerializer(MappingEntryProvider mappingEntryProvider = null)
-        {
-            _mappingEntryProvider = mappingEntryProvider ?? new MappingEntryProvider();
-        }
+        public PlcDataMapperSerializer(MappingEntryProvider mappingEntryProvider = null) => _mappingEntryProvider = mappingEntryProvider ?? new MappingEntryProvider();
 
 
         /// <summary>

@@ -5,7 +5,7 @@ namespace Papper.Types
 {
     internal class PlcDateTime : PlcObject
     {
-        // Use share size for this datatype, we will never change the size
+        // Use share size for this data type, we will never change the size
         private static readonly PlcSize _size = new PlcSize { Bytes = 8 };
         private static readonly DateTime _epochTime = new DateTime(1900, 01, 01, 00, 00, 00);
         public override Type DotNetType => typeof(DateTime);
@@ -20,47 +20,47 @@ namespace Papper.Types
                 return _epochTime;
 
             int bt = data[plcObjectBinding.Offset];
-            //BCD Umwandlung
+            //BCD conversion
             bt = (((bt >> 4)) * 10) + ((bt & 0x0f));
-            var jahr = bt < 90 ? 2000 : 1900;
-            jahr += bt;
+            var year = bt < 90 ? 2000 : 1900;
+            year += bt;
 
-            //Monat
+            //month
             bt = data[plcObjectBinding.Offset + 1];
-            var monat = (((bt >> 4)) * 10) + ((bt & 0x0f));
+            var month = (((bt >> 4)) * 10) + ((bt & 0x0f));
 
-            //Tag
+            //day
             bt = data[plcObjectBinding.Offset + 2];
-            var tag = (((bt >> 4)) * 10) + ((bt & 0x0f));
+            var day = (((bt >> 4)) * 10) + ((bt & 0x0f));
 
-            //Stunde
+            //hour
             bt = data[plcObjectBinding.Offset + 3];
-            var stunde = (((bt >> 4)) * 10) + ((bt & 0x0f));
+            var hour = (((bt >> 4)) * 10) + ((bt & 0x0f));
 
-            //Minute
+            //minute
             bt = data[plcObjectBinding.Offset + 4];
             var minute = (((bt >> 4)) * 10) + ((bt & 0x0f));
 
-            //Sekunde
+            //sec
             bt = data[plcObjectBinding.Offset + 5];
-            var sekunde = (((bt >> 4)) * 10) + ((bt & 0x0f));
+            var sec = (((bt >> 4)) * 10) + ((bt & 0x0f));
 
-            //Milisekunden
+            //millisecond
             //Byte 6 BCD + MSB (Byte 7)
             bt = data[plcObjectBinding.Offset + 6];
             int bt1 = data[plcObjectBinding.Offset + 7];
-            var mili = (((bt >> 4)) * 10) + ((bt & 0x0f));
-            mili = mili * 10 + (bt1 >> 4);
+            var milli = (((bt >> 4)) * 10) + ((bt & 0x0f));
+            milli = milli * 10 + (bt1 >> 4);
 
-            //Wochentag
+            //weekday
             //LSB (Byte 7) 1=Sunday
             //bt = b[pos + 7];
-            //wochentag = (bt1 & 0x0f); 
-            if (jahr > 0 && monat > 0 && monat <= 12 && tag > 0 && stunde >= 0 && stunde <= 24 && minute >= 0 && minute < 60 && sekunde >= 0 && sekunde < 60)
+            //weekday = (bt1 & 0x0f); 
+            if (year > 0 && month > 0 && month <= 12 && day > 0 && hour >= 0 && hour <= 24 && minute >= 0 && minute < 60 && sec >= 0 && sec < 60)
             {
                 try
                 {
-                    return new DateTime(jahr, monat, tag, stunde, minute, sekunde, mili, DateTimeKind.Local);
+                    return new DateTime(year, month, day, hour, minute, sec, milli, DateTimeKind.Local);
                 }
                 catch (Exception) { }
             }

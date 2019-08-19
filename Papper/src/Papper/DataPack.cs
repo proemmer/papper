@@ -21,9 +21,6 @@ namespace Papper
             return this;
         }
 
-        public override string ToString()
-        {
-            return $"{Selector}.{Offset}.{Length}#{BitMask}";
-        }
+        public override string ToString() => $"{Selector}.{Offset}.{Length}#{BitMask}";
     }
 }

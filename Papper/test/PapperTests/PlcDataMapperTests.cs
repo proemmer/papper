@@ -37,11 +37,20 @@ namespace DataTypeTests
             _papper.AddMapping(typeof(PrimitiveValuesMapping));
             _papper.AddMapping(typeof(DB_MotionHMI));
 
-            var vars = _papper.GetVariablesOf(nameof(DB_Safety));
-            Assert.Equal(4596, vars.Count());
+
         }
 
-
+        [Theory]
+        [InlineData(nameof(DB_Safety), 4596)]
+        [InlineData("ARRAY_TEST_MAPPING_1", 105030)]
+        [InlineData("STRING_ARRAY_TEST_MAPPING", 21)]
+        [InlineData(nameof(PrimitiveValuesMapping), 6)]
+        [InlineData(nameof(DB_MotionHMI), 725)]
+        public void TestVariables(string mapping, int expectedVariables)
+        {
+            var vars = _papper.GetVariablesOf(mapping);
+            Assert.Equal(expectedVariables, vars.Count());
+        }
 
         [Fact]
         public void BitAccessTest()

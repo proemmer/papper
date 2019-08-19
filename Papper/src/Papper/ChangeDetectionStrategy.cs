@@ -3,7 +3,7 @@
     public enum ChangeDetectionStrategy
     {
         /// <summary>
-        /// Papper handle changedetection by iteself.
+        /// Papper handle change detection by itself.
         /// The library will be used to poll th items.
         /// </summary>
         Polling,
