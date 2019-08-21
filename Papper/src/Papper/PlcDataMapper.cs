@@ -451,7 +451,7 @@ namespace Papper
                         {
                             if (!EntriesByName.TryGetValue(mapping, out entry))
                             {
-                                entry = new RawEntry(this, mapping, ReadDataBlockSize, 0);
+                                entry = new RawEntry(this, mapping, 0);
                                 using (upgradeableGuard.UpgradeToWriterLock())
                                 {
                                     EntriesByName.Add(mapping, entry);
@@ -475,11 +475,11 @@ namespace Papper
                     {
                         if (mappingEntry.Mapping == mapping && mappingEntry.Type == type)
                             continue; // mapping already exists
-                        return false; // mapping is invlaid, because it exists for a nother type
+                        return false; // mapping is invalid, because it exists for an other type
                     }
                     using (upgradeableGuard.UpgradeToWriterLock())
                     {
-                        EntriesByName.Add(mapping.Name, new MappingEntry(this, mapping, type, _tree, ReadDataBlockSize, mapping.ObservationRate));
+                        EntriesByName.Add(mapping.Name, new MappingEntry(this, mapping, type, _tree, mapping.ObservationRate));
                     }
                 }
             }
