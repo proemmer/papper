@@ -12,16 +12,23 @@ namespace Papper.Internal
         private readonly List<string> _nodes = new List<string>();
         private int[] _arrayIndizes;
 
-        public static PlcMetaDataTreePath CreateAbsolutePath(params string[] nodeNames)
-        {
-            return CreatePath((new List<string> { Separator }).Concat(nodeNames).ToArray());
-        }
+        public static PlcMetaDataTreePath CreateAbsolutePath(params string[] nodeNames) => CreatePath((new List<string> { Separator }).Concat(nodeNames));
+
+        public static PlcMetaDataTreePath CreateAbsolutePath(IEnumerable<string> nodeNames) => CreatePath((new List<string> { Separator }).Concat(nodeNames));
 
         public static PlcMetaDataTreePath CreatePath(params string[] nodeNames)
+            => CreatePath(nodeNames as IEnumerable<string>);
+
+        public static PlcMetaDataTreePath CreatePath(IEnumerable<string> nodeNames)
         {
-            if (nodeNames.Skip(1).Any(node => node.IndexOf(Separator, StringComparison.Ordinal) >= 0)
-                || (nodeNames[0].Length > 1 && nodeNames[0].IndexOf(Separator, StringComparison.Ordinal) > 0))
+            var first = nodeNames.FirstOrDefault();
+            if (first == null ||
+                nodeNames.Skip(1).Any(node => node.IndexOf(Separator, StringComparison.Ordinal) >= 0) || 
+                (first.Length > 1 && first.IndexOf(Separator, StringComparison.Ordinal) > 0))
+            {
                 ExceptionThrowHelper.ThrowInvalidNodePathCollectionException();
+            }
+
             return new PlcMetaDataTreePath(nodeNames);
         }
 
@@ -65,7 +72,7 @@ namespace Papper.Internal
 
         public IEnumerable<string> Nodes => _nodes;
 
-        public bool IsPathToRoot => _nodes.Count == 1 && _nodes[0] == Separator; 
+        public bool IsPathToRoot => _nodes.Count == 1 && _nodes[0] == Separator;
 
         public bool IsPathToCurrent => !_nodes.Any();
 
@@ -98,17 +105,20 @@ namespace Papper.Internal
                 if (node != null)
                 {
                     var v = node.Split(new[] { "[", "]" }, StringSplitOptions.RemoveEmptyEntries);
-                    _arrayIndizes = !node.StartsWith("[") ? v.Skip(1).Select(Int32.Parse).ToArray() : v.Select(Int32.Parse).ToArray();
+                    _arrayIndizes = !node.StartsWith("[") ? v.Skip(1).Select(int.Parse).ToArray() : v.Select(int.Parse).ToArray();
                 }
                 else
+                {
                     _arrayIndizes = new int[0];
+                }
+
                 return _arrayIndizes;
             }
         }
 
         public bool IsAbsolute => !IsRelative;
 
-        public bool IsRelative =>  !_nodes.Any() || _nodes[0] != Separator; 
+        public bool IsRelative => !_nodes.Any() || _nodes[0] != Separator;
 
         public ITreePath StepDown()
         {
