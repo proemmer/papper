@@ -12,17 +12,27 @@ namespace Papper.Internal
         private readonly List<string> _nodes = new List<string>();
         private int[] _arrayIndizes;
 
-        public static PlcMetaDataTreePath CreateAbsolutePath(params string[] nodeNames)
+        public static PlcMetaDataTreePath CreateAbsolutePath(string nodeName)
         {
-            return CreatePath((new List<string> { Separator }).Concat(nodeNames).ToArray());
+            if (nodeName.IndexOf(Separator, StringComparison.Ordinal) >= 0)
+            {
+                ExceptionThrowHelper.ThrowInvalidNodePathCollectionException();
+            }
+            return new PlcMetaDataTreePath(nodeName, true);
         }
 
+        public static PlcMetaDataTreePath CreateAbsolutePath(IEnumerable<string> nodeNames) => CreatePath(nodeNames, true);
+
         public static PlcMetaDataTreePath CreatePath(params string[] nodeNames)
+            => CreatePath(nodeNames as IEnumerable<string>);
+
+        public static PlcMetaDataTreePath CreatePath(IEnumerable<string> nodeNames, bool isAbsolute = false)
         {
-            if (nodeNames.Skip(1).Any(node => node.IndexOf(Separator, StringComparison.Ordinal) >= 0)
-                || (nodeNames[0].Length > 1 && nodeNames[0].IndexOf(Separator, StringComparison.Ordinal) > 0))
+            if (nodeNames.Any(node => node.IndexOf(Separator, StringComparison.Ordinal) >= 0))
+            {
                 ExceptionThrowHelper.ThrowInvalidNodePathCollectionException();
-            return new PlcMetaDataTreePath(nodeNames);
+            }
+            return new PlcMetaDataTreePath(nodeNames, isAbsolute);
         }
 
         public static PlcMetaDataTreePath CreateNodePath(ITreePath path, PlcObject plcObject) => path.Extend(plcObject.Name) as PlcMetaDataTreePath;
@@ -41,7 +51,18 @@ namespace Papper.Internal
                 _nodes.AddRange(path.Split(_splitSeparator, StringSplitOptions.None));
         }
 
-        private PlcMetaDataTreePath(IEnumerable<string> nodes) => _nodes.AddRange(nodes);
+
+        private PlcMetaDataTreePath(IEnumerable<string> nodes, bool isAbsolute = false)
+        {
+            if (isAbsolute) _nodes.Add(Separator);
+            _nodes.AddRange(nodes);
+        }
+
+        private PlcMetaDataTreePath(string node, bool isAbsolute = false)
+        {
+            if (isAbsolute) _nodes.Add(Separator);
+            _nodes.Add(node);
+        }
 
         private static string Normalize(string path)
         {
@@ -59,13 +80,13 @@ namespace Papper.Internal
             {
                 return IsRelative
                     ? string.Join(Separator, _nodes)
-                    : _nodes[0] + string.Join(Separator, _nodes.Skip(1).ToArray());
+                    : _nodes[0] + string.Join(Separator, _nodes.Skip(1));
             }
         }
 
         public IEnumerable<string> Nodes => _nodes;
 
-        public bool IsPathToRoot => _nodes.Count == 1 && _nodes[0] == Separator; 
+        public bool IsPathToRoot => _nodes.Count == 1 && _nodes[0] == Separator;
 
         public bool IsPathToCurrent => !_nodes.Any();
 
@@ -98,17 +119,20 @@ namespace Papper.Internal
                 if (node != null)
                 {
                     var v = node.Split(new[] { "[", "]" }, StringSplitOptions.RemoveEmptyEntries);
-                    _arrayIndizes = !node.StartsWith("[") ? v.Skip(1).Select(Int32.Parse).ToArray() : v.Select(Int32.Parse).ToArray();
+                    _arrayIndizes = !node.StartsWith("[") ? v.Skip(1).Select(int.Parse).ToArray() : v.Select(int.Parse).ToArray();
                 }
                 else
+                {
                     _arrayIndizes = new int[0];
+                }
+
                 return _arrayIndizes;
             }
         }
 
         public bool IsAbsolute => !IsRelative;
 
-        public bool IsRelative =>  !_nodes.Any() || _nodes[0] != Separator; 
+        public bool IsRelative => !_nodes.Any() || _nodes[0] != Separator;
 
         public ITreePath StepDown()
         {
@@ -118,8 +142,9 @@ namespace Papper.Internal
 
         public ITreePath Extend(string child)
         {
-            var extendedNodes = new List<string>(_nodes) { child };
-            return new PlcMetaDataTreePath(extendedNodes);
+            var result = new PlcMetaDataTreePath(_nodes);
+            result._nodes.Add(child);
+            return result;
         }
     }
 }

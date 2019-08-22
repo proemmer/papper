@@ -8,8 +8,8 @@ namespace Papper.Internal
     internal class RawEntry : Entry
     {
 
-        public RawEntry(PlcDataMapper mapper, string from, int readDataBlockSize, int validationTimeInMs)
-            : base(mapper, new PlcObjectRef(from, null) { Selector = @from }, readDataBlockSize, validationTimeInMs)
+        public RawEntry(PlcDataMapper mapper, string from, int validationTimeInMs)
+            : base(mapper, new PlcObjectRef(from, null) { Selector = @from }, validationTimeInMs)
         {
         }
 

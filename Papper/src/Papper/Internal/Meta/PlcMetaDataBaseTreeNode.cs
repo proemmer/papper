@@ -58,7 +58,7 @@ namespace Papper.Internal
                 nodeNames.Insert(0, upper.Name);
                 upper = upper.Parent;
             } while (upper != null);
-            _savedPath = PlcMetaDataTreePath.CreatePath(nodeNames.ToArray());
+            _savedPath = PlcMetaDataTreePath.CreatePath(nodeNames);
         }
     }
 }

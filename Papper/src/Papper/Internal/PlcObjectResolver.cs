@@ -286,7 +286,7 @@ namespace Papper.Internal
                             else
                             {
                                 var internalPath = new List<string>(path.Take(path.Count - 1)) { child.Name };
-                                list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalPath.Skip(1).ToArray()).Path.Substring(1));
+                                list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalPath.Skip(1)).Path.Substring(1));
                             }
                         }
                     }
@@ -299,7 +299,7 @@ namespace Papper.Internal
                 }
                 else
                 {
-                    list.Add(PlcMetaDataTreePath.CreateAbsolutePath(path.Skip(1).ToArray()).Path.Substring(1));
+                    list.Add(PlcMetaDataTreePath.CreateAbsolutePath(path.Skip(1)).Path.Substring(1));
                 }
             }
             return list;
@@ -317,7 +317,7 @@ namespace Papper.Internal
             foreach (var part in name.Split('.'))
                 nodePathStack.Push(part);
 
-            var path = PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse().ToArray());
+            var path = PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse());
             var offset = 0;
             if (!tree.TryGet(path, ref offset, out var obj, true))
             {
@@ -332,14 +332,14 @@ namespace Papper.Internal
                         Offset = { Bytes = mapping.Offset },
                         Selector = mapping.Selector
                     };
-                    PlcObject.AddPlcObjectToTree(plcObj, tree, PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse().ToArray()));
+                    PlcObject.AddPlcObjectToTree(plcObj, tree, PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse()));
                     obj = plcObj;
                 }
                 else if (allowAddingWithoutMappingAttribute)
                 {
                     nodePathStack.Pop();
                     var plcObj = new PlcObjectRef(name, GetMetaData(tree, t));
-                    PlcObject.AddPlcObjectToTree(plcObj, tree, PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse().ToArray()));
+                    PlcObject.AddPlcObjectToTree(plcObj, tree, PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse()));
                     obj = plcObj;
                 }
                 else
@@ -373,7 +373,7 @@ namespace Papper.Internal
             nodePathStack.Push(RootNodeName);
             nodePathStack.Push(MetaDataNodeName);
             nodePathStack.Push(name);
-            var path = PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse().ToArray());
+            var path = PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse());
             var offset = 0;
             if (!tree.TryGet(path, ref offset, out var obj))
             {
@@ -381,7 +381,7 @@ namespace Papper.Internal
                 var bitOffset = 0;
                 nodePathStack.Pop();
                 var parent = new PlcStruct(name, t);
-                PlcObject.AddPlcObjectToTree(parent, tree, PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse().ToArray()));
+                PlcObject.AddPlcObjectToTree(parent, tree, PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse()));
                 nodePathStack.Push(parent.Name);
                 PlcObject pred = null;
                 DebugOutPut("{0}{{", name);
@@ -417,7 +417,7 @@ namespace Papper.Internal
             plcObject.Offset.Bytes = byteOffset;
             plcObject.Offset.Bits = bitOffset;
             DebugOutPut("{0}: Offset:{1,3}.{2}    Size={3}.{4}", plcObject.Name.PadRight(20), byteOffset, bitOffset, plcObject.Size.Bytes, plcObject.Size.Bits);
-            PlcObject.AddPlcObjectToTree(plcObject, tree, PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse().ToArray()));
+            PlcObject.AddPlcObjectToTree(plcObject, tree, PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse()));
             byteOffset += plcObject.Size.Bytes;
             bitOffset += plcObject.Size.Bits;
         }

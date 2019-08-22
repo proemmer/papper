@@ -11,8 +11,8 @@ namespace Papper.Internal
         public MappingAttribute Mapping { get; private set; }
         public Type Type { get; private set; }
 
-        public MappingEntry(PlcDataMapper mapper, MappingAttribute mapping, Type type, PlcMetaDataTree tree, int readDataBlockSize, int validationTimeInMs)
-            : base(mapper, PlcObjectResolver.GetMapping(mapping?.Name, tree, type), readDataBlockSize, validationTimeInMs)
+        public MappingEntry(PlcDataMapper mapper, MappingAttribute mapping, Type type, PlcMetaDataTree tree, int validationTimeInMs)
+            : base(mapper, PlcObjectResolver.GetMapping(mapping?.Name, tree, type), validationTimeInMs)
         {
             Mapping = mapping ?? ExceptionThrowHelper.ThrowArgumentNullException<MappingAttribute>(nameof(mapping));
             Type = type ?? ExceptionThrowHelper.ThrowArgumentNullException<Type>(nameof(type));

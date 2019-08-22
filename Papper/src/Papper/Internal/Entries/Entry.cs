@@ -13,8 +13,8 @@ namespace Papper.Internal
         private readonly PlcDataMapper _mapper;
 
 
-        public string Name { get; private set; }
-        public int ReadDataBlockSize { get; private set; }
+        public string Name => PlcObject.Name;
+        public int ReadDataBlockSize => _mapper.ReadDataBlockSize;
         public int ValidationTimeMs { get; set; }
         public PlcObject PlcObject { get; private set; }
         public Dictionary<string, Tuple<int, PlcObject>> Variables { get; private set; }
@@ -29,15 +29,12 @@ namespace Papper.Internal
         }
 
   
-        public Entry(PlcDataMapper mapper, PlcObject plcObject, int readDataBlockSize, int validationTimeInMs)
+        public Entry(PlcDataMapper mapper, PlcObject plcObject, int validationTimeInMs)
         {
             _mapper = mapper ?? ExceptionThrowHelper.ThrowArgumentNullException<PlcDataMapper>(nameof(mapper));
             PlcObject = plcObject ?? ExceptionThrowHelper.ThrowArgumentNullException<PlcObject>(nameof(plcObject));
-            ReadDataBlockSize = readDataBlockSize;
             ValidationTimeMs = validationTimeInMs;
             Variables = new Dictionary<string, Tuple<int, PlcObject>>();
-            
-            Name = plcObject.Name;
         }
 
         ~Entry()
