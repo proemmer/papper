@@ -79,10 +79,10 @@ namespace Papper.Internal
                 pred.AddReference(item.Key, offset, item.Value.Item2);
 
 
-                if (item.Value.Item2 is PlcArray array)
-                {
-                    HandleArray(offset, array, item, pred);
-                }
+                //if (item.Value.Item2 is PlcArray array)
+                //{
+                //    HandleArray(offset, array, item, pred);
+                //}
             }
 
             return rawBlocks;

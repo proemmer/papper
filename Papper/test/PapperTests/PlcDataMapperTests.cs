@@ -36,6 +36,7 @@ namespace DataTypeTests
             _papper.AddMapping(typeof(StringArrayTestMapping));
             _papper.AddMapping(typeof(PrimitiveValuesMapping));
             _papper.AddMapping(typeof(DB_MotionHMI));
+            _papper.AddMapping(typeof(DB_BST1_ChargenRV));
 
 
         }
@@ -248,7 +249,6 @@ namespace DataTypeTests
 
             // Assert.True(AreDataEqual(ToExpando(header), result2.Values.FirstOrDefault()));
         }
-
 
 
         [Fact]
@@ -554,6 +554,15 @@ namespace DataTypeTests
             var writeResults = papper.WriteAsync(PlcWriteReference.FromAddress("DB2000.W2", (UInt16)3)).GetAwaiter().GetResult();
 
         }
+
+        [Fact]
+        public void PerformReadStruct()
+        {
+            var address = _papper.GetAddressOf(PlcReadReference.FromAddress("DB_BST1_ChargenRV")).RawAddress<byte>();
+            var readResults = _papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult();
+
+        }
+
 
 
         [Fact]
