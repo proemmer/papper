@@ -43,7 +43,15 @@ namespace Papper
         }
 
 
-        public string RawAddress<T>() => $"{Selector}.{GetTypeSign<T>()}{Offset.Bytes},{Size.Bytes}";
+        public string RawAddress<T>()
+        {
+            var sign = GetTypeSign<T>();
+            if (sign == "X")
+            {
+                return $"{Selector}.{sign}{Offset.Bytes}.{Offset.Bits},{Size.Bytes}";
+            }
+            return $"{Selector}.{sign}{Offset.Bytes},{Size.Bytes}";
+        }
 
         private string GetTypeSign<T>()
         {

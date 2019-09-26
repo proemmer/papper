@@ -151,7 +151,7 @@ namespace Papper.Types
                 {
                     case PlcBool plcbool:
                         {
-                            plcbool.AssigneOffsetFrom(((int)arrayIndex - @from) * obj.Size.Bits);
+                            plcbool.AssigneOffsetFrom((((int)arrayIndex - @from) * obj.Size.Bits) + obj.Offset.Bits);
                         }
                         break;
                     case ISupportStringLengthAttribute plcString:

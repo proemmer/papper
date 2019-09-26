@@ -296,28 +296,39 @@ namespace PapperCmd
             var result = reads.ToList();
             foreach (var item in result)
             {
-                if(item.BitMask == 0)
+                if(!item.HasBitMask)
                 {
                     Console.WriteLine($"OnWrite: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
                     item.Data.Slice(0, item.Length).CopyTo(GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length));
+                    item.ExecutionResult = ExecutionResult.Ok;
                 }
                 else
                 {
+                    var lastItem = item.Data.Length - 1;
                     for (int j = 0; j < item.Data.Length; j++)
                     {
                         var bItem = item.Data.Span[j];
-                        var bm = item.BitMask;
-                        for (var i = 0; i < 8; i++)
+                        
+
+                        if (j > 0 || j < lastItem)
                         {
-                            var bit = bm.GetBit(i);
-                            if (bit)
+                            GetPlcEntry(item.Selector, item.Offset + 1).Data.Span[item.Offset] = item.Data.Span[j];
+                        }
+                        else
+                        {
+                            var bm = j == 0 ? item.BitMaskBegin : (j == lastItem) ? item.BitMaskEnd : (byte)0;
+                            for (var i = 0; i < 8; i++)
                             {
-                                var b = GetPlcEntry(item.Selector, item.Offset + 1).Data.Span[item.Offset];
-                                GetPlcEntry(item.Selector, item.Offset + 1).Data.Span[item.Offset] = b.SetBit(i, bItem.GetBit(i));
-                                item.ExecutionResult = ExecutionResult.Ok;
-                                bm = bm.SetBit(i, false);
-                                if (bm == 0)
-                                    break;
+                                var bit = bm.GetBit(i);
+                                if (bit)
+                                {
+                                    var b = GetPlcEntry(item.Selector, item.Offset + 1).Data.Span[item.Offset];
+                                    GetPlcEntry(item.Selector, item.Offset + 1).Data.Span[item.Offset] = b.SetBit(i, bItem.GetBit(i));
+                                    item.ExecutionResult = ExecutionResult.Ok;
+                                    bm = bm.SetBit(i, false);
+                                    if (bm == 0)
+                                        break;
+                                }
                             }
                         }
                     }

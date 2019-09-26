@@ -361,6 +361,7 @@ namespace Papper.Types
         {
             var isBoolean = _arrayType is PlcBool;
             Size.Bits = isBoolean ? ArrayLength * _arrayType.Size.Bits : 0;
+            Offset.Bits = _arrayType.Offset.Bits;
             if (_arrayType is ISupportStringLengthAttribute && _arrayType.Size.Bytes % 2 != 0)
             {
                 var result = 0;
@@ -379,8 +380,9 @@ namespace Papper.Types
 
             if (isBoolean)
             {
-                Size.Bytes = Size.Bits / 8;
-                Size.Bits = Size.Bits - Size.Bytes * 8;
+                var bits = (_arrayType.Offset.Bits + Size.Bits);
+                Size.Bytes = bits / 8;
+                Size.Bits = bits - Size.Bytes * 8;
             }
         }
 
