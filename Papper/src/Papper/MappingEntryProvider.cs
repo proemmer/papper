@@ -2,6 +2,7 @@
 using Papper.Types;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Papper
 {
@@ -26,7 +27,7 @@ namespace Papper
             }
         }
 
-        internal MappingEntry GetMappingEntryForType(Type type)
+        internal MappingEntry GetMappingEntryForType(Type type, object data = null)
         {
             if (!_entries.TryGetValue(type, out var mappingEntry))
             {
@@ -34,7 +35,8 @@ namespace Papper
                 {
                     if (!_entries.TryGetValue(type, out mappingEntry))
                     {
-                        mappingEntry = new MappingEntry(PlcObjectResolver.GetMapping(type.Name, _tree, type, true));
+                        var plcObject = PlcObjectFactory.CreatePlcObjectFromType(type, data) ?? PlcObjectResolver.GetMapping(type.Name, _tree, type, true);
+                        mappingEntry = new MappingEntry(plcObject);
                         _entries.Add(type, mappingEntry);
                     }
                 }

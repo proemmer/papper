@@ -58,6 +58,38 @@ namespace Papper.Types
             {"S7Counter", typeof (PlcS7Counter)},
         };
 
+        public static PlcObject CreatePlcObjectFromType(Type t, object value)
+        {
+            if (TypeMatch.TryGetValue(t, out var plcType))
+            {
+                var plcObject = Activator.CreateInstance(plcType, t.Name) as PlcObject;
+
+                if (plcObject is ISupportStringLengthAttribute s)
+                {
+                    if(value is string str)
+                    {
+                        s.StringLength = str.Length;
+                    }
+                    else if (value is Array a)
+                    {
+                        s.StringLength = a.Length - 2;
+                    }
+                }
+                else if (plcObject is PlcArray)
+                {
+                    if (value is Array a)
+                    {
+                        var obj = (plcObject as PlcArray);
+                        obj.From = 0;
+                        obj.To = a.Length - 1;
+                        obj.Dimension = 1;
+                    }
+                }
+                return plcObject;
+            }
+            return null;
+        }
+
         public static PlcObject CreatePlcObject(PropertyInfo pi, int? arrayIndex = null)
         {
             var plcType = GetTypeFromAttribute(pi);

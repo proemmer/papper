@@ -1,6 +1,7 @@
 ﻿using Papper;
 using PMSComponentHost.VTagStorerLoader;
 using System;
+using System.Globalization;
 using System.Text;
 using UnitTestSuit.Mappings;
 using Xunit;
@@ -57,6 +58,30 @@ namespace DataTypeTests
 
 
         }
+
+        [Theory]
+        [InlineData(typeof(int), 0, new byte[] { 0x00, 0x00, 0x00, 0x00 })]
+        [InlineData(typeof(int), 3, new byte[] { 0x00, 0x00, 0x00, 0x03 })]
+        [InlineData(typeof(short), 6, new byte[] { 0x00, 0x06 })]
+        [InlineData(typeof(ushort), 2, new byte[] { 0x00, 0x02 })]
+        [InlineData(typeof(float), (float)0.2, new byte[] { 0x3e, 0x4c, 0xcc, 0xcd })]
+        [InlineData(typeof(string), "Test", new byte[] { 0x04, 0x04, 0x54, 0x65, 0x73, 0x74 })]
+        [InlineData(typeof(char), 'X', new byte[] { 0x58 })]
+        [InlineData(typeof(DateTime), "Mon 16 Jun 8:30 AM 2008", new byte[] { 0x08, 0x06, 0x16, 0x08, 0x30, 0x00, 0x00, 0x01 })]
+
+        public void SerializePlcType(Type t, object value, byte[] expected)
+        {
+            var s = new PlcDataMapperSerializer();
+            if(t == typeof(DateTime) && value is string str)
+            {
+                value = DateTime.ParseExact(str, "ddd dd MMM h:mm tt yyyy", CultureInfo.InvariantCulture);
+            }
+
+            var data = s.Serialize(t, value);
+
+            Assert.Equal(expected, data);
+        }
+
 
 
         [Fact]
