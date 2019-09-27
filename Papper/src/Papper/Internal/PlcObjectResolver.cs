@@ -56,7 +56,7 @@ namespace Papper.Internal
 
                 if (plcObject != null)
                 {
-                    var parts = value.Substring(dataType.Length).Split(new[] { "_", "," }, StringSplitOptions.RemoveEmptyEntries);
+                    var parts = value.Substring(dataType.Length).Split(new[] { "_", ".", "," }, StringSplitOptions.RemoveEmptyEntries);
                     plcObject.Selector = plcObj.Name;
                     if (parts.Length >= 2)
                     {
@@ -149,7 +149,7 @@ namespace Papper.Internal
                     break;
                 case "LW":
                 case "LWORD":
-                    plcObject = new PlcWord(value);
+                    plcObject = new PlcLWord(value);
                     break;
                 case "R":
                 case "REAL":
@@ -237,7 +237,7 @@ namespace Papper.Internal
                     catch (Exception)
                     {
                         // This could throw an exception if another thread has already added the object.
-                        // but we could ignore this, becuase this would be the same object
+                        // but we could ignore this, because this would be the same object
                     }
                     updated = true;
                 }

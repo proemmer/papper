@@ -395,7 +395,7 @@ namespace DataTypeTests
         public void TestDataChange()
         {
             var sleepTime = 4000;
-            var mapping = "DB_Safety";
+            var mapping = "DB_SafetyDataChange";
             var intiState = true;
             var originData = new Dictionary<string, object> {
                     { "SafeMotion.Slots[15].SlotId", (byte)0},
@@ -479,7 +479,7 @@ namespace DataTypeTests
         {
             var writeData = new Dictionary<string, object> {
                     { "W88", (UInt16)3},
-                    { "X99_0", true  },
+                    { "X99.0", true  },
                 };
             var items = writeData.Keys.Select(variable => PlcWatchReference.FromAddress($"DB15.{variable}", 100)).ToArray();
 
@@ -490,7 +490,7 @@ namespace DataTypeTests
                 Thread.Sleep(100);
                 Assert.True(sub.RemoveItems(items.FirstOrDefault()));
                 Assert.True(sub.RemoveItems(items.FirstOrDefault())); // <- modified is already true
-                c = sub.DetectChangesAsync();      // returns because we moditied the detection
+                c = sub.DetectChangesAsync();      // returns because we modified the detection
                 Assert.False(sub.RemoveItems(items.FirstOrDefault()));
             }
         }
@@ -546,13 +546,25 @@ namespace DataTypeTests
             }
         }
 
-        [Fact]
-        public void PerformReadWriteRaw()
+        [Theory]
+        [InlineData("DB2000.W2", (UInt16)3)]
+        [InlineData("DB2001.X0.0", true)]
+        [InlineData("DB2002.X0_1", true)]
+        [InlineData("DB2003.X0.0,8", new bool[] { false, false, true, true, false, false, true, true })]
+        [InlineData("DB2004.X0.1,4", new bool[] { false, false, true, true })]
+        [InlineData("DB2005.X1.1,4", new bool[] { false, false, true, true })]
+        [InlineData("DB2006.X0.0,10", new bool[] { false, false, true, true, false, false, true, true, false, false })]
+        [InlineData("DB2007.X0.0,16", new bool[] { false, false, true, true, false, false, true, true, false, false, true, true, false, false, true, true })]
+        [InlineData("DB2008.X0.4,16", new bool[] { false, false, true, true, false, false, true, true, false, false, true, true, false, false, true, true })]
+        [InlineData("DB2008.DT0", new bool[] { false, false, true, true, false, false, true, true, false, false, true, true, false, false, true, true })]
+        public void PerformReadWriteRaw(string address, object value)
         {
             var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
-            var readResults = papper.ReadAsync(PlcReadReference.FromAddress("DB2000.W2")).GetAwaiter().GetResult();
-            var writeResults = papper.WriteAsync(PlcWriteReference.FromAddress("DB2000.W2", (UInt16)3)).GetAwaiter().GetResult();
+            var readResults = papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult();
+            var writeResults = papper.WriteAsync(PlcWriteReference.FromAddress(address, value)).GetAwaiter().GetResult();
+            var afterWriteReadResults = papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult();
 
+            Assert.Equal(value, afterWriteReadResults[0].Value);
         }
 
         [Fact]
@@ -560,7 +572,6 @@ namespace DataTypeTests
         {
             var address = _papper.GetAddressOf(PlcReadReference.FromAddress("DB_BST1_ChargenRV")).RawAddress<byte>();
             var readResults = _papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult();
-
         }
 
 
@@ -707,7 +718,8 @@ namespace DataTypeTests
                     Selector = i.Selector,
                     Offset = i.Offset,
                     Length = i.Length,
-                    BitMask = i.BitMask,
+                    BitMaskBegin = i.BitMaskBegin,
+                    BitMaskEnd = i.BitMaskEnd,
                     ExecutionResult = ExecutionResult.Ok
                 }.ApplyData(i.Data)));
             };
@@ -951,29 +963,47 @@ namespace DataTypeTests
             var result = reads.ToList();
             foreach (var item in result)
             {
-                if (item.BitMask == 0)
+                var entry = MockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length);
+                if (!item.HasBitMask)
                 {
                     Console.WriteLine($"OnWrite: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
-                    item.Data.Slice(0, item.Length).CopyTo(MockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length));
+                    item.Data.Slice(0, item.Length).CopyTo(entry.Data.Slice(item.Offset, item.Length));
                     item.ExecutionResult = ExecutionResult.Ok;
                 }
                 else
                 {
+                    var lastItem = item.Data.Length - 1;
                     for (int j = 0; j < item.Data.Length; j++)
                     {
                         var bItem = item.Data.Span[j];
-                        var bm = item.BitMask;
-                        for (var i = 0; i < 8; i++)
+                        if (j > 0 && j < lastItem)
                         {
-                            var bit = bm.GetBit(i);
-                            if (bit)
+                            entry.Data.Span[item.Offset + j] = item.Data.Span[j];
+                            item.ExecutionResult = ExecutionResult.Ok;
+                        }
+                        else
+                        {
+                            var bm = j == 0 ? item.BitMaskBegin : (j == lastItem) ? item.BitMaskEnd : (byte)0;
+                            if (bm == 0xFF)
                             {
-                                var b = MockPlc.GetPlcEntry(item.Selector, item.Offset + 1).Data.Span[item.Offset];
-                                MockPlc.GetPlcEntry(item.Selector, item.Offset + 1).Data.Span[item.Offset] = b.SetBit(i, bItem.GetBit(i));
+                                entry.Data.Span[item.Offset + j] = item.Data.Span[j];
                                 item.ExecutionResult = ExecutionResult.Ok;
-                                bm = bm.SetBit(i, false);
-                                if (bm == 0)
-                                    break;
+                            }
+                            else if(bm > 0)
+                            {
+                                for (var i = 0; i < 8; i++)
+                                {
+                                    var bit = bm.GetBit(i);
+                                    if (bit)
+                                    {
+                                        var b = entry.Data.Span[item.Offset + j];
+                                        entry.Data.Span[item.Offset + j] = b.SetBit(i, bItem.GetBit(i));
+                                        item.ExecutionResult = ExecutionResult.Ok;
+                                        bm = bm.SetBit(i, false);
+                                        if (bm == 0)
+                                            break;
+                                    }
+                                }
                             }
                         }
                     }
@@ -982,7 +1012,7 @@ namespace DataTypeTests
             return Task.CompletedTask;
         }
 
-        
+
 
         private static ExpandoObject ToExpando<T>(T instance)
         {

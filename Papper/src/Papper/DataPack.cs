@@ -8,12 +8,18 @@ namespace Papper
         public int Offset { get; set; }
         public int Length { get; set; }
 
-        public byte BitMask { get; set; }
+
+        public byte BitMask => BitMaskBegin;
+
+        public byte BitMaskBegin { get; set; } 
+        public byte BitMaskEnd { get; set; }
+
+        public bool HasBitMask => BitMaskBegin != 0 || BitMaskEnd != 0;
 
         public Memory<byte> Data { get; internal set; }
 
         public ExecutionResult ExecutionResult { get; set; }
-
+       
 
         public DataPack ApplyData(Memory<byte> data)
         {
@@ -21,6 +27,6 @@ namespace Papper
             return this;
         }
 
-        public override string ToString() => $"{Selector}.{Offset}.{Length}#{BitMask}";
+        public override string ToString() => $"{Selector}.{Offset}.{Length}#{BitMaskBegin}#{BitMaskEnd}";
     }
 }

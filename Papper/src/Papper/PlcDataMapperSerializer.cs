@@ -26,7 +26,7 @@ namespace Papper
         /// <returns></returns>
         public byte[] Serialize(Type type, object data)
         {
-            var binding = _mappingEntryProvider.GetMappingEntryForType(type).BaseBinding;
+            var binding = _mappingEntryProvider.GetMappingEntryForType(type, data).BaseBinding;
             var buffer = new byte[binding.RawData.MemoryAllocationSize];  // TODO handle a reusable buffer
             binding.ConvertToRaw(data, buffer);
             return buffer;

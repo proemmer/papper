@@ -34,6 +34,10 @@ namespace Papper.Internal
                     else
                         count = false;
                 }
+                if(item.Value.Item2 is PlcArray arr && arr.Size.Bits > 0)
+                {
+                    sizeInBytes += 1;
+                }
 
                 var current = new PlcRawData(readDataBlockSize)
                 {

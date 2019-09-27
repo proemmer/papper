@@ -12,10 +12,7 @@ namespace Papper.Extensions.Notification
         private readonly Exception _exception;
         private readonly bool _completed;
 
-        public PlcNotificationEventArgs(IEnumerable<PlcReadResult> changedItems)
-        {
-            _changedItems = changedItems;
-        }
+        public PlcNotificationEventArgs(IEnumerable<PlcReadResult> changedItems) => _changedItems = changedItems;
 
         public PlcNotificationEventArgs(Exception exception)
         {
@@ -23,10 +20,7 @@ namespace Papper.Extensions.Notification
             _exception = exception;
         }
 
-        public PlcNotificationEventArgs()
-        {
-            _completed = true;
-        }
+        public PlcNotificationEventArgs() => _completed = true;
 
         /// <summary>
         /// If watching is completed, this value is true.
@@ -34,7 +28,7 @@ namespace Papper.Extensions.Notification
         public bool Completed => _completed;
 
         /// <summary>
-        /// If an exception occured, there are no changed iems in the event arg, but there should be an exception here. 
+        /// If an exception occurred, there are no changed items in the event arguments, but there should be an exception here. 
         /// </summary>
         public Exception Exception => _exception;
 
@@ -43,10 +37,7 @@ namespace Papper.Extensions.Notification
         /// </summary>
         /// <param name="name">[Mapping].[Variable]</param>
         /// <returns></returns>
-        public object this[string name]
-        {
-            get { return _changedItems?.FirstOrDefault(x => x.Address == name).Value; }
-        }
+        public object this[string name] => _changedItems?.FirstOrDefault(x => x.Address == name).Value;
 
         /// <summary>
         /// Convert the Changed variables to an object, so every changed variable is an Property
@@ -155,50 +146,22 @@ namespace Papper.Extensions.Notification
         }
 
         /// <summary>
-        /// Convert the Changed variables to an plcObject, so every changed variable is an Property (you could also use indexes in c#)
-        /// </summary>
-        /// <returns></returns>
-        //public dynamic ToPlcObject()
-        //{
-        //    var item = new DynamicPlcObject();
-        //    foreach (var items in _changedItems)
-        //    {
-        //        var val = items.Value;
-        //        item.AddEntry(items.Value.GetType().IsArray ?
-        //                string.Format("{0}[*]", items.Key) :
-        //                items.Key,
-        //            () => val,
-        //            value => { });
-        //    }
-        //    return item;
-        //}
-
-        /// <summary>
         /// Number of changed fields
         /// </summary>
         /// <returns></returns>
-        public int FieldCount
-        {
-            get { return _changedItems != null ? _changedItems.Count() : 0; }
-        }
+        public int FieldCount => _changedItems != null ? _changedItems.Count() : 0;
 
         /// <summary>
         /// Enumerator of changed fields
         /// </summary>
         /// <returns></returns>
-        public IEnumerator<PlcReadResult> GetEnumerator()
-        {
-            return _changedItems.Cast<PlcReadResult>().GetEnumerator();
-        }
+        public IEnumerator<PlcReadResult> GetEnumerator() => _changedItems.GetEnumerator();
 
         /// <summary>
         /// 
         /// </summary>
         /// <returns></returns>
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         /// <summary>
         /// Add a property to the expando object
@@ -228,7 +191,7 @@ namespace Papper.Extensions.Notification
         /// <returns></returns>
         private static dynamic GetPropertyValue(dynamic parent, string name)
         {
-            if (parent is IDictionary<string, object> dictionary && dictionary.TryGetValue(name, out object ret))
+            if (parent is IDictionary<string, object> dictionary && dictionary.TryGetValue(name, out var ret))
                 return ret;
             return null;
         }

@@ -2,6 +2,7 @@
 using Papper.Extensions.Metadata;
 using Papper.Extensions.Notification;
 using Papper.Internal;
+using Papper.Types;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -258,42 +259,15 @@ namespace Papper
                     return new KeyValuePair<string, DataPack>(key, pack);
                 }
 
-                byte[] GetOrCreateBufferAndApplyValue(PlcObjectBinding binding, Dictionary<PlcRawData, byte[]> dict, object value)
-                {
-                    if (!dict.TryGetValue(binding.RawData, out var buffer))
-                    {
-                        buffer = ArrayPool<byte>.Shared.Rent(binding.RawData.MemoryAllocationSize);
-                        dict.Add(binding.RawData, buffer);
-                    }
 
-                    if (value is byte[] b && binding.Size == b.Length)
-                    {
-                        // we got raw data for the type, so we need not to convert them
-                        b.CopyTo(buffer, 0);
-                    }
-                    else
-                    {
-                        binding.ConvertToRaw(value, buffer);
-                    }
-                    return buffer;
-                }
 
                 var values = vars.ToDictionary(x => x.Address, x => x.Value);
                 // determine executions
                 var executions = DetermineExecutions(vars);
 
                 var prepared = executions.SelectMany(execution => execution.Bindings.Where(b => !b.Value.MetaData.IsReadOnly))
-                                         .Select(x => UpdatePack(x.Key, new DataPack
-                                         {
-                                             Selector = x.Value.RawData.Selector,
-                                             Offset = x.Value.Offset + x.Value.RawData.Offset,
-                                             Length = x.Value.Size > 0 ? x.Value.Size : 1,
-                                             BitMask = x.Value.Size <= 0 ? Converter.SetBit(0, x.Value.MetaData.Offset.Bits, true) : (byte)0,
-                                             Data = GetOrCreateBufferAndApplyValue(x.Value,
-                                                                                    memoryBuffer,
-                                                                                    values[x.Key])
-                                         }, x.Value.Offset))
-                                                .ToDictionary(x => x.Key, x => x.Value);
+                                         .Select(x => UpdatePack(x.Key, Create(x.Key, x.Value, values, memoryBuffer), x.Value.Offset))
+                                         .ToDictionary(x => x.Key, x => x.Value);
 
                 await WriteToPlcAsync(prepared.Values);
 
@@ -307,9 +281,8 @@ namespace Papper
             }
         }
 
-
         /// <summary>
-        /// If a client supports datachanges it has to call this method on any changes
+        /// If a client supports data changes it has to call this method on any changes
         /// </summary>
         /// <param name="changed"></param>
         public void OnDataChanges(IEnumerable<DataPack> changed)
@@ -319,6 +292,10 @@ namespace Papper
                 item.OnDataChanged(changed);
             }
         }
+
+
+
+
 
 
         #region internal
@@ -407,6 +384,96 @@ namespace Papper
                 (entry is MappingEntry && entry.PlcObject.Get(new PlcMetaDataTreePath(watchs.Variable)) != null) ||
                 (entry is RawEntry);
         #endregion
+
+
+        private DataPack Create(string key, PlcObjectBinding binding, Dictionary<string, object> values, Dictionary<PlcRawData, byte[]> memoryBuffer)
+        {
+            byte[] GetOrCreateBufferAndApplyValue(PlcObjectBinding plcBinding, Dictionary<PlcRawData, byte[]> dict, object value)
+            {
+                if (!dict.TryGetValue(plcBinding.RawData, out var buffer))
+                {
+                    buffer = ArrayPool<byte>.Shared.Rent(plcBinding.RawData.MemoryAllocationSize);
+                    dict.Add(plcBinding.RawData, buffer);
+                }
+
+                if (value is byte[] b && plcBinding.Size == b.Length)
+                {
+                    // we got raw data for the type, so we need not to convert them
+                    b.CopyTo(buffer, 0);
+                }
+                else
+                {
+                    plcBinding.ConvertToRaw(value, buffer);
+                }
+                return buffer;
+            }
+
+            (var begin, var end) = CreateBitMasks(binding);
+            return new DataPack
+            {
+                Selector = binding.RawData.Selector,
+                Offset = binding.Offset + binding.RawData.Offset,
+                Length = GetSize(binding),
+                BitMaskBegin = begin,
+                BitMaskEnd = end,
+                Data = GetOrCreateBufferAndApplyValue(binding,
+                                                        memoryBuffer,
+                                                        values[key])
+            };
+        }
+
+
+        private int GetSize(PlcObjectBinding binding)
+        {
+            if (binding.MetaData is PlcBool plcBool)
+            {
+                return 1;
+            }
+            else if (binding.MetaData is PlcArray plcArray && plcArray.ArrayType is PlcBool)
+            {
+                return plcArray.Size.Bytes + (plcArray.Size.Bits > 0 ? 1 : 0);
+            }
+            return binding.Size;
+        }
+
+        private (byte begin, byte end) CreateBitMasks(PlcObjectBinding binding)
+        {
+            byte begin = 0;
+            byte end = 0;
+            if (binding.MetaData is PlcBool plcBool)
+            {
+                begin = Converter.SetBit(0, plcBool.Offset.Bits, true);
+            }
+            else if (binding.MetaData is PlcArray plcArray && plcArray.ArrayType is PlcBool)
+            {
+                if (plcArray.Offset.Bits > 0 || ((plcArray.ArrayLength % 8) != 0))
+                {
+                    var take = 8 - plcArray.Offset.Bits;
+                    foreach (var item in plcArray.Childs.Take(take).OfType<PlcObject>())
+                    {
+                        begin = Converter.SetBit(begin, item.Offset.Bits, true);
+                    }
+
+                    var lastItems = ((plcArray.Offset.Bits + plcArray.ArrayLength) % 8);
+                    if (lastItems > 0)
+                    {
+                        foreach (var item in plcArray.Childs.Skip(plcArray.ArrayLength - lastItems).OfType<PlcObject>())
+                        {
+                            end = Converter.SetBit(end, item.Offset.Bits, true);
+                        }
+
+                        if (begin == 0) begin = 0xFF;
+                    }
+                    else if (begin > 0)
+                    {
+                        end = 0xFF;
+                    }
+                }
+
+            }
+            return (begin, end);
+        }
+
 
         private async Task<PlcReadResult[]> InternalReadAsync(IEnumerable<PlcReadReference> vars, bool doNotConvert)
         {

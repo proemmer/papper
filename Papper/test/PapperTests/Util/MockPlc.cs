@@ -24,11 +24,12 @@ namespace UnitTestSuit.Util
             public int Offset { get; set; }
             public int Length { get; set; }
 
-            public byte BitMask { get; set; }
+            public byte BitMaskBegin { get; set; }
+            public byte BitMaskEnd { get; set; }
 
             public override string ToString()
             {
-                return $"{Selector}.{Offset}.{Length}#{BitMask}";
+                return $"{Selector}.{Offset}.{Length}#{BitMaskBegin}#{BitMaskEnd}";
             }
         }
 
@@ -91,7 +92,7 @@ namespace UnitTestSuit.Util
                     {
                         if (!_items.TryGetValue(itemKey, out _))
                         {
-                            _items.Add(itemKey, new PlcItem { Selector = item.Selector, Offset = item.Offset, Length = item.Length, BitMask = item.BitMask });
+                            _items.Add(itemKey, new PlcItem { Selector = item.Selector, Offset = item.Offset, Length = item.Length, BitMaskBegin = item.BitMaskBegin, BitMaskEnd = item.BitMaskEnd });
                         }
                     }
                 }
