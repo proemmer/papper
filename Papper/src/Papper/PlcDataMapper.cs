@@ -388,22 +388,22 @@ namespace Papper
 
         private DataPack Create(string key, PlcObjectBinding binding, Dictionary<string, object> values, Dictionary<PlcRawData, byte[]> memoryBuffer)
         {
-            byte[] GetOrCreateBufferAndApplyValue(PlcObjectBinding binding, Dictionary<PlcRawData, byte[]> dict, object value)
+            byte[] GetOrCreateBufferAndApplyValue(PlcObjectBinding plcBinding, Dictionary<PlcRawData, byte[]> dict, object value)
             {
-                if (!dict.TryGetValue(binding.RawData, out var buffer))
+                if (!dict.TryGetValue(plcBinding.RawData, out var buffer))
                 {
-                    buffer = ArrayPool<byte>.Shared.Rent(binding.RawData.MemoryAllocationSize);
-                    dict.Add(binding.RawData, buffer);
+                    buffer = ArrayPool<byte>.Shared.Rent(plcBinding.RawData.MemoryAllocationSize);
+                    dict.Add(plcBinding.RawData, buffer);
                 }
 
-                if (value is byte[] b && binding.Size == b.Length)
+                if (value is byte[] b && plcBinding.Size == b.Length)
                 {
                     // we got raw data for the type, so we need not to convert them
                     b.CopyTo(buffer, 0);
                 }
                 else
                 {
-                    binding.ConvertToRaw(value, buffer);
+                    plcBinding.ConvertToRaw(value, buffer);
                 }
                 return buffer;
             }
