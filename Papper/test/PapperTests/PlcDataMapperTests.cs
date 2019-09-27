@@ -490,7 +490,7 @@ namespace DataTypeTests
                 Thread.Sleep(100);
                 Assert.True(sub.RemoveItems(items.FirstOrDefault()));
                 Assert.True(sub.RemoveItems(items.FirstOrDefault())); // <- modified is already true
-                c = sub.DetectChangesAsync();      // returns because we moditied the detection
+                c = sub.DetectChangesAsync();      // returns because we modified the detection
                 Assert.False(sub.RemoveItems(items.FirstOrDefault()));
             }
         }
@@ -556,6 +556,7 @@ namespace DataTypeTests
         [InlineData("DB2006.X0.0,10", new bool[] { false, false, true, true, false, false, true, true, false, false })]
         [InlineData("DB2007.X0.0,16", new bool[] { false, false, true, true, false, false, true, true, false, false, true, true, false, false, true, true })]
         [InlineData("DB2008.X0.4,16", new bool[] { false, false, true, true, false, false, true, true, false, false, true, true, false, false, true, true })]
+        [InlineData("DB2008.DT0", new bool[] { false, false, true, true, false, false, true, true, false, false, true, true, false, false, true, true })]
         public void PerformReadWriteRaw(string address, object value)
         {
             var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
@@ -571,7 +572,6 @@ namespace DataTypeTests
         {
             var address = _papper.GetAddressOf(PlcReadReference.FromAddress("DB_BST1_ChargenRV")).RawAddress<byte>();
             var readResults = _papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult();
-
         }
 
 

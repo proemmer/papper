@@ -149,7 +149,7 @@ namespace Papper.Internal
                     break;
                 case "LW":
                 case "LWORD":
-                    plcObject = new PlcWord(value);
+                    plcObject = new PlcLWord(value);
                     break;
                 case "R":
                 case "REAL":

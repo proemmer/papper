@@ -147,6 +147,63 @@ private static bool Papper_OnWrite(string selector, int offset, byte[] data, byt
 }
 </code></pre>
 
+
+
+
+# Absolut addressing
+Syntax:
+
+
+[Selector].[TYPE][OFFSET],[CountOfData]
+
+Bool
+[Selector].[TYPE][OFFSET_Byte].[OFFSET_Bit],[CountOfData]
+
+String
+[Selector].[TYPE][OFFSET_Stringlength][_CountOfData]
+
+
+## Selector
+
+IB: Input Area
+FB: Flag Area
+QB: Output Area
+TM: Timer Area
+CT: Counter Area
+DB[Number]: DataBlock Area
+
+## Type
+
+* Boolean: 	X or BIT
+* Byte:    	B or BYTE
+* Char:    	C or CHAR
+* Date:    	DATE
+* DateTime:	DT or DATETIME
+* DInt:    	DI or DINT
+* DWord:   	DW or DWORD
+* Int:     	I or INT
+* LDateTime:LDT or LDATETIME
+* LInt:		LI or LINT
+* Time:		LT or LTIME
+* LWord:	LW or LWORD
+* Real:		R or REAL
+* S5Time:	TIMEBCD
+* Counter:  CT or COUNT
+* SInt:		SI or SINT
+* String:   S or STRING
+* Time:     T or TIme
+* TimeOfDay:TOD
+* UDInt:	UDI or UDINT
+* UInt: 	UI or UINT
+* ULInt:	ULI or ULINT
+* USInt:	USI or USINT
+* WChar:	WC or WCHAR
+* Word:     W or WORD
+* WString:  WS or WSTRING 
+
+
+
+
 # Release Notes
 * 1.0.6:
     * migrated to VS2017 and C#7.

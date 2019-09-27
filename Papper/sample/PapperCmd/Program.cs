@@ -296,10 +296,11 @@ namespace PapperCmd
             var result = reads.ToList();
             foreach (var item in result)
             {
-                if(!item.HasBitMask)
+                var entry = GetPlcEntry(item.Selector, item.Offset + item.Length);
+                if (!item.HasBitMask)
                 {
                     Console.WriteLine($"OnWrite: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
-                    item.Data.Slice(0, item.Length).CopyTo(GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length));
+                    item.Data.Slice(0, item.Length).CopyTo(entry.Data.Slice(item.Offset, item.Length));
                     item.ExecutionResult = ExecutionResult.Ok;
                 }
                 else
@@ -308,26 +309,33 @@ namespace PapperCmd
                     for (int j = 0; j < item.Data.Length; j++)
                     {
                         var bItem = item.Data.Span[j];
-                        
-
-                        if (j > 0 || j < lastItem)
+                        if (j > 0 && j < lastItem)
                         {
-                            GetPlcEntry(item.Selector, item.Offset + 1).Data.Span[item.Offset] = item.Data.Span[j];
+                            entry.Data.Span[item.Offset + j] = item.Data.Span[j];
+                            item.ExecutionResult = ExecutionResult.Ok;
                         }
                         else
                         {
                             var bm = j == 0 ? item.BitMaskBegin : (j == lastItem) ? item.BitMaskEnd : (byte)0;
-                            for (var i = 0; i < 8; i++)
+                            if (bm == 0xFF)
                             {
-                                var bit = bm.GetBit(i);
-                                if (bit)
+                                entry.Data.Span[item.Offset + j] = item.Data.Span[j];
+                                item.ExecutionResult = ExecutionResult.Ok;
+                            }
+                            else if (bm > 0)
+                            {
+                                for (var i = 0; i < 8; i++)
                                 {
-                                    var b = GetPlcEntry(item.Selector, item.Offset + 1).Data.Span[item.Offset];
-                                    GetPlcEntry(item.Selector, item.Offset + 1).Data.Span[item.Offset] = b.SetBit(i, bItem.GetBit(i));
-                                    item.ExecutionResult = ExecutionResult.Ok;
-                                    bm = bm.SetBit(i, false);
-                                    if (bm == 0)
-                                        break;
+                                    var bit = bm.GetBit(i);
+                                    if (bit)
+                                    {
+                                        var b = entry.Data.Span[item.Offset + j];
+                                        entry.Data.Span[item.Offset + j] = b.SetBit(i, bItem.GetBit(i));
+                                        item.ExecutionResult = ExecutionResult.Ok;
+                                        bm = bm.SetBit(i, false);
+                                        if (bm == 0)
+                                            break;
+                                    }
                                 }
                             }
                         }
