@@ -37,6 +37,7 @@ namespace DataTypeTests
             _papper.AddMapping(typeof(PrimitiveValuesMapping));
             _papper.AddMapping(typeof(DB_MotionHMI));
             _papper.AddMapping(typeof(DB_BST1_ChargenRV));
+            _papper.AddMapping(typeof(MSpindleInterface));
 
 
         }
@@ -366,6 +367,33 @@ namespace DataTypeTests
             await Task.Delay(2000);
 
             Assert.Equal((short)1, value);
+
+            sub.Dispose();
+            t.Stop();
+        }
+
+
+
+        [Fact]
+        public async Task DataChanegOnBitsTest()
+        {
+            var t = new Stopwatch();
+            t.Start();
+            await _papper.WriteAsync(PlcWriteReference.FromAddress($"DB_IDAT_MSpindleData.IDATInterface.IDATtoPLC.Toggle", false));
+
+            var sub = _papper.SubscribeDataChanges((s, e) =>
+            {
+    
+            }, PlcWatchReference.FromAddress($"DB_IDAT_MSpindleData.IDATInterface.PLCtoIDAT.UpdateRequired", 10),
+               PlcWatchReference.FromAddress($"DB_IDAT_MSpindleData.IDATInterface.IDATtoPLC.Toggle", 10),
+               PlcWatchReference.FromAddress($"DB_IDAT_MSpindleData.IDATInterface.PLCtoIDAT.WriteEnable", 10));
+
+            await Task.Delay(100);
+            await _papper.WriteAsync(PlcWriteReference.FromAddress($"DB_IDAT_MSpindleData.IDATInterface.PLCtoIDAT.UpdateRequired", true));
+            //await Task.Delay(100);
+            //await _papper.WriteAsync(PlcWriteReference.FromAddress($"DB_IDAT_MSpindleData.IDATInterface.IDATtoPLC.Toggle", false));
+
+            await Task.Delay(30000);
 
             sub.Dispose();
             t.Stop();
@@ -886,6 +914,13 @@ namespace DataTypeTests
             var writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, accessDict.ToArray()).ToArray()).GetAwaiter().GetResult();
         }
 
+
+
+        [Fact]
+        public async Task ReadBitsAsyncTest()
+        {
+            var x = await _papper.ReadAsync(PlcReadReference.FromAddress("DB_IDAT_MSpindleData.IDATInterface.PLCtoIDAT.WriteEnable"));
+        }
 
 
         #region Helper

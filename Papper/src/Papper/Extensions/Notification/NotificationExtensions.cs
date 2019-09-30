@@ -105,7 +105,7 @@ namespace Papper.Extensions.Notification
                         }
                         else
                         {
-                            // is cancelled or completed, so set whatching is compleded now!
+                            // is cancelled or completed, so set watching is compled now!
                             callback(subscription, new PlcNotificationEventArgs());
                             return;
                         }
