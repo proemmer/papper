@@ -142,20 +142,25 @@ namespace Papper.Extensions.Notification
         }
 
         /// <summary>
-        /// Returns the plcreadresult form the subscriptions cache
+        /// Returns the plc read result form the subscriptions cache
         /// </summary>
         /// <param name="vars"></param>
         /// <returns></returns>
         public PlcReadResult[] ReadResultsFromCache(IEnumerable<PlcWatchReference> vars)
         {
+            if (_executions.IsNullOrEmpty() || !vars.Any()) return null;
             var variables = vars.Select(x => x.Address).ToList();
-            return _executions.GroupBy(exec => exec.ExecutionResult) // Group by execution result
+            using (new ReaderGuard(_lock))
+            {
+                if (_executions.IsNullOrEmpty()) return null;
+                return _executions.GroupBy(exec => exec.ExecutionResult) // Group by execution result
                                                      .SelectMany(group => group.SelectMany(g => g.Bindings)
                                                                                .Where(b => variables.Contains(b.Key))
                                                                                .Select(b => new PlcReadResult(b.Key,
                                                                                                               b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache.Span),
                                                                                                               group.Key)
                                                                                )).ToArray();
+            }
         }
 
         /// <summary>
