@@ -396,10 +396,11 @@ namespace Papper
                     dict.Add(plcBinding.RawData, buffer);
                 }
 
+
                 if (value is byte[] b && plcBinding.Size == b.Length)
                 {
                     // we got raw data for the type, so we need not to convert them
-                    b.CopyTo(buffer, 0);
+                    b.CopyTo(buffer, plcBinding.Offset);
                 }
                 else
                 {

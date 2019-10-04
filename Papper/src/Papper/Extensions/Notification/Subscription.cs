@@ -11,7 +11,7 @@ namespace Papper.Extensions.Notification
     /// <summary>
     /// This representates a subscription to a plc value change detection.
     /// </summary>
-    public class Subscription : IDisposable
+    public sealed class Subscription : IDisposable
     {
         private readonly TaskCompletionSource<object> _watchingTcs = new TaskCompletionSource<object>();
         private readonly PlcDataMapper _mapper;

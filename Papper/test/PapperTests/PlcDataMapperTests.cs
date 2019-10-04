@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -417,6 +418,21 @@ namespace DataTypeTests
             t.Stop();
         }
 
+        [Fact]
+        public async Task TestWriteSerializedData()
+        {
+            var ser = new PlcDataMapperSerializer();
+
+            var value = ser.Serialize(TimeTransformationRule.FromTimeZoneInfo(TimeZoneInfo.Local));
+
+
+
+            await _papper.WriteAsync(PlcWriteReference.FromAddress($"DB301.S108,5", CultureInfo.CurrentCulture.Name),
+                                    PlcWriteReference.FromAddress($"DB301.B10,{value.Length}", value),
+                                    PlcWriteReference.FromAddress($"DB301.DT2", DateTime.Now),
+                                    PlcWriteReference.FromAddress($"DB301.X106.0", true));
+        }
+
 
 
         [Fact]
@@ -584,7 +600,6 @@ namespace DataTypeTests
         [InlineData("DB2006.X0.0,10", new bool[] { false, false, true, true, false, false, true, true, false, false })]
         [InlineData("DB2007.X0.0,16", new bool[] { false, false, true, true, false, false, true, true, false, false, true, true, false, false, true, true })]
         [InlineData("DB2008.X0.4,16", new bool[] { false, false, true, true, false, false, true, true, false, false, true, true, false, false, true, true })]
-        [InlineData("DB2008.DT0", new bool[] { false, false, true, true, false, false, true, true, false, false, true, true, false, false, true, true })]
         public void PerformReadWriteRaw(string address, object value)
         {
             var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);

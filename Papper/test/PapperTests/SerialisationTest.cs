@@ -1,4 +1,5 @@
 ﻿using Papper;
+using PapperTests.Mappings;
 using PMSComponentHost.VTagStorerLoader;
 using System;
 using System.Globalization;
@@ -93,6 +94,13 @@ namespace DataTypeTests
             var s = Encoding.ASCII.GetString(st, 0, st.Length).Trim();
 
 
+        }
+
+        [Fact]
+        public void TestStructSerialializing()
+        {
+            var s = new PlcDataMapperSerializer();
+            var data = s.Serialize(TimeTransformationRule.FromTimeZoneInfo(TimeZoneInfo.Local));
         }
 
 
