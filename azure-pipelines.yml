@@ -26,7 +26,6 @@ pool:
 variables:
   buildConfiguration: 'Release'
   pushAsRelease: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/releases/')]
-  runTests: 'False'
   
 steps:
 - template: eng/run.yml
@@ -35,7 +34,7 @@ steps:
     publishProject: ''
     artifactNamePrefix: 'papper'
     framework: 'netstandard2.0'
-    runTests: '$(runTests)'
-    dotnetCoreSdk: '2.2.300'
+    runTests: 'true'
+    dotnetCoreSdk: '3.0.100'
     nugetConfig: './papper/nuget.config'
     addNugetAuthentication: 'False'
