@@ -83,6 +83,7 @@ namespace PapperTests.Mappings
     }
 
     [Mapping("DB_IDAT_MSpindleData", "DB241", 0)]
+    [Mapping("DB_IDAT_MSpindleData1", "DB242", 0)]
     public class MSpindleInterface
     {
         public UDT_IDATInterface IDATInterface { get; set; }

@@ -32,10 +32,13 @@ namespace Papper.Internal
             {
                 if(PlcRawData.ReadDataCache.IsEmpty || !PlcRawData.ReadDataCache.Span.SequenceEqual(pack.Data.Span))
                 {
-                    LastChange = DateTime.Now; // We detected a change in this data area 
+                    if(pack.Timestamp > LastChange)
+                        LastChange = pack.Timestamp; // We detected a change in this data area 
                 }
                 PlcRawData.ReadDataCache = pack.Data;
-                PlcRawData.LastUpdate = DateTime.Now;
+
+                if (pack.Timestamp > LastChange)
+                    PlcRawData.LastUpdate = pack.Timestamp;
             }
             ExecutionResult = pack.ExecutionResult;
             return this;

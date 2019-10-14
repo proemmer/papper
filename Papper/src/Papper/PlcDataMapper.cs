@@ -335,7 +335,7 @@ namespace Papper
                 filter = (x) => x;
             }
             return executions.Select(exec => needUpdate.TryGetValue(exec, out var pack) ? exec.ApplyDataPack(pack) : exec)
-                             .Where(exec => changedAfter == null || exec.LastChange > changedAfter) // filter by data area
+                             .Where(exec => HasChangesSinceLastRun(exec, changedAfter)) 
                              .GroupBy(exec => exec.ExecutionResult) // Group by execution result
                              .Where(res => res.Key == ExecutionResult.Ok) // filter by OK results
                              .SelectMany(group => filter(group.SelectMany(g => g.Bindings))
@@ -345,7 +345,8 @@ namespace Papper
                                                        )).ToArray();
         }
 
-
+        private static bool HasChangesSinceLastRun(Execution exec, DateTime? changedAfter) 
+            => changedAfter == null || exec.LastChange > changedAfter;
 
         internal PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions, IEnumerable<DataPack> packs)
         {

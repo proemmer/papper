@@ -11,6 +11,7 @@ using System.Dynamic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using UnitTestSuit.Mappings;
@@ -380,7 +381,7 @@ namespace DataTypeTests
         {
             var t = new Stopwatch();
             t.Start();
-            await _papper.WriteAsync(PlcWriteReference.FromAddress($"DB_IDAT_MSpindleData.IDATInterface.IDATtoPLC.Toggle", false));
+            await _papper.WriteAsync(PlcWriteReference.FromAddress($"DB_IDAT_MSpindleData1.IDATInterface.IDATtoPLC.Toggle", false));
 
             var sub = _papper.SubscribeDataChanges((s, e) =>
             {
@@ -438,8 +439,8 @@ namespace DataTypeTests
         [Fact]
         public void TestDataChange()
         {
-            var sleepTime = 4000;
-            var mapping = "DB_SafetyDataChange";
+            var sleepTime = 10000;
+            var mapping = "DB_SafetyDataChange1";
             var intiState = true;
             var originData = new Dictionary<string, object> {
                     { "SafeMotion.Slots[15].SlotId", (byte)0},
@@ -515,6 +516,59 @@ namespace DataTypeTests
                 //test if data change only occurred if data changed
                 Assert.False(are.WaitOne(sleepTime));
 
+            }
+        }
+
+        [Fact]
+        public void TestBitDataChange()
+        {
+            var sleepTime = 10000;
+            var address = "DB_SafetyDataChange.SafeMotion.Slots[15].Commands.TakeoverPermitted";
+            var are = new AutoResetEvent(false);
+            int changes = 0;
+
+            using (var subscription = _papper.CreateSubscription())
+            {
+                subscription.AddItems( PlcWatchReference.FromAddress(address, 100));
+                var t = Task.Run(async () =>
+                {
+                    try
+                    {
+                        while (!subscription.Watching.IsCompleted)
+                        {
+                            var res = await subscription.DetectChangesAsync();
+
+                            if (!res.IsCompleted && !res.IsCanceled)
+                            {
+                                are.Set();
+                                changes++;
+                            }
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                });
+
+                //waiting for initialize
+                Assert.True(are.WaitOne(sleepTime));
+
+                for (int i = 0; i < 5; i++)
+                {
+                    var writeResults = _papper.WriteAsync(PlcWriteReference.FromAddress(address, i % 2 == 0)).GetAwaiter().GetResult();
+                    foreach (var item in writeResults)
+                    {
+                        Assert.Equal(ExecutionResult.Ok, item.ActionResult);
+                    }
+                    //waiting for write update
+                    Assert.True(are.WaitOne(sleepTime));
+                }
+
+
+                Assert.Equal(6, changes);
+
+                are.Dispose();
             }
         }
 
@@ -609,6 +663,8 @@ namespace DataTypeTests
 
             Assert.Equal(value, afterWriteReadResults[0].Value);
         }
+
+
 
         [Fact]
         public void PerformReadStruct()

@@ -18,12 +18,15 @@ namespace Papper
 
         public Memory<byte> Data { get; internal set; }
 
+        public DateTime Timestamp { get; private set; }
+
         public ExecutionResult ExecutionResult { get; set; }
        
 
         public DataPack ApplyData(Memory<byte> data)
         {
             Data = data;
+            Timestamp = DateTime.Now;
             return this;
         }
 
