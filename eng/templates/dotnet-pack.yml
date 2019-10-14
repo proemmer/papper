@@ -8,7 +8,6 @@ steps:
 
 # publish packages
 - script: dotnet pack --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)\packages --include-symbols  --version-suffix ${{ parameters.versionSuffix }}  ${{ parameters.solution }}
-  condition: 
   displayName: 'dotnet pack --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)\packages --include-symbols  --version-suffix ${{ parameters.versionSuffix }} ${{ parameters.solution }}'
 
 

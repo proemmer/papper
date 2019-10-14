@@ -26,8 +26,11 @@ pool:
 variables:
   buildConfiguration: 'Release'
   pushAsRelease: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/releases/')]
+  nugetChannelName: 'dev'
   
 steps:
+- script: "echo Build.SourceBranch: $(Build.SourceBranch); buildConfiguration: $(buildConfiguration); pushAsRelease: $(pushAsRelease)"
+
 - template: eng/run.yml
   parameters: 
     solution: './papper/Papper.sln'
@@ -37,4 +40,4 @@ steps:
     runTests: 'true'
     dotnetCoreSdk: '3.0.100'
     nugetConfig: './papper/nuget.config'
-    addNugetAuthentication: 'False'
+    nugetChannelName: $(nugetChannelName)

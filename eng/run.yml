@@ -4,39 +4,48 @@ parameters:
   publishProject: ''
   artifactNamePrefix: ''
   framework: ''
-  runTests: 'True'
+  runTests: 'true'
   dotnetCoreSdk: ''
   nugetConfig: './NuGet.Config'
-  addNugetAuthentication: 'True'
+  nugetChannelName: ''
+  testFilter: ''
   
   
 steps:
 
-- script: "echo Build.SourceBranch: $(Build.SourceBranch); buildConfiguration: $(buildConfiguration); solution: ${{ parameters.solution }}; publishProject: ${{ parameters.publishProject }}; framework: ${{ parameters.framework }}; pushAsRelease: $(pushAsRelease)"
+- script: "echo solution: ${{ parameters.solution }}; dotnetCoreSdk: ${{ parameters.dotnetCoreSdk }}; nugetConfig: ${{ parameters.nugetConfig }}; nugetChannelName: ${{ parameters.nugetChannelName }}; publishProject: ${{ parameters.publishProject }}; artifactNamePrefix: ${{ parameters.artifactNamePrefix }};framework: ${{ parameters.framework }}; pushAsRelease: $(pushAsRelease); runTests: ${{ parameters.runTests }};"
 
+- task: UseDotNet@2
+  displayName: 'Use .NET Core sdk'
+  inputs:
+    packageType: sdk
+    version: '${{ parameters.dotnetCoreSdk }}'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+  condition: and(succeeded(), ne('${{ parameters.dotnetCoreSdk }}', ''))
 
-- ${{ if ne(parameters['dotnetCoreSdk'], '') }}:
-  - task: UseDotNet@2
-    displayName: 'Use .NET Core sdk'
-    inputs:
-      packageType: sdk
-      version: '${{ parameters.dotnetCoreSdk }}'
-      installationPath: $(Agent.ToolsDirectory)/dotnet
-    
+# add nuget authentication if configured
+- ${{ if ne(parameters.nugetChannelName, '') }}:
+  - template: templates/nuget-authenticate.yml 
+    parameters: 
+      channelName: '${{ parameters.nugetChannelName }}'
+      nugetConfig: '${{ parameters.nugetConfig }}'
+
+# build the solution
 - template: templates/dotnet-build.yml 
   parameters: 
     solution: '${{ parameters.solution }}'
     nugetConfig: '${{ parameters.nugetConfig }}'
-    addAuthentication: '${{ parameters.addNugetAuthentication }}'
 
-- ${{ if eq(parameters['runTests'], 'True') }}:
+# run tests if configured
+- ${{ if eq(parameters.runTests, 'true') }}:
   - template: templates/dotnet-test.yml
     parameters: 
       solution: '${{ parameters.solution }}'
       framework: '${{ parameters.framework }}'
+      filter:  '${{ parameters.testFilter }}'
 
 # publish a win-x64 project if some is configured
-- ${{ if ne(parameters['publishProject'], '') }}:
+- ${{ if ne(parameters.publishProject, '') }}:
   - template: templates/dotnet-publish.yml
     parameters: 
       runtime: 'win-x64'
@@ -45,7 +54,7 @@ steps:
       framework: '${{ parameters.framework }}'
 
 # publish a win-x86 project if some is configured
-- ${{ if ne(parameters['publishProject'], '') }}:
+- ${{ if ne(parameters.publishProject, '') }}:
   - template: templates/dotnet-publish.yml
     parameters: 
       runtime: 'win-x86'
@@ -58,7 +67,7 @@ steps:
   - template: templates/dotnet-pack.yml
     parameters: 
       versionSuffix: '$(Build.BuildNumber)'
-      feed: 'dev'
+      feed: '${{ parameters.nugetChannelName }}'
       solution: '${{ parameters.solution }}'
 
 # if this comes from a release branch, create a CI build on the public feed
