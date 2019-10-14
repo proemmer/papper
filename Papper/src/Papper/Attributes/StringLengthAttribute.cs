@@ -10,7 +10,7 @@ namespace Papper.Attributes
     public class StringLengthAttribute : Attribute
     {
         /// <summary>
-        /// Gets the maximum acceptable length of the string
+        /// Gets the maximum acceptable length of the string.
         /// </summary>
         public int MaximumLength
         {
@@ -19,7 +19,7 @@ namespace Papper.Attributes
         }
 
         /// <summary>
-        /// Gets or sets the minimum acceptable length of the string
+        /// Gets or sets the minimum acceptable length of the string.
         /// </summary>
         public int MinimumLength
         {

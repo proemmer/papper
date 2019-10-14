@@ -3,7 +3,7 @@
 namespace Papper.Attributes
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-    public class MappingAttribute :  Attribute
+    public sealed class MappingAttribute :  Attribute
     {
         //public MappingAttribute()
         //{
@@ -23,12 +23,19 @@ namespace Papper.Attributes
             ObservationRate = observationRate;
         }
 
+
+        /// <summary>
+        /// The symbolic name of the data block. This is the name you will use to access the data block in the plc.
+        /// </summary>
         public string Name
         {
             get;
             private set;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public string Selector
         {
             get;
@@ -56,7 +63,7 @@ namespace Papper.Attributes
             {
                 rc = true;
             }
-            else if (((object)a == null) || ((object)b == null))
+            else if ((a is null) || (b is null))
             {
                 rc = false;
             }

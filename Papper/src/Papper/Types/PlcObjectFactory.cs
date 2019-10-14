@@ -35,7 +35,7 @@ namespace Papper.Types
             {"Bit", typeof (PlcBool)},
             {"Byte", typeof (PlcByte)},
             {"SInt", typeof (PlcSInt)},
-            {"USInt", typeof (PlcUDInt)},
+            {"USInt", typeof (PlcUSInt)},
             {"Int", typeof (PlcInt)},
             {"DInt", typeof (PlcDInt)},
             {"UDInt", typeof (PlcUDInt)},
