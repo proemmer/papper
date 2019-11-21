@@ -1,9 +1,11 @@
-﻿using Papper;
+﻿using Insite.Customer.Data.DB_BST1_Tel_Gruppe_05;
+using Papper;
 using PapperTests.Mappings;
 using PMSComponentHost.VTagStorerLoader;
 using System;
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 using UnitTestSuit.Mappings;
 using Xunit;
 using Xunit.Abstractions;
@@ -82,6 +84,20 @@ namespace DataTypeTests
             var data = s.Serialize(t, value);
 
             Assert.Equal(expected, data);
+        }
+
+        [Fact]
+        public void SerializeObjectTest()
+        {
+            var s = new PlcDataMapperSerializer();
+            var t = typeof(DB_BST1_Tel_Gruppe_05);
+            var blockData = "{\r\n  \"tel\": {\r\n    \"Auswahl_Text\": 2,\r\n    \"Status\": 2,\r\n    \"Text\": [\r\n      \"Hat sich erledigt\",\r\n      \"St\\u00F6rung; Sofort kommen\",\r\n      \"St\\u00F6rung; Demn\\u00E4chst kommen\",\r\n      \"Stillstand\",\r\n      \"\",\r\n      \"\",\r\n      \"\",\r\n      \"\",\r\n      \"\",\r\n      \"\"\r\n    ],\r\n    \"Ruftyp\": \"IH_MECHAN\",\r\n    \"Datum\": [\r\n      \"1990-01-01T00:00:00\",\r\n      \"1990-01-01T00:00:00\",\r\n      \"1990-01-01T00:00:00\",\r\n      \"2006-12-20T00:00:00\",\r\n      \"1990-01-01T00:00:00\",\r\n      \"1990-01-01T00:00:00\",\r\n      \"1990-01-01T00:00:00\",\r\n      \"1990-01-01T00:00:00\",\r\n      \"1990-01-01T00:00:00\",\r\n      \"1990-01-01T00:00:00\"\r\n    ],\r\n    \"Zeit\": [\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      },\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      },\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      },\r\n      {\r\n        \"Ticks\": 258707970000,\r\n        \"Days\": 0,\r\n        \"Hours\": 7,\r\n        \"Milliseconds\": 797,\r\n        \"Minutes\": 11,\r\n        \"Seconds\": 10,\r\n        \"TotalDays\": 0.2994305208333333,\r\n        \"TotalHours\": 7.1863325,\r\n        \"TotalMilliseconds\": 25870797,\r\n        \"TotalMinutes\": 431.17995,\r\n        \"TotalSeconds\": 25870.797\r\n      },\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      },\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      },\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      },\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      },\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      },\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      }\r\n    ],\r\n    \"Tel_lfd_Nr\": [\r\n      0,\r\n      0,\r\n      0,\r\n      2,\r\n      0,\r\n      0,\r\n      0,\r\n      0,\r\n      0,\r\n      0\r\n    ]\r\n  }\r\n}";
+            var data = JsonSerializer.Deserialize(blockData, t, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+            var plcData = s.Serialize(t, data);
+
         }
 
 

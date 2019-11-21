@@ -165,7 +165,7 @@ namespace Papper.Types
                             if (childEnumeratore.MoveNext())
                             {
                                 var child = childEnumeratore.Current;
-                                var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + (child.Size.Bytes * i), plcObjectBinding.ValidationTimeInMs);
+                                var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + (GetElementSizeForOffset() * i), plcObjectBinding.ValidationTimeInMs);
                                 ArrayType.ConvertToRaw(enumerator.Current, binding, data);
                             }
                             else
