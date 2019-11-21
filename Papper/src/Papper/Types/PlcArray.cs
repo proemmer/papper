@@ -152,7 +152,10 @@ namespace Papper.Types
                 else if (type == typeof(PlcChar) && (value is char[] || value is Memory<char>))
                 {
                     var charArray = value as char[];
-                    Encoding.UTF7.GetBytes(charArray).CopyTo(data.Slice(plcObjectBinding.Offset, charArray.Length));
+                    for (int i = 0; i < charArray.Length; i++)
+                    {
+                        data[plcObjectBinding.Offset + i] = Convert.ToByte(charArray[i]);
+                    }
                 }
                 else
                 {
@@ -215,7 +218,12 @@ namespace Papper.Types
                 else if (type == typeof(char))
                 {
                     var d = data.Slice(plcObjectBinding.Offset, ArrayLength).ToArray();
-                    return Encoding.UTF7.GetChars(d);
+                    var result = new char[ArrayLength];
+                    for (int i = 0; i < ArrayLength; i++)
+                    {
+                        result[i] = Convert.ToChar(d[i]);
+                    }
+                    return result;
                 }
                 else if (fully && t != null)
                 {

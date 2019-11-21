@@ -21,7 +21,7 @@
     <!--<SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>C:\Projects\Tools\signatures\papper\papper.pfx</AssemblyOriginatorKeyFile>-->
     <PackageReleaseNotes>* fixed some bugs according to multiple access</PackageReleaseNotes>
-    <Version>2.0.2</Version>
+    <Version>2.0.3</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
