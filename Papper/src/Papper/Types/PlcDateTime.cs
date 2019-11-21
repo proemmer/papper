@@ -7,7 +7,7 @@ namespace Papper.Types
     {
         // Use share size for this data type, we will never change the size
         private static readonly PlcSize _size = new PlcSize { Bytes = 8 };
-        private static readonly DateTime _epochTime = new DateTime(1900, 01, 01, 00, 00, 00);
+        private static readonly DateTime _epochTime = new DateTime(1990, 01, 01, 00, 00, 00);
         public override Type DotNetType => typeof(DateTime);
 
 
@@ -22,7 +22,8 @@ namespace Papper.Types
             int bt = data[plcObjectBinding.Offset];
             //BCD conversion
             bt = (((bt >> 4)) * 10) + ((bt & 0x0f));
-            var year = bt < 90 ? 2000 : 1900;
+            var year = bt < 90 ? 2000 : 1900;  //  BCD#90 = 1990 ; BCD#0 = 2000; BCD#89 = 2089
+
             year += bt;
 
             //month

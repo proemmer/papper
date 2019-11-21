@@ -146,7 +146,7 @@ namespace Papper
         /// <returns></returns>
         public static byte[] ToByteArray<T>(this T value, int maxLength)
         {
-            if (value is string str) return Encoding.ASCII.GetBytes(str).SubArray(0, maxLength);
+            if (value is string str) return Encoding.UTF7.GetBytes(str).SubArray(0, maxLength);
             var rawdata = new byte[Marshal.SizeOf(value)];
             var handle = GCHandle.Alloc(rawdata, GCHandleType.Pinned);
             Marshal.StructureToPtr(value, handle.AddrOfPinnedObject(), false);

@@ -1,9 +1,11 @@
-﻿using Papper;
+﻿using Insite.Customer.Data.DB_BST1_Tel_Gruppe_05;
+using Papper;
 using PapperTests.Mappings;
 using PMSComponentHost.VTagStorerLoader;
 using System;
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 using UnitTestSuit.Mappings;
 using Xunit;
 using Xunit.Abstractions;
@@ -69,6 +71,7 @@ namespace DataTypeTests
         [InlineData(typeof(string), "Test", new byte[] { 0x04, 0x04, 0x54, 0x65, 0x73, 0x74 })]
         [InlineData(typeof(char), 'X', new byte[] { 0x58 })]
         [InlineData(typeof(DateTime), "Mon 16 Jun 8:30 AM 2008", new byte[] { 0x08, 0x06, 0x16, 0x08, 0x30, 0x00, 0x00, 0x01 })]
+        [InlineData(typeof(string), "Störung; Demnächst kommen          ", new byte[] { 35, 35, 83, 116, 246, 114, 117, 110, 103, 59, 32, 68, 101, 109, 110, 228, 99, 104, 115, 116, 32, 107, 111, 109, 109, 101, 110, 32, 32, 32, 32, 32, 32, 32 ,32 ,32, 32 })]
 
         public void SerializePlcType(Type t, object value, byte[] expected)
         {
@@ -83,6 +86,45 @@ namespace DataTypeTests
             Assert.Equal(expected, data);
         }
 
+        [Fact]
+        public void SerializeObjectTest()
+        {
+            var s = new PlcDataMapperSerializer();
+            var t = typeof(DB_BST1_Tel_Gruppe_05);
+            var blockData = "{\r\n  \"tel\": {\r\n    \"Auswahl_Text\": 2,\r\n    \"Status\": 2,\r\n    \"Text\": [\r\n      \"Hat sich erledigt\",\r\n      \"St\\u00F6rung; Sofort kommen\",\r\n      \"St\\u00F6rung; Demn\\u00E4chst kommen\",\r\n      \"Stillstand\",\r\n      \"\",\r\n      \"\",\r\n      \"\",\r\n      \"\",\r\n      \"\",\r\n      \"\"\r\n    ],\r\n    \"Ruftyp\": \"IH_MECHAN\",\r\n    \"Datum\": [\r\n      \"1990-01-01T00:00:00\",\r\n      \"1990-01-01T00:00:00\",\r\n      \"1990-01-01T00:00:00\",\r\n      \"2006-12-20T00:00:00\",\r\n      \"1990-01-01T00:00:00\",\r\n      \"1990-01-01T00:00:00\",\r\n      \"1990-01-01T00:00:00\",\r\n      \"1990-01-01T00:00:00\",\r\n      \"1990-01-01T00:00:00\",\r\n      \"1990-01-01T00:00:00\"\r\n    ],\r\n    \"Zeit\": [\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      },\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      },\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      },\r\n      {\r\n        \"Ticks\": 258707970000,\r\n        \"Days\": 0,\r\n        \"Hours\": 7,\r\n        \"Milliseconds\": 797,\r\n        \"Minutes\": 11,\r\n        \"Seconds\": 10,\r\n        \"TotalDays\": 0.2994305208333333,\r\n        \"TotalHours\": 7.1863325,\r\n        \"TotalMilliseconds\": 25870797,\r\n        \"TotalMinutes\": 431.17995,\r\n        \"TotalSeconds\": 25870.797\r\n      },\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      },\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      },\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      },\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      },\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      },\r\n      {\r\n        \"Ticks\": 0,\r\n        \"Days\": 0,\r\n        \"Hours\": 0,\r\n        \"Milliseconds\": 0,\r\n        \"Minutes\": 0,\r\n        \"Seconds\": 0,\r\n        \"TotalDays\": 0,\r\n        \"TotalHours\": 0,\r\n        \"TotalMilliseconds\": 0,\r\n        \"TotalMinutes\": 0,\r\n        \"TotalSeconds\": 0\r\n      }\r\n    ],\r\n    \"Tel_lfd_Nr\": [\r\n      0,\r\n      0,\r\n      0,\r\n      2,\r\n      0,\r\n      0,\r\n      0,\r\n      0,\r\n      0,\r\n      0\r\n    ]\r\n  }\r\n}";
+            var data = JsonSerializer.Deserialize(blockData, t, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+            var plcData = s.Serialize(t, data);
+
+        }
+
+
+        [Theory]
+        [InlineData(typeof(int), 0, new byte[] { 0x00, 0x00, 0x00, 0x00 })]
+        [InlineData(typeof(int), 3, new byte[] { 0x00, 0x00, 0x00, 0x03 })]
+        [InlineData(typeof(short), (short)6, new byte[] { 0x00, 0x06 })]
+        [InlineData(typeof(ushort), (ushort)2, new byte[] { 0x00, 0x02 })]
+        [InlineData(typeof(float), (float)0.2, new byte[] { 0x3e, 0x4c, 0xcc, 0xcd })]
+        [InlineData(typeof(string), "Test", new byte[] { 0x04, 0x04, 0x54, 0x65, 0x73, 0x74 })]
+        [InlineData(typeof(char), 'X', new byte[] { 0x58 })]
+        [InlineData(typeof(DateTime), "Mon 16 Jun 8:30 AM 2008", new byte[] { 0x08, 0x06, 0x16, 0x08, 0x30, 0x00, 0x00, 0x01 })]
+        [InlineData(typeof(string), "Störung; Demnächst kommen          ", new byte[] { 35, 35, 83, 116, 246, 114, 117, 110, 103, 59, 32, 68, 101, 109, 110, 228, 99, 104, 115, 116, 32, 107, 111, 109, 109, 101, 110, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32 })]
+
+        public void DeserializePlcType(Type t, object expected, byte[] value)
+        {
+            var s = new PlcDataMapperSerializer();
+            if (t == typeof(DateTime) && expected is string str)
+            {
+                expected = DateTime.ParseExact(str, "ddd dd MMM h:mm tt yyyy", CultureInfo.InvariantCulture);
+            }
+
+            var data = s.Deserialize(t, value);
+
+            Assert.Equal(expected, data);
+        }
+
 
 
         [Fact]
@@ -91,7 +133,7 @@ namespace DataTypeTests
 
             var st = new byte[] { 0x20, 0x20, 0x00, Convert.ToByte('T'), Convert.ToByte('X'), 0x00, 0x20, 0x20, 0x00, 0x20, 0x20 };
 
-            var s = Encoding.ASCII.GetString(st, 0, st.Length).Trim();
+            var s = Encoding.UTF7.GetString(st, 0, st.Length).Trim();
 
 
         }
