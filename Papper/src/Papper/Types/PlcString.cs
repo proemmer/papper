@@ -41,7 +41,7 @@ namespace Papper.Types
             var maxLength = data[plcObjectBinding.Offset];
             var curLength = data[plcObjectBinding.Offset + 1];
             var take = Math.Min(Math.Min(maxLength, curLength), Size.Bytes - 2);
-            return Encoding.ASCII.GetString(data.ToArray(), plcObjectBinding.Offset + 2, take);
+            return Encoding.UTF7.GetString(data.ToArray(), plcObjectBinding.Offset + 2, take);
         }
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)

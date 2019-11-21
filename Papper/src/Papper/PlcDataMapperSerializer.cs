@@ -44,7 +44,7 @@ namespace Papper
         public object Deserialize(Type t, byte[] data)
         {
             var binding = _mappingEntryProvider.GetMappingEntryForType(t).BaseBinding;
-            if (data.Length < binding.Size) ExceptionThrowHelper.ThrowArgumentOutOfRangeException(nameof(data));
+            if (t != typeof(string) && data.Length < binding.Size) ExceptionThrowHelper.ThrowArgumentOutOfRangeException(nameof(data));
             return binding.ConvertFromRaw(data);
         }
 
