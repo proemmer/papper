@@ -143,7 +143,7 @@ namespace DataTypeTests
                     { "SafeMotion.Slots[254].UnitTimestamp",Normalize( DateTime.Now)},
                 };
             
-            Test(mapping, accessDict, new DateTime(599266080000000000));  //01.01.1900
+            Test(mapping, accessDict, new DateTime(1990, 1, 1));  //01.01.1900
         }
 
 

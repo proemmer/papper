@@ -5,6 +5,7 @@ using System.Text;
 using Xunit;
 using Papper.Types;
 using Papper.Internal;
+using System.Buffers.Binary;
 
 namespace PapperTests
 {
@@ -91,6 +92,42 @@ namespace PapperTests
 
             type.ConvertToRaw(value, binding, data);
             var result1 = (TimeSpan)type.ConvertFromRaw(binding, data);
+            Assert.Equal(value, result1);
+
+        }
+
+        [Theory]
+        [InlineData(1990, 1, 1)]
+        [InlineData(1991, 1, 1)]
+        [InlineData(2019, 2, 5)]
+        [InlineData(2169, 6, 6)]
+        public void TestDate(int year, int month, int day)
+        {
+            var value = new DateTime(year, month, day);
+
+            var type = new PlcDate("TEST");
+            var data = new byte[type.Size.Bytes];
+            var binding = new PlcObjectBinding(new PlcRawData(512), type, 0, 0);
+
+            type.ConvertToRaw(value, binding, data);
+            var result1 = (DateTime)type.ConvertFromRaw(binding, data);
+            Assert.Equal(value, result1);
+
+        }
+
+        [Theory]
+        [InlineData(1990, 1, 1, 0, 0, 0, 0)]
+        [InlineData(2089, 12, 31, 23, 59, 59, 999)]
+        public void TestDateTime(int year, int month, int day, int hour, int min, int sec, int millis)
+        {
+            var value = new DateTime(year, month, day, hour, min, sec, millis);
+
+            var type = new PlcDateTime("TEST");
+            var data = new byte[type.Size.Bytes];
+            var binding = new PlcObjectBinding(new PlcRawData(512), type, 0, 0);
+
+            type.ConvertToRaw(value, binding, data);
+            var result1 = (DateTime)type.ConvertFromRaw(binding, data);
             Assert.Equal(value, result1);
 
         }

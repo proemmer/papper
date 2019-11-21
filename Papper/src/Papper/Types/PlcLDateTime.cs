@@ -8,7 +8,7 @@ namespace Papper.Types
     {
         // Use share size for this data type, we will never change the size
         private static readonly PlcSize _size = new PlcSize { Bytes = 8 };
-        private static readonly DateTime _epochTime = new DateTime(1900, 01, 01, 00, 00, 00);
+        private static readonly DateTime _epochTime = new DateTime(1970, 01, 01, 00, 00, 00);
         public override Type DotNetType => typeof(DateTime);
 
         public PlcLDateTime(string name) : base(name)
