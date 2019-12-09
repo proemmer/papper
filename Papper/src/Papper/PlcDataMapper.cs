@@ -16,7 +16,7 @@ namespace Papper
 {
     // This project can output the Class library as a NuGet Package.
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
-    public class PlcDataMapper
+    public class PlcDataMapper : IDisposable
     {
         #region Delegates
         /// <summary>
@@ -50,10 +50,10 @@ namespace Papper
         private const int _readDataHeaderLength = 18;
         private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
         private readonly ReaderWriterLockSlim _mappingsLock = new ReaderWriterLockSlim();
-        private ReadOperation _readEventHandler;
-        private WriteOperation _writeEventHandler;
-        private UpdateMonitoring _updateHandler;
-        private ReadBlockInfo _blockInfoHandler;
+        private ReadOperation? _readEventHandler;
+        private WriteOperation? _writeEventHandler;
+        private UpdateMonitoring? _updateHandler;
+        private ReadBlockInfo? _blockInfoHandler;
         #endregion
 
         #region Properties
@@ -101,10 +101,10 @@ namespace Papper
         }
 
         public PlcDataMapper(int pduSize,
-                            ReadOperation readEventHandler,
-                            WriteOperation writeEventHandler,
-                            UpdateMonitoring updateHandler,
-                            ReadBlockInfo blockInfoHandler,
+                            ReadOperation? readEventHandler,
+                            WriteOperation? writeEventHandler,
+                            UpdateMonitoring? updateHandler,
+                            ReadBlockInfo? blockInfoHandler,
                             OptimizerType optimizer = OptimizerType.Block)
         {
             PduSize = pduSize;
@@ -114,16 +114,12 @@ namespace Papper
             _blockInfoHandler = blockInfoHandler;
             Optimizer = OptimizerFactory.CreateOptimizer(optimizer);
             ReadDataBlockSize = pduSize - _readDataHeaderLength;
-            if (ReadDataBlockSize <= 0) ExceptionThrowHelper.ThrowInvalidPduSizeException(_readDataHeaderLength);
-            PlcMetaDataTreePath.CreateAbsolutePath(PlcObjectResolver.RootNodeName);
-        }
+            if (ReadDataBlockSize <= 0)
+            {
+                ExceptionThrowHelper.ThrowInvalidPduSizeException(_readDataHeaderLength);
+            }
 
-        ~PlcDataMapper()
-        {
-            _readEventHandler = null;
-            _writeEventHandler = null;
-            _updateHandler = null;
-            _blockInfoHandler = null;
+            PlcMetaDataTreePath.CreateAbsolutePath(PlcObjectResolver.RootNodeName);
         }
 
         /// <summary>
@@ -138,11 +134,14 @@ namespace Papper
         /// <returns></returns>
         public IEnumerable<string> GetVariablesOf(string mapping)
         {
-            var result = new List<string>();
-            if (EntriesByName.TryGetValue(mapping, out var entry))
+            List<string> result = new List<string>();
+            if (EntriesByName.TryGetValue(mapping, out IEntry entry))
+            {
                 return PlcObjectResolver.GetLeafs(entry.PlcObject, result);
+            }
+
             ExceptionThrowHelper.ThrowMappingNotFoundException(mapping);
-            return null;
+            return Array.Empty<string>();
         }
 
         /// <summary>
@@ -153,12 +152,17 @@ namespace Papper
         public bool AddMapping(Type type)
         {
             if (type == null)
+            {
                 ExceptionThrowHelper.ThrowArgumentNullException<Type>(nameof(type));
+            }
 
-            var mappingAttributes = type.GetTypeInfo().GetCustomAttributes<MappingAttribute>().ToList();
+            List<MappingAttribute> mappingAttributes = type!.GetTypeInfo().GetCustomAttributes<MappingAttribute>().ToList();
             if (!mappingAttributes.Any())
-                ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type);
-            return AddMappingsInternal(type, mappingAttributes);
+            {
+                ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type!);
+            }
+
+            return AddMappingsInternal(type!, mappingAttributes);
         }
 
         /// <summary>
@@ -170,12 +174,16 @@ namespace Papper
         public bool AddMapping(Type type, params MappingAttribute[] mappingAttributes)
         {
             if (type == null)
+            {
                 ExceptionThrowHelper.ThrowArgumentNullException<Type>(nameof(type));
+            }
 
             if (!mappingAttributes.Any())
-                ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type);
+            {
+                ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type!);
+            }
 
-            return AddMappingsInternal(type, mappingAttributes);
+            return AddMappingsInternal(type!, mappingAttributes);
         }
 
         /// <summary>
@@ -186,11 +194,15 @@ namespace Papper
         public bool RemoveMappings(Type type)
         {
             if (type == null)
+            {
                 ExceptionThrowHelper.ThrowArgumentNullException<Type>(nameof(type));
+            }
 
-            var mappingAttributes = type.GetTypeInfo().GetCustomAttributes<MappingAttribute>().ToList();
+            List<MappingAttribute> mappingAttributes = type.GetTypeInfo().GetCustomAttributes<MappingAttribute>().ToList();
             if (!mappingAttributes.Any())
-                ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type);
+            {
+                ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type!);
+            }
 
             return RemoveMappingsInternal(mappingAttributes.Select(x => x.Name));
         }
@@ -250,10 +262,10 @@ namespace Papper
         {
 
             // because we need the byte arrays only for converting, we can use the ArrayPool
-            var memoryBuffer = new Dictionary<PlcRawData, byte[]>();
+            Dictionary<PlcRawData, byte[]> memoryBuffer = new Dictionary<PlcRawData, byte[]>();
             try
             {
-                KeyValuePair<string, DataPack> UpdatePack(string key, DataPack pack, int dataOffset)
+                static KeyValuePair<string, DataPack> UpdatePack(string key, DataPack pack, int dataOffset)
                 {
                     pack.Data = pack.Data.Slice(dataOffset, pack.Length);
                     return new KeyValuePair<string, DataPack>(key, pack);
@@ -261,15 +273,15 @@ namespace Papper
 
 
 
-                var values = vars.ToDictionary(x => x.Address, x => x.Value);
+                Dictionary<string, object> values = vars.ToDictionary(x => x.Address, x => x.Value);
                 // determine executions
-                var executions = DetermineExecutions(vars);
+                List<Execution> executions = DetermineExecutions(vars);
 
-                var prepared = executions.SelectMany(execution => execution.Bindings.Where(b => !b.Value.MetaData.IsReadOnly))
+                Dictionary<string, DataPack> prepared = executions.SelectMany(execution => execution.Bindings.Where(b => !b.Value.MetaData.IsReadOnly))
                                          .Select(x => UpdatePack(x.Key, Create(x.Key, x.Value, values, memoryBuffer), x.Value.Offset))
                                          .ToDictionary(x => x.Key, x => x.Value);
 
-                await WriteToPlcAsync(prepared.Values);
+                await WriteToPlcAsync(prepared.Values).ConfigureAwait(false);
 
                 executions.ForEach(exec => exec.Invalidate());
 
@@ -287,7 +299,7 @@ namespace Papper
         /// <param name="changed"></param>
         public void OnDataChanges(IEnumerable<DataPack> changed)
         {
-            foreach (var item in _subscriptions.ToList())
+            foreach (Subscription item in _subscriptions.ToList())
             {
                 item.OnDataChanged(changed);
             }
@@ -304,18 +316,18 @@ namespace Papper
 
         internal bool RemoveSubscription(Subscription sub) => _subscriptions.Remove(sub);
 
-        internal Task ReadFromPlcAsync(Dictionary<Execution, DataPack> needUpdate) => _readEventHandler?.Invoke(needUpdate.Values);
+        internal Task ReadFromPlcAsync(Dictionary<Execution, DataPack> needUpdate) => _readEventHandler != null ? _readEventHandler.Invoke(needUpdate.Values) : Task.CompletedTask;
 
-        internal Task WriteToPlcAsync(IEnumerable<DataPack> packs) => _writeEventHandler?.Invoke(packs);
+        internal Task WriteToPlcAsync(IEnumerable<DataPack> packs) => _writeEventHandler != null ? _writeEventHandler.Invoke(packs) : Task.CompletedTask;
 
-        internal Task UpdateMonitoringItemsAsync(IEnumerable<DataPack> monitoring, bool add = true) => _updateHandler?.Invoke(monitoring, add);
+        internal Task UpdateMonitoringItemsAsync(IEnumerable<DataPack> monitoring, bool add = true) => _updateHandler != null ? _updateHandler.Invoke(monitoring, add) : Task.CompletedTask;
 
-        internal Task ReadBlockInfos(IEnumerable<MetaDataPack> infos) => _blockInfoHandler?.Invoke(infos);
+        internal Task ReadBlockInfos(IEnumerable<MetaDataPack> infos) => _blockInfoHandler != null ? _blockInfoHandler.Invoke(infos) : Task.CompletedTask;
 
         internal List<Execution> DetermineExecutions<T>(IEnumerable<T> vars) where T : IPlcReference
         {
             return vars.GroupBy(x => x.Mapping)
-                                .Select((execution) => GetOrAddMapping(execution.Key, out var entry)
+                                .Select((execution) => GetOrAddMapping(execution.Key, out IEntry entry)
                                                                 ? (execution, entry)
                                                                 : (null, null))
                                 .Where(x => x.execution != null)
@@ -323,19 +335,19 @@ namespace Papper
                                 .ToList();
         }
 
-        internal PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions,
+        internal static PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions,
                                                       Dictionary<Execution, DataPack> needUpdate,
                                                       DateTime? changedAfter = null,
                                                       Func<IEnumerable<KeyValuePair<string, PlcObjectBinding>>,
-                                                      IEnumerable<KeyValuePair<string, PlcObjectBinding>>> filter = null,
+                                                      IEnumerable<KeyValuePair<string, PlcObjectBinding>>>? filter = null,
                                                       bool doNotConvert = false)
         {
             if (filter == null)
             {
                 filter = (x) => x;
             }
-            return executions.Select(exec => needUpdate.TryGetValue(exec, out var pack) ? exec.ApplyDataPack(pack) : exec)
-                             .Where(exec => HasChangesSinceLastRun(exec, changedAfter)) 
+            return executions.Select(exec => needUpdate.TryGetValue(exec, out DataPack pack) ? exec.ApplyDataPack(pack) : exec)
+                             .Where(exec => HasChangesSinceLastRun(exec, changedAfter))
                              .GroupBy(exec => exec.ExecutionResult) // Group by execution result
                              .Where(res => res.Key == ExecutionResult.Ok) // filter by OK results
                              .SelectMany(group => filter(group.SelectMany(g => g.Bindings))
@@ -345,25 +357,25 @@ namespace Papper
                                                        )).ToArray();
         }
 
-        private static bool HasChangesSinceLastRun(Execution exec, DateTime? changedAfter) 
+        private static bool HasChangesSinceLastRun(Execution exec, DateTime? changedAfter)
             => changedAfter == null || exec.LastChange > changedAfter;
 
-        internal PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions, IEnumerable<DataPack> packs)
+        internal static PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions, IEnumerable<DataPack> packs)
         {
             return packs.Select(pack => executions.FirstOrDefault(x => pack.Selector == x.PlcRawData.Selector &&
                                                                 pack.Offset == x.PlcRawData.Offset &&
                                                                 pack.Length == (x.PlcRawData.Size > 0 ? x.PlcRawData.Size : 1))?.ApplyDataPack(pack))
                         .Where(exec => exec != null)
-                        .GroupBy(exec => exec.ExecutionResult) // Group by execution result
+                        .GroupBy(exec => exec!.ExecutionResult) // Group by execution result
                         .Where(res => res.Key == ExecutionResult.Ok) // filter by OK results
-                        .SelectMany(group => group.SelectMany(g => g.Bindings)
+                        .SelectMany(group => group.SelectMany(g => g!.Bindings)
                                                     .Select(b => new PlcReadResult(b.Key,
                                                                     b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache.Span),
                                                                     group.Key)
                                                     )).ToArray();
         }
 
-        internal Dictionary<Execution, DataPack> UpdateableItems(List<Execution> executions, bool onlyOutdated, Func<IEnumerable<string>, DateTime, bool> forceUpdate = null)
+        internal static Dictionary<Execution, DataPack> UpdateableItems(List<Execution> executions, bool onlyOutdated, Func<IEnumerable<string>, DateTime, bool>? forceUpdate = null)
         {
             return executions.Where(exec => !onlyOutdated ||
                                             exec.ValidationTimeMs <= 0 ||
@@ -381,7 +393,7 @@ namespace Papper
 
 
         internal bool IsValidReference(PlcWatchReference watchs)
-            => GetOrAddMapping(watchs.Mapping, out var entry) &&
+            => GetOrAddMapping(watchs.Mapping, out IEntry entry) &&
                 (entry is MappingEntry && entry.PlcObject.Get(new PlcMetaDataTreePath(watchs.Variable)) != null) ||
                 (entry is RawEntry);
         #endregion
@@ -389,9 +401,9 @@ namespace Papper
 
         private DataPack Create(string key, PlcObjectBinding binding, Dictionary<string, object> values, Dictionary<PlcRawData, byte[]> memoryBuffer)
         {
-            byte[] GetOrCreateBufferAndApplyValue(PlcObjectBinding plcBinding, Dictionary<PlcRawData, byte[]> dict, object value)
+            static byte[] GetOrCreateBufferAndApplyValue(PlcObjectBinding plcBinding, Dictionary<PlcRawData, byte[]> dict, object value)
             {
-                if (!dict.TryGetValue(plcBinding.RawData, out var buffer))
+                if (!dict.TryGetValue(plcBinding.RawData, out byte[] buffer))
                 {
                     buffer = ArrayPool<byte>.Shared.Rent(plcBinding.RawData.MemoryAllocationSize);
                     dict.Add(plcBinding.RawData, buffer);
@@ -410,7 +422,7 @@ namespace Papper
                 return buffer;
             }
 
-            (var begin, var end) = CreateBitMasks(binding);
+            (byte begin, byte end) = CreateBitMasks(binding);
             return new DataPack
             {
                 Selector = binding.RawData.Selector,
@@ -425,9 +437,9 @@ namespace Papper
         }
 
 
-        private int GetSize(PlcObjectBinding binding)
+        private static int GetSize(PlcObjectBinding binding)
         {
-            if (binding.MetaData is PlcBool plcBool)
+            if (binding.MetaData is PlcBool)
             {
                 return 1;
             }
@@ -438,7 +450,7 @@ namespace Papper
             return binding.Size;
         }
 
-        private (byte begin, byte end) CreateBitMasks(PlcObjectBinding binding)
+        private static (byte begin, byte end) CreateBitMasks(PlcObjectBinding binding)
         {
             byte begin = 0;
             byte end = 0;
@@ -450,21 +462,24 @@ namespace Papper
             {
                 if (plcArray.Offset.Bits > 0 || ((plcArray.ArrayLength % 8) != 0))
                 {
-                    var take = 8 - plcArray.Offset.Bits;
-                    foreach (var item in plcArray.Childs.Take(take).OfType<PlcObject>())
+                    int take = 8 - plcArray.Offset.Bits;
+                    foreach (PlcObject item in plcArray.Childs.Take(take).OfType<PlcObject>())
                     {
                         begin = Converter.SetBit(begin, item.Offset.Bits, true);
                     }
 
-                    var lastItems = ((plcArray.Offset.Bits + plcArray.ArrayLength) % 8);
+                    int lastItems = ((plcArray.Offset.Bits + plcArray.ArrayLength) % 8);
                     if (lastItems > 0)
                     {
-                        foreach (var item in plcArray.Childs.Skip(plcArray.ArrayLength - lastItems).OfType<PlcObject>())
+                        foreach (PlcObject item in plcArray.Childs.Skip(plcArray.ArrayLength - lastItems).OfType<PlcObject>())
                         {
                             end = Converter.SetBit(end, item.Offset.Bits, true);
                         }
 
-                        if (begin == 0) begin = 0xFF;
+                        if (begin == 0)
+                        {
+                            begin = 0xFF;
+                        }
                     }
                     else if (begin > 0)
                     {
@@ -479,23 +494,27 @@ namespace Papper
 
         private async Task<PlcReadResult[]> InternalReadAsync(IEnumerable<PlcReadReference> vars, bool doNotConvert)
         {
-            var variables = vars;
+            IEnumerable<PlcReadReference> variables = vars;
             // determine executions
-            var executions = DetermineExecutions(variables);
+            List<Execution> executions = DetermineExecutions(variables);
 
             // determine outdated
-            var needUpdate = UpdateableItems(executions, true);  // true = read some items from cache!!
+            Dictionary<Execution, DataPack> needUpdate = UpdateableItems(executions, true);  // true = read some items from cache!!
 
             // read from plc
-            await ReadFromPlcAsync(needUpdate);
+            await ReadFromPlcAsync(needUpdate).ConfigureAwait(false);
 
             // transform to result
-            return CreatePlcReadResults(executions, needUpdate, null, null, doNotConvert);
+            return PlcDataMapper.CreatePlcReadResults(executions, needUpdate, null, null, doNotConvert);
         }
 
-        private object ConvertToResult(PlcObjectBinding binding, bool doNotConvert = false)
+        private static object? ConvertToResult(PlcObjectBinding binding, bool doNotConvert = false)
         {
-            if (doNotConvert) return binding.RawData.ReadDataCache.Slice(binding.Offset, binding.Size).ToArray();
+            if (doNotConvert)
+            {
+                return binding.RawData.ReadDataCache.Slice(binding.Offset, binding.Size).ToArray();
+            }
+
             return binding?.ConvertFromRaw(binding.RawData.ReadDataCache.Span);
         }
 
@@ -516,7 +535,7 @@ namespace Papper
                 case "CT":
                 case var s when Regex.IsMatch(s, "^DB\\d+$"):
                     {
-                        using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
+                        using (UpgradeableGuard upgradeableGuard = new UpgradeableGuard(_mappingsLock))
                         {
                             if (!EntriesByName.TryGetValue(mapping, out entry))
                             {
@@ -536,48 +555,84 @@ namespace Papper
 
         private bool AddMappingsInternal(Type type, IEnumerable<MappingAttribute> mappingAttributes)
         {
-            foreach (var mapping in mappingAttributes)
+            foreach (MappingAttribute mapping in mappingAttributes)
             {
-                using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
+                using UpgradeableGuard upgradeableGuard = new UpgradeableGuard(_mappingsLock);
+                if (EntriesByName.TryGetValue(mapping.Name, out IEntry existingMapping) && existingMapping is MappingEntry mappingEntry)
                 {
-                    if (EntriesByName.TryGetValue(mapping.Name, out var existingMapping) && existingMapping is MappingEntry mappingEntry)
+                    if (mappingEntry.Mapping == mapping && mappingEntry.Type == type)
                     {
-                        if (mappingEntry.Mapping == mapping && mappingEntry.Type == type)
-                            continue; // mapping already exists
-                        return false; // mapping is invalid, because it exists for an other type
+                        continue; // mapping already exists
                     }
-                    using (upgradeableGuard.UpgradeToWriterLock())
-                    {
-                        EntriesByName.Add(mapping.Name, new MappingEntry(this, mapping, type, _tree, mapping.ObservationRate));
-                    }
+
+                    return false; // mapping is invalid, because it exists for an other type
+                }
+                using (upgradeableGuard.UpgradeToWriterLock())
+                {
+                    EntriesByName.Add(mapping.Name, new MappingEntry(this, mapping, type, _tree, mapping.ObservationRate));
                 }
             }
             return true;
         }
 
-        private bool RemoveMappingsInternal(IEnumerable<string> mappingNames)
+        private bool RemoveMappingsInternal(IEnumerable<string>? mappingNames)
         {
-            foreach (var mapping in mappingNames)
+            if (mappingNames == null) return false;
+            foreach (string mapping in mappingNames)
             {
-                using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
+                using UpgradeableGuard upgradeableGuard = new UpgradeableGuard(_mappingsLock);
+                if (EntriesByName.TryGetValue(mapping, out IEntry existingMapping) && existingMapping is MappingEntry mappingEntry)
                 {
-                    if (EntriesByName.TryGetValue(mapping, out var existingMapping) && existingMapping is MappingEntry mappingEntry)
+                    if (mappingEntry.Mapping.Name == mapping)
                     {
-                        if (mappingEntry.Mapping.Name == mapping)
+                        using (upgradeableGuard.UpgradeToWriterLock())
                         {
-                            using (upgradeableGuard.UpgradeToWriterLock())
+                            if (!EntriesByName.Remove(mapping))
                             {
-                                if (!EntriesByName.Remove(mapping))
-                                {
-                                    return false;
-                                }
+                                return false;
                             }
                         }
-
                     }
+
                 }
             }
             return true;
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    _mappingsLock.Dispose();
+                }
+
+                _readEventHandler = null;
+                _writeEventHandler = null;
+                _updateHandler = null;
+                _blockInfoHandler = null;
+
+                disposedValue = true;
+            }
+        }
+
+        ~PlcDataMapper()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(false);
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
+
     }
 }

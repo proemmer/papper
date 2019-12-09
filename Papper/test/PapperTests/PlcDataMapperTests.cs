@@ -954,6 +954,22 @@ namespace DataTypeTests
 
         }
 
+        [Fact]
+        public void TestGetAddressOfType()
+        {
+            var mapping = "DB_MotionHMI";
+            var result1 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}.HMI.MotionLine[8].Txt.Position[1]"));
+
+            mapping = "DB_Safety2";
+            var result2 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{ mapping}.SafeMotion.Slots"));
+            var result3 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{ mapping}.SafeMotion.Slots[2]"));
+            var result4 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{ mapping}.SafeMotion.Slots[2].SlotId"));
+            var result5 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{ mapping}.SafeMotion.Slots[2].SafeSlotVersion"));
+
+
+
+        }
+
 
         [Fact]
         public void TestWriteRawDataToStruct()

@@ -36,13 +36,14 @@ namespace Papper
         /// <param name="address"> [Mapping].[Variable]</param>
         /// <param name="value">Value to write</param>
         /// <returns>An instance of a <see cref="PlcWriteReference"/></returns>
-        public static PlcWriteReference FromAddress(string address, object value) =>  new PlcWriteReference(address, value);
+        public static PlcWriteReference FromAddress(string address, object? value) =>  new PlcWriteReference(address, value);
 
-        public PlcWriteReference(string address, object value)
+        public PlcWriteReference(string address, object? value)
         {
             Address = address;
-            _dot = address.IndexOf(".");
-            Value = value;
+            Value = value ?? ExceptionThrowHelper.ThrowArgumentNullException<object>(nameof(value));
+            _dot = address == null ? -1 : address.IndexOf(".", System.StringComparison.InvariantCulture);
+            
         }
 
         /// <summary>
@@ -64,6 +65,7 @@ namespace Papper
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="PlcWriteReference"/></returns>
         public static IEnumerable<PlcWriteReference> FromRoot(string root, IEnumerable<KeyValuePair<string,object>> variables)
         {
+            if (variables == null) yield break;
             foreach (var variable in variables)
             {
                 yield return FromAddress($"{root}.{variable.Key}", variable.Value);
@@ -89,6 +91,7 @@ namespace Papper
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="PlcWriteReference"/></returns>
         public static IEnumerable<PlcWriteReference> FromRoot(string root, IEnumerable<(string variable, object value)> variables)
         {
+            if (variables == null) yield break;
             foreach (var variable in variables)
             {
                 yield return FromAddress($"{root}.{variable.variable}", variable.value);

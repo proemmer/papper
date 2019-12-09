@@ -6,7 +6,7 @@ namespace Papper
     {
         private readonly MappingEntryProvider _mappingEntryProvider;
 
-        public PlcDataAccessor(MappingEntryProvider mappingEntryProvider = null)
+        public PlcDataAccessor(MappingEntryProvider? mappingEntryProvider = null)
         {
             _mappingEntryProvider = mappingEntryProvider ?? new MappingEntryProvider();
         }
@@ -32,8 +32,10 @@ namespace Papper
         /// <returns></returns>
         public TValue GetValue<TValue>(Type type, string variable, Span<byte> data)
         {
+            if (type == null || variable == null) return default;
             var mappingEntry = _mappingEntryProvider.GetMappingEntryForType(type);
-            _mappingEntryProvider.UpdateVariables(mappingEntry, variable);
+            if (mappingEntry == null) return default;
+            MappingEntryProvider.UpdateVariables(mappingEntry, variable);
             return mappingEntry.Bindings.TryGetValue(variable, out var binding) ? (TValue)binding.ConvertFromRaw(data) : default;
         }
 
@@ -61,8 +63,10 @@ namespace Papper
         /// <returns></returns>
         public bool SetValue<TValue>(Type type, string variable, TValue value, Span<byte> data)
         {
+            if (type == null || value == null) return false;
             var mappingEntry = _mappingEntryProvider.GetMappingEntryForType(type);
-            _mappingEntryProvider.UpdateVariables(mappingEntry, variable);
+            if (mappingEntry == null) return false;
+            MappingEntryProvider.UpdateVariables(mappingEntry, variable);
             if (mappingEntry.Bindings.TryGetValue(variable, out var binding))
             {
                 binding.ConvertToRaw(value, data);

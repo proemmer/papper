@@ -8,11 +8,11 @@ namespace Papper.Extensions.Notification
 {
     public class PlcNotificationEventArgs : EventArgs, IEnumerable<PlcReadResult>
     {
-        private readonly IEnumerable<PlcReadResult> _changedItems;
-        private readonly Exception _exception;
+        private readonly IEnumerable<PlcReadResult>? _changedItems;
+        private readonly Exception? _exception;
         private readonly bool _completed;
 
-        public PlcNotificationEventArgs(IEnumerable<PlcReadResult> changedItems) => _changedItems = changedItems;
+        public PlcNotificationEventArgs(IEnumerable<PlcReadResult>? changedItems) => _changedItems = changedItems;
 
         public PlcNotificationEventArgs(Exception exception)
         {
@@ -30,14 +30,14 @@ namespace Papper.Extensions.Notification
         /// <summary>
         /// If an exception occurred, there are no changed items in the event arguments, but there should be an exception here. 
         /// </summary>
-        public Exception Exception => _exception;
+        public Exception? Exception => _exception;
 
         /// <summary>
         /// Indexed Value access
         /// </summary>
         /// <param name="name">[Mapping].[Variable]</param>
         /// <returns></returns>
-        public object this[string name] => _changedItems?.FirstOrDefault(x => x.Address == name).Value;
+        public object? this[string name] => _changedItems?.FirstOrDefault(x => x.Address == name).Value;
 
         /// <summary>
         /// Convert the Changed variables to an object, so every changed variable is an Property
@@ -76,7 +76,7 @@ namespace Papper.Extensions.Notification
             {
                 var levels = asterix ? items.Address.Split('.') : items.Variable.Split('.');
                 var levelCount = levels.Length;
-                var parent = item;
+                ExpandoObject? parent = item;
                 foreach (var level in levels)
                 {
                     var name = level;
@@ -155,7 +155,7 @@ namespace Papper.Extensions.Notification
         /// Enumerator of changed fields
         /// </summary>
         /// <returns></returns>
-        public IEnumerator<PlcReadResult> GetEnumerator() => _changedItems.GetEnumerator();
+        public IEnumerator<PlcReadResult> GetEnumerator() => (_changedItems ?? Array.Empty<PlcReadResult>()).GetEnumerator();
 
         /// <summary>
         /// 
@@ -169,16 +169,16 @@ namespace Papper.Extensions.Notification
         /// <param name="parent"></param>
         /// <param name="name"></param>
         /// <param name="value"></param>
-        private static void AddProperty(dynamic parent, string name, object value)
+        private static void AddProperty(dynamic parent, string name, object? value)
         {
-            var list = (parent as List<dynamic>);
+            var list = (parent as List<dynamic?>);
             if (list != null)
             {
                 list.Add(value);
             }
             else
             {
-                if (parent is IDictionary<string, object> dictionary)
+                if (parent is IDictionary<string, object?> dictionary)
                     dictionary[name] = value;
             }
         }
@@ -189,9 +189,9 @@ namespace Papper.Extensions.Notification
         /// <param name="parent"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        private static dynamic GetPropertyValue(dynamic parent, string name)
+        private static dynamic? GetPropertyValue(dynamic? parent, string name)
         {
-            if (parent is IDictionary<string, object> dictionary && dictionary.TryGetValue(name, out var ret))
+            if (parent is IDictionary<string, object?> dictionary && dictionary.TryGetValue(name, out var ret))
                 return ret;
             return null;
         }

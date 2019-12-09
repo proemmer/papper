@@ -55,22 +55,21 @@ namespace Papper
 
         private string GetTypeSign<T>()
         {
-
             var t = default(T);
-            switch (t)
+            return t switch
             {
-                case bool _: return "X";
-                case byte _: return "B";
-                case char _: return "C";
-                case int _: return "DI";
-                case uint _: return "DW";
-                case short _: return "I";
-                case ushort _: return "W";
-                case float _: return "R";
-                case string _: return "S";
-            }
+                bool _ => "X",
+                byte _ => "B",
+                char _ => "C",
+                int _ => "DI",
+                uint _ => "DW",
+                short _ => "I",
+                ushort _ => "W",
+                float _ => "R",
+                string _ => "S",
 
-            return "B";
+                _ => "B",
+            };
         }
     }
 }

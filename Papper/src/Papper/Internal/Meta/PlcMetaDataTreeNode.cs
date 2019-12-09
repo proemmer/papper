@@ -8,8 +8,8 @@ namespace Papper.Internal
     internal class PlcMetaDataTreeNode : PlcMetaDataBaseTreeNode
     {
         private static readonly List<ITreeNode> _empty = new List<ITreeNode>();
-        private List<ITreeNode> _childs;
-        private Dictionary<string, ITreeNode> _childByNameCache;
+        private List<ITreeNode>? _childs;
+        private Dictionary<string, ITreeNode>? _childByNameCache;
 
 
         public PlcMetaDataTreeNode(string name)
@@ -37,14 +37,14 @@ namespace Papper.Internal
             var child = GetChildByName(name);
             if (child == null)
                 ExceptionThrowHelper.ThrowChildNodeException(name, false);
-            _childs?.Remove(child);
+            _childs?.Remove(child!);
             if (child is PlcMetaDataBaseTreeNode baseTreeNode) baseTreeNode.Parent = null;
-            return child;
+            return child!;
         }
 
-        public virtual ITreeNode GetChildByName(string name)
+        public virtual ITreeNode? GetChildByName(string name)
         {
-            ITreeNode tn;
+            ITreeNode? tn;
             if (_childByNameCache == null)
                 _childByNameCache = new Dictionary<string, ITreeNode>();
             else if (_childByNameCache.TryGetValue(name, out tn))
@@ -75,13 +75,13 @@ namespace Papper.Internal
                 Parent.ReverseAccept(visit);
         }
 
-        public override ITreeNode Get(ITreePath path)
+        public override ITreeNode? Get(ITreePath path)
         {
             int dummy = 0;
             return Get(path, ref dummy);
         }
 
-        public override ITreeNode Get(ITreePath path, ref int offset, bool getRef = false)
+        public override ITreeNode? Get(ITreePath path, ref int offset, bool getRef = false)
         {
             if (path.IsPathToCurrent)
                 return this;
@@ -115,7 +115,7 @@ namespace Papper.Internal
                     AddChild(new PlcMetaDataTreeNode(nextNode));
                     child = GetChildByName(nextNode);
                 }
-                child.AddChild(path.StepDown(), node);
+                child?.AddChild(path.StepDown(), node);
             }
         }
 

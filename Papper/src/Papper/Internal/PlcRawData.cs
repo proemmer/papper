@@ -13,11 +13,11 @@ namespace Papper.Internal
         private readonly int _partitionSize;
         private readonly int _readDataBlockSize;
         private DateTime _lastUpdate;
-        private Dictionary<int, Partiton> _partitons;
+        private Dictionary<int, Partiton>? _partitons = null;
 
         public IDictionary<string, Tuple<int, PlcObject>> References { get; private set; }
         
-        public string Selector { get; set; }
+        public string? Selector { get; set; }
         public int Offset { get; set; }
         public int Size
         {
@@ -33,7 +33,7 @@ namespace Papper.Internal
 
         public int MemoryAllocationSize { get; private set; }
 
-        private int CalcRawDataSize(int size)
+        private static int CalcRawDataSize(int size)
         {
             size = size > 0 ? size : 2;
             if (size % 2 != 0)

@@ -1,4 +1,5 @@
 ﻿using Papper.Internal;
+using Papper.Types;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,24 +23,26 @@ namespace Papper.Extensions.Metadata
         public static async Task<MetaDataResult[]> ReadMetaDataAsync(this PlcDataMapper papper, IEnumerable<string> mappings)
         {
             var results = new List<MetaDataPack>();
-            foreach (var mapping in mappings)
+            if (mappings != null && papper != null)
             {
-                if (papper.EntriesByName.TryGetValue(mapping, out var entry))
+                foreach (var mapping in mappings)
                 {
-                    results.Add(new MetaDataPack
+                    if (papper.EntriesByName.TryGetValue(mapping, out var entry))
                     {
-                        MappingName = entry.PlcObject.Name,
-                        AbsoluteName = entry.PlcObject.Selector
-                    });
+                        results.Add(new MetaDataPack
+                        {
+                            MappingName = entry.PlcObject.Name,
+                            AbsoluteName = entry.PlcObject.Selector ?? string.Empty
+                        });
+                    }
+                    else
+                    {
+                        ExceptionThrowHelper.ThrowMappingNotFoundException(mapping);
+                    }
                 }
-                else
-                {
-                    ExceptionThrowHelper.ThrowMappingNotFoundException(mapping);
-                }
+
+                await papper.ReadBlockInfos(results).ConfigureAwait(false);
             }
-
-            await papper.ReadBlockInfos(results);
-
             return results.Select(x => new MetaDataResult(x.MetaData, x.ExecutionResult)).ToArray();
 
         }
@@ -54,20 +57,20 @@ namespace Papper.Extensions.Metadata
         /// <returns></returns>
         public static PlcItemAddress GetAddressOf(this PlcDataMapper papper, IPlcReference var)
         {
-            if (papper.EntriesByName.TryGetValue(var.Mapping, out var entry))
+            if (papper != null && var != null && papper.EntriesByName.TryGetValue(var.Mapping, out var entry))
             {
                 if (entry is Entry e) e.UpdateInternalState(new List<string>() { var.Variable });
                 if (entry.Variables.TryGetValue(var.Variable, out var varibleEntry))
                 {
                     return new PlcItemAddress(
                         entry.PlcObject.Selector,
-                        varibleEntry.Item2.ElemenType,
+                        varibleEntry.Item2 is PlcArray arr ? arr.ElemenType.MakeArrayType() : varibleEntry.Item2.ElemenType ?? varibleEntry.Item2.DotNetType,
                         new PlcSize { Bytes = varibleEntry.Item1 + varibleEntry.Item2.ByteOffset, Bits = varibleEntry.Item2.BitOffset },
                         varibleEntry.Item2.Size
                         );
                 }
             }
-            ExceptionThrowHelper.ThrowInvalidVariableException($"{var.Mapping}.{var.Variable}");
+            ExceptionThrowHelper.ThrowInvalidVariableException($"{var?.Mapping}.{var?.Variable}");
             return default;
         }
 

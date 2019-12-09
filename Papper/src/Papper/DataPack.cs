@@ -4,7 +4,7 @@ namespace Papper
 {
     public class DataPack
     {
-        public string Selector { get; set; }
+        public string? Selector { get; set; }
         public int Offset { get; set; }
         public int Length { get; set; }
 

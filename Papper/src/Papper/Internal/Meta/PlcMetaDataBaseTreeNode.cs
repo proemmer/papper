@@ -6,9 +6,9 @@ namespace Papper.Internal
     internal abstract class PlcMetaDataBaseTreeNode : ITreeNode
     {
         private readonly string _name;
-        private ITreePath _savedPath;
-        private ITreeNode _parent;
-        public PlcObject Data { get; set; }
+        private ITreePath? _savedPath;
+        private ITreeNode? _parent;
+        public PlcObject? Data { get; set; }
 
         protected PlcMetaDataBaseTreeNode(string name) => _name = name;
 
@@ -16,7 +16,7 @@ namespace Papper.Internal
 
         public ITreeNode Root => (_parent == null) ? this : _parent.Root;
 
-        public ITreeNode Parent
+        public ITreeNode? Parent
         {
             get => _parent;
             internal set
@@ -33,8 +33,8 @@ namespace Papper.Internal
         public abstract void AddChild(ITreeNode child);
         public abstract void AddChild(ITreePath path, ITreeNode child);
         public abstract ITreeNode RemoveChild(string name);
-        public abstract ITreeNode Get(ITreePath path);
-        public abstract ITreeNode Get(ITreePath path, ref int offset, bool getRef = false);
+        public abstract ITreeNode? Get(ITreePath path);
+        public abstract ITreeNode? Get(ITreePath path, ref int offset, bool getRef = false);
         public abstract void Accept(VisitNode visit);
         public abstract void ReverseAccept(VisitNode visit);
 
@@ -46,13 +46,13 @@ namespace Papper.Internal
             {
                 SetupPath();
             }
-            return _savedPath;
+            return _savedPath!;
         }
 
         private void SetupPath()
         {
             var nodeNames = new List<string>();
-            ITreeNode upper = this;
+            ITreeNode? upper = this;
             do
             {
                 nodeNames.Insert(0, upper.Name);

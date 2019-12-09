@@ -21,13 +21,13 @@ namespace Papper
             public MappingEntry(PlcObject plcObject)
             {
                 PlcObject = plcObject ?? ExceptionThrowHelper.ThrowArgumentNullException<PlcObject>(nameof(plcObject));
-                BaseBinding = new PlcObjectBinding(new PlcRawData(plcObject.ByteSize), plcObject, 0, 0, true);
+                BaseBinding = new PlcObjectBinding(new PlcRawData(plcObject!.ByteSize), plcObject, 0, 0, true);
                 Variables = new Dictionary<string, Tuple<int, PlcObject>>();
                 Bindings = new Dictionary<string, PlcObjectBinding>();
             }
         }
 
-        internal MappingEntry GetMappingEntryForType(Type type, object data = null)
+        internal MappingEntry? GetMappingEntryForType(Type type, object? data = null)
         {
             if (!_entries.TryGetValue(type, out var mappingEntry))
             {
@@ -36,7 +36,7 @@ namespace Papper
                     if (!_entries.TryGetValue(type, out mappingEntry))
                     {
                         var plcObject = PlcObjectFactory.CreatePlcObjectFromType(type, data) ?? PlcObjectResolver.GetMapping(type.Name, _tree, type, true);
-                        mappingEntry = new MappingEntry(plcObject);
+                        mappingEntry = new MappingEntry(plcObject!);
                         _entries.Add(type, mappingEntry);
                     }
                 }
@@ -44,7 +44,7 @@ namespace Papper
             return mappingEntry;
         }
 
-        internal bool UpdateVariables(MappingEntry mappingEntry, string variable)
+        internal static bool UpdateVariables(MappingEntry mappingEntry, string variable)
         {
             if (PlcObjectResolver.AddPlcObjects(mappingEntry.PlcObject, mappingEntry.Variables, new List<string> { variable }))
             {

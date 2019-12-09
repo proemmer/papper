@@ -3,14 +3,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Globalization;
 using System.Linq;
 
 namespace Papper.Types
 {
     internal abstract class PlcObject : PlcMetaDataTreeNode, IPlcObject
     {
-        public string Selector { get; set; }
-        public Type ElemenType { get; set; }
+        public string? Selector { get; set; }
+        public Type? ElemenType { get; set; }
         public bool AllowOddByteOffsetInArray { get; set; }
 
         public PlcSize Offset { get; } = new PlcSize();
@@ -19,27 +20,26 @@ namespace Papper.Types
 
         public virtual int ByteOffset => Offset.Bytes;
         public virtual int BitOffset => Offset.Bits;
-        public virtual int ByteSize => Size.Bytes;
-        public virtual int BitSize => Size.Bits;
+        public virtual int ByteSize => Size == null ? 0 : Size.Bytes;
+        public virtual int BitSize => Size == null ? 0 : Size.Bits;
 
         public abstract Type DotNetType { get; }
 
         public IEnumerable<IPlcObject> ChildVars => Childs.OfType<IPlcObject>();
 
-        public virtual PlcSize Size { get; protected set; }
+        public virtual PlcSize? Size { get; protected set; }
 
-        public static PlcObject AddPlcObjectToTree(PlcObject obj, ITree tree, ITreePath path)
+        public static PlcObject? AddPlcObjectToTree(PlcObject obj, ITree tree, ITreePath path)
         {
             var node = PlcMetaDataTreePath.CreateNodePath(path, obj);
+            if (node == null) return null;
             if (!(tree.Get(node) is PlcObject metaDataNode))
             {
                 lock (tree.Root)
                 {
-                    metaDataNode = tree.Get(node) as PlcObject;
-                    if (metaDataNode == null)
-                        tree.Root.AddChild(path, obj);
-                    else
-                        return metaDataNode;
+                    if (tree.Get(node) is PlcObject plcObj)
+                        return plcObj;
+                    tree.Root.AddChild(path, obj);
                 }
                 return obj;
             }
@@ -57,12 +57,12 @@ namespace Papper.Types
         public abstract object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data);
         public abstract void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data);
 
-        public virtual object StringToObject(string value)
+        public virtual object? StringToObject(string value)
         {
             try
             {
                 var type = PlcObjectFactory.GetTypeForPlcObject(GetType());
-                return Convert.ChangeType(value, type);
+                return Convert.ChangeType(value, type, CultureInfo.InvariantCulture);
             }
             catch
             { }
@@ -75,7 +75,7 @@ namespace Papper.Types
             var t2 = obj2.GetType();
 
             if (t1 == t2) { return t1 != typeof(ExpandoObject) ? ElementEqual(obj1, obj2) : DynamicObjectCompare(obj1, obj2); }
-            try { return ElementEqual(obj1, Convert.ChangeType(obj2, t1)); } catch { }
+            try { return ElementEqual(obj1, Convert.ChangeType(obj2, t1, CultureInfo.InvariantCulture)); } catch { }
             return false;
         }
 

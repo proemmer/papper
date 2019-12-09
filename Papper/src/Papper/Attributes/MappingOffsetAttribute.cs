@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 
 namespace Papper.Attributes
 {
@@ -44,7 +45,7 @@ namespace Papper.Attributes
 
         public override int GetHashCode()
         {
-            return string.Format("{0}.{1}", ByteOffset, BitOffset).GetHashCode();
+            return string.Format(CultureInfo.InvariantCulture, "{0}.{1}", ByteOffset, BitOffset).GetHashCode();
         }
     }
 }

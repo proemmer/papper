@@ -36,7 +36,7 @@ namespace Papper
         public PlcReadReference(string address)
         {
             Address = address;
-            _dot = address.IndexOf(".");
+            _dot = address == null ? -1 : address.IndexOf(".", System.StringComparison.InvariantCulture);
         }
 
 
@@ -58,6 +58,7 @@ namespace Papper
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="PlcReadReference"/></returns>
         public static IEnumerable<PlcReadReference> FromRoot(string root, IEnumerable<string> variables)
         {
+            if (variables == null) yield break;
             foreach (var variable in variables)
             {
                 yield return FromAddress($"{root}.{variable}");

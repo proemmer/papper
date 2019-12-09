@@ -3,6 +3,7 @@ using Papper.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -61,19 +62,19 @@ namespace Papper.Internal
                     if (parts.Length >= 2)
                     {
                         if (plcObject is PlcBool)
-                            plcObject.Offset.Bits = int.Parse(parts[1]);
+                            plcObject.Offset.Bits = int.Parse(parts[1], CultureInfo.InvariantCulture);
 
                         if (plcObject is ISupportStringLengthAttribute plcs)
-                            plcs.StringLength = int.Parse(parts[1]);
+                            plcs.StringLength = int.Parse(parts[1], CultureInfo.InvariantCulture);
 
                         if (!(plcObject is PlcBool || plcObject is ISupportStringLengthAttribute) || parts.Length >= 3)
                         {
-                            var length = int.Parse(parts.Last());
+                            var length = int.Parse(parts.Last(), CultureInfo.InvariantCulture);
                             if (length > 0) length--;
                             plcObject = new PlcArray(value, plcObject, 0, length);
                         }
                     }
-                    plcObject.Offset.Bytes = int.Parse(parts[0]);
+                    plcObject.Offset.Bytes = int.Parse(parts[0], CultureInfo.InvariantCulture);
                     if (!plcObjects.ContainsKey(value))
                     {
                         adds.Add(value, new Tuple<int, PlcObject>(0, plcObject));
@@ -99,9 +100,9 @@ namespace Papper.Internal
             return updated;
         }
 
-        private static PlcObject DataTypeToPlcObject(string value, StringBuilder dataType)
+        private static PlcObject? DataTypeToPlcObject(string value, StringBuilder dataType)
         {
-            PlcObject plcObject = null;
+            PlcObject? plcObject = null;
             switch (dataType.ToString())
             {
                 case "X":
@@ -308,13 +309,14 @@ namespace Papper.Internal
         /// <summary>
         /// Try to get the mapping from MetaTree. If the data are not in the tree, try to create and add it. 
         /// </summary>
-        internal static PlcObject GetMapping(string name, ITree tree, Type t, bool allowAddingWithoutMappingAttribute = false)
+        internal static PlcObject? GetMapping(string? name, ITree tree, Type t, bool allowAddingWithoutMappingAttribute = false)
         {
             if (string.IsNullOrWhiteSpace(name)) return null;
+
             var nodePathStack = new Stack<string>();
             nodePathStack.Push(RootNodeName);
             nodePathStack.Push(InstancesNodeName);
-            foreach (var part in name.Split('.'))
+            foreach (var part in name!.Split('.'))
                 nodePathStack.Push(part);
 
             var path = PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse());
@@ -324,10 +326,10 @@ namespace Papper.Internal
                 if (t == null) ExceptionThrowHelper.ThrowArgumentNullException(nameof(t));
 
                 var mapping = t.GetTypeInfo().GetCustomAttributes<MappingAttribute>().FirstOrDefault(m => m.Name == name);
-                if (mapping != null)
+                if (mapping?.Name == name)
                 {
                     nodePathStack.Pop();
-                    var plcObj = new PlcObjectRef(name, GetMetaData(tree, t))
+                    var plcObj = new PlcObjectRef(name, GetMetaData(tree, t!))
                     {
                         Offset = { Bytes = mapping.Offset },
                         Selector = mapping.Selector
@@ -338,7 +340,7 @@ namespace Papper.Internal
                 else if (allowAddingWithoutMappingAttribute)
                 {
                     nodePathStack.Pop();
-                    var plcObj = new PlcObjectRef(name, GetMetaData(tree, t));
+                    var plcObj = new PlcObjectRef(name, GetMetaData(tree, t!));
                     PlcObject.AddPlcObjectToTree(plcObj, tree, PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse()));
                     obj = plcObj;
                 }
@@ -383,49 +385,52 @@ namespace Papper.Internal
                 var parent = new PlcStruct(name, t);
                 PlcObject.AddPlcObjectToTree(parent, tree, PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse()));
                 nodePathStack.Push(parent.Name);
-                PlcObject pred = null;
+                PlcObject? pred = null;
                 DebugOutPut("{0}{{", name);
 
                 foreach (var pi in t.GetTypeInfo().DeclaredProperties)
                 {
-                    var plcObject = PlcObjectFactory.CreatePlcObject(pi);
+                    PlcObject? plcObject = PlcObjectFactory.CreatePlcObject(pi);
 
                     if (plcObject is PlcArray plcObjectArray && (plcObjectArray.LeafElementType ?? plcObjectArray.ArrayType) is PlcStruct)
-                        plcObjectArray.ArrayType = GetMetaData(tree, plcObjectArray.ElemenType);
+                        plcObjectArray.ArrayType = GetMetaData(tree, plcObjectArray.ElemenType!);
                     else if (plcObject is PlcStruct)
                         plcObject = new PlcObjectRef(plcObject.Name, GetMetaData(tree, pi.PropertyType));
 
 
-                    var hasCustomOffset = PlcObjectFactory.GetOffsetFromAttribute(pi, ref byteOffset, ref bitOffset);
-                    AddPlcObject(tree, pred, plcObject, nodePathStack, ref byteOffset, ref bitOffset, hasCustomOffset);
-                    pred = plcObject;
+                    if (plcObject != null)
+                    {
+                        var hasCustomOffset = PlcObjectFactory.GetOffsetFromAttribute(pi, ref byteOffset, ref bitOffset);
+                        AddPlcObject(tree, pred, plcObject, nodePathStack, ref byteOffset, ref bitOffset, hasCustomOffset);
+                        pred = plcObject;
+                    }
                 }
                 DebugOutPut("}} = {0}", parent.Size.Bytes);
                 nodePathStack.Pop();
                 obj = parent;
             }
-            return obj as PlcObject;
+            return (obj as PlcObject)!;
         }
 
         /// <summary>
         /// Calculates the Offset of the new Object, add it to the tree and update the offsets
         /// </summary>
-        private static void AddPlcObject(ITree tree, PlcObject pred, PlcObject plcObject, IEnumerable<string> nodePathStack, ref int byteOffset, ref int bitOffset, bool hasCustomOffset)
+        private static void AddPlcObject(ITree tree, PlcObject? pred, PlcObject plcObject, IEnumerable<string> nodePathStack, ref int byteOffset, ref int bitOffset, bool hasCustomOffset)
         {
             if (!hasCustomOffset)
                 CalculateOffset(pred, plcObject, ref byteOffset, ref bitOffset);
             plcObject.Offset.Bytes = byteOffset;
             plcObject.Offset.Bits = bitOffset;
-            DebugOutPut("{0}: Offset:{1,3}.{2}    Size={3}.{4}", plcObject.Name.PadRight(20), byteOffset, bitOffset, plcObject.Size.Bytes, plcObject.Size.Bits);
+            DebugOutPut("{0}: Offset:{1,3}.{2}    Size={3}.{4}", plcObject.Name.PadRight(20), byteOffset, bitOffset, plcObject.Size == null ? 0 : plcObject.Size.Bytes, plcObject.Size == null ? 0 : plcObject.Size.Bits);
             PlcObject.AddPlcObjectToTree(plcObject, tree, PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse()));
-            byteOffset += plcObject.Size.Bytes;
-            bitOffset += plcObject.Size.Bits;
+            byteOffset += plcObject.Size == null ? 0 : plcObject.Size.Bytes;
+            bitOffset += plcObject.Size == null ? 0 : plcObject.Size.Bits;
         }
 
         /// <summary>
         /// Calculate the real offsets in the PLC.
         /// </summary>
-        internal static void CalculateOffset(PlcObject pred, PlcObject cur, ref int byteOffset, ref int bitOffset)
+        internal static void CalculateOffset(PlcObject? pred, PlcObject? cur, ref int byteOffset, ref int bitOffset)
         {
             if (byteOffset % 2 == 0 && bitOffset == 0)
             {

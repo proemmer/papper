@@ -1,6 +1,7 @@
 ﻿using Papper.Attributes;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 
@@ -58,7 +59,7 @@ namespace Papper.Types
             {"S7Counter", typeof (PlcS7Counter)},
         };
 
-        public static PlcObject CreatePlcObjectFromType(Type t, object value)
+        public static PlcObject? CreatePlcObjectFromType(Type t, object? value)
         {
             if (TypeMatch.TryGetValue(t, out var plcType))
             {
@@ -77,9 +78,8 @@ namespace Papper.Types
                 }
                 else if (plcObject is PlcArray)
                 {
-                    if (value is Array a)
+                    if (value is Array a && plcObject is PlcArray obj)
                     {
-                        var obj = (plcObject as PlcArray);
                         obj.From = 0;
                         obj.To = a.Length - 1;
                         obj.Dimension = 1;
@@ -90,16 +90,16 @@ namespace Papper.Types
             return null;
         }
 
-        public static PlcObject CreatePlcObject(PropertyInfo pi, int? arrayIndex = null)
+        public static PlcObject? CreatePlcObject(PropertyInfo pi, int? arrayIndex = null)
         {
             var plcType = GetTypeFromAttribute(pi);
-            PlcObject instance;
-            PlcObject leafPlcObject = null;
+            PlcObject? instance;
+            PlcObject? leafPlcObject = null;
             var name = GetName(pi);
 
             if (pi.PropertyType.IsArray && arrayIndex == null)
             {
-                PlcObject element;
+                PlcObject? element;
                 var elementType = pi.PropertyType.GetElementType();
                 var dimensions = 0;
 
@@ -137,6 +137,11 @@ namespace Papper.Types
                     element = Activator.CreateInstance(typeof(PlcStruct), name, pi.PropertyType) as PlcObject;
                 }
 
+                if(element != null)
+                {
+                    element.ElemenType = elementType;
+                }
+
                 instance = Activator.CreateInstance(typeof(PlcArray), name, element, 0, 0) as PlcObject;
                 if (instance != null)
                 {
@@ -154,28 +159,30 @@ namespace Papper.Types
             {
                 if (plcType != null || TypeMatch.TryGetValue(arrayIndex == null ? pi.PropertyType : pi.PropertyType.GetElementType(), out plcType))
                 {
-                    instance = Activator.CreateInstance(plcType, arrayIndex == null ? name : name + string.Format("[{0}]", arrayIndex)) as PlcObject;
+                    instance = Activator.CreateInstance(plcType, arrayIndex == null ? name : name + string.Format(CultureInfo.InvariantCulture, "[{0}]", arrayIndex)) as PlcObject;
                     UpdateSize(pi, instance);
                 }
                 else
                 {
-                    instance = Activator.CreateInstance(typeof(PlcStruct), arrayIndex == null ? name : name + string.Format("[{0}]", arrayIndex), pi.PropertyType) as PlcObject;
+                    instance = Activator.CreateInstance(typeof(PlcStruct), arrayIndex == null ? name : name + string.Format(CultureInfo.InvariantCulture, "[{0}]", arrayIndex), pi.PropertyType) as PlcObject;
                 }
 
                 if (instance != null)
+                {
                     instance.ElemenType = pi.PropertyType;
+                }
             }
 
             UpdateReadOnlyPoperty(pi, instance);
             return instance;
         }
 
-        public static PlcObject CreatePlcObjectForArrayIndex(PlcObject obj, int? arrayIndex, int from)
+        public static PlcObject? CreatePlcObjectForArrayIndex(PlcObject obj, int? arrayIndex, int from)
         {
             var plcType = obj.GetType();
             var plcObject = obj is PlcArray arrayElement ?
-                Activator.CreateInstance(plcType, arrayIndex == null ? obj.Name : obj.Name + string.Format("[{0}]", arrayIndex), arrayElement.ArrayType, arrayElement.From, arrayElement.To) as PlcObject :
-                Activator.CreateInstance(plcType, arrayIndex == null ? obj.Name : obj.Name + string.Format("[{0}]", arrayIndex)) as PlcObject;
+                Activator.CreateInstance(plcType, arrayIndex == null ? obj.Name : obj.Name + string.Format(CultureInfo.InvariantCulture, "[{0}]", arrayIndex), arrayElement.ArrayType, arrayElement.From, arrayElement.To) as PlcObject :
+                Activator.CreateInstance(plcType, arrayIndex == null ? obj.Name : obj.Name + string.Format(CultureInfo.InvariantCulture, "[{0}]", arrayIndex)) as PlcObject;
 
             if (plcObject != null && arrayIndex != null)
             {
@@ -183,12 +190,17 @@ namespace Papper.Types
                 {
                     case PlcBool plcbool:
                         {
-                            plcbool.AssigneOffsetFrom((((int)arrayIndex - @from) * obj.Size.Bits) + obj.Offset.Bits);
+
+                            plcbool.AssigneOffsetFrom((((int)arrayIndex - @from) * (obj.Size != null ? obj.Size.Bits : 0) + obj.Offset.Bits));
+                            
                         }
                         break;
                     case ISupportStringLengthAttribute plcString:
                         {
-                            plcString.AssigneLengthFrom(obj as ISupportStringLengthAttribute);
+                            if (obj is ISupportStringLengthAttribute o)
+                            {
+                                plcString.AssigneLengthFrom(o);
+                            }
                         }
                         break;
                 }
@@ -196,16 +208,19 @@ namespace Papper.Types
             return plcObject;
         }
 
-        private static void UpdateReadOnlyPoperty(MemberInfo pi, PlcObject plcObject)
+        private static void UpdateReadOnlyPoperty(MemberInfo pi, PlcObject? plcObject)
         {
-            var readOnlyAttribute = pi.GetCustomAttributes<ReadOnlyAttribute>().FirstOrDefault();
-            if (readOnlyAttribute != null)
+            if (plcObject != null)
             {
-                plcObject.IsReadOnly = readOnlyAttribute.IsReadOnly;
+                var readOnlyAttribute = pi.GetCustomAttributes<ReadOnlyAttribute>().FirstOrDefault();
+                if (readOnlyAttribute != null)
+                {
+                    plcObject.IsReadOnly = readOnlyAttribute.IsReadOnly;
+                }
             }
         }
 
-        private static void UpdateSize(MemberInfo pi, PlcObject plcObject, int dimension = 0)
+        private static void UpdateSize(MemberInfo pi, PlcObject? plcObject, int dimension = 0)
         {
             if (plcObject is ISupportStringLengthAttribute s)
             {
@@ -216,9 +231,8 @@ namespace Papper.Types
             else if (plcObject is PlcArray)
             {
                 var bounds = pi.GetCustomAttributes<ArrayBoundsAttribute>().OfType<ArrayBoundsAttribute>().FirstOrDefault(x => x.Dimension == dimension);
-                if (bounds != null)
+                if (bounds != null && plcObject is PlcArray obj)
                 {
-                    var obj = (plcObject as PlcArray);
                     obj.From = bounds.From;
                     obj.To = bounds.To;
                     obj.Dimension = bounds.Dimension;
@@ -256,7 +270,7 @@ namespace Papper.Types
             return false;
         }
 
-        private static Type GetTypeFromAttribute(MemberInfo pi)
+        private static Type? GetTypeFromAttribute(MemberInfo pi)
         {
             var attribute = pi.GetCustomAttributes<PlcTypeAttribute>().FirstOrDefault();
             if (attribute != null)

@@ -21,7 +21,7 @@ namespace Papper.Types
             set => _size.Bytes = (value * 2) + 4;
         }
 
-        public override PlcSize Size
+        public override PlcSize? Size
         {
             get => _size;
             protected set {; }
@@ -42,13 +42,13 @@ namespace Papper.Types
 
             var maxLength = BinaryPrimitives.ReadInt16BigEndian(data.Slice(plcObjectBinding.Offset));
             var curLength = BinaryPrimitives.ReadInt16BigEndian(data.Slice(plcObjectBinding.Offset + 2));
-            var take = Math.Min(Math.Min(maxLength, curLength), Size.Bytes - 4) * 2;
+            var take = Math.Min(Math.Min(maxLength, curLength), Size == null ? 0 : Size.Bytes - 4) * 2;
             return Encoding.BigEndianUnicode.GetString(data.Slice(plcObjectBinding.Offset + 4, take).ToArray());
         }
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            var maxLength = Convert.ToInt16((Size.Bytes / 2) - 2);
+            var maxLength = Size == null ? (short)0 : Convert.ToInt16((Size.Bytes / 2) - 2);
             var i = plcObjectBinding.Offset;
             BinaryPrimitives.TryWriteInt16BigEndian(data.Slice(i, 2), maxLength);
             i += 2;

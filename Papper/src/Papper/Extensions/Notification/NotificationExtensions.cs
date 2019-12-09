@@ -72,7 +72,8 @@ namespace Papper.Extensions.Notification
         /// <returns></returns>
         public static Subscription Pause(this Subscription subscription)
         {
-            subscription.CancelCurrentDetection();
+            if (subscription == null) return ExceptionThrowHelper.ThrowArgumentNullException<Subscription>(nameof(subscription));
+            subscription!.CancelCurrentDetection();
             return subscription;
         }
 
@@ -92,35 +93,35 @@ namespace Papper.Extensions.Notification
 
         private static void RunWatchTask(Subscription subscription, OnChangeEventHandler callback)
         {
-            Task.Factory.StartNew(async () =>
+            _ = Task.Factory.StartNew(async() => await  WatchLoop(subscription, callback).ConfigureAwait(false), System.Threading.CancellationToken.None , TaskCreationOptions.LongRunning, TaskScheduler.Current);
+        }
+
+        private static async Task WatchLoop(Subscription subscription, OnChangeEventHandler callback)
+        {
+            while (!subscription!.Watching.IsCompleted)
             {
-                while (!subscription.Watching.IsCompleted)
+                try
                 {
-                    try
+                    var result = await subscription.DetectChangesAsync().ConfigureAwait(false);
+                    if (!result.IsCompleted && !result.IsCanceled)
                     {
-                        var result = await subscription.DetectChangesAsync();
-                        if (!result.IsCompleted && !result.IsCanceled)
-                        {
-                            callback(subscription, new PlcNotificationEventArgs(result.Results));
-                        }
-                        else
-                        {
-                            // is cancelled or completed, so set watching is compled now!
-                            callback(subscription, new PlcNotificationEventArgs());
-                            return;
-                        }
+                        callback(subscription, new PlcNotificationEventArgs(result.Results));
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        // todo
-                        subscription.CancelCurrentDetection();
-                        callback(subscription, new PlcNotificationEventArgs(ex));
+                        // is cancelled or completed, so set watching is compled now!
+                        callback(subscription, new PlcNotificationEventArgs());
                         return;
                     }
                 }
-
-            }, TaskCreationOptions.LongRunning);
+                catch (Exception ex)
+                {
+                    // todo
+                    subscription.CancelCurrentDetection();
+                    callback(subscription, new PlcNotificationEventArgs(ex));
+                    return;
+                }
+            }
         }
-
     }
 }

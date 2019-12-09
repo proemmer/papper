@@ -9,17 +9,17 @@ namespace Papper.Extensions.Conditions
 
         public async static Task<bool> WhenAsync<T1>(this PlcDataMapper papper,
                                                 (PlcReadReference reference, Func<T1, bool> cmp) variable1,
-                                                Func<Task<bool>> then = null,
-                                                Func<Task<bool>> otherwise = null,
+                                                Func<Task<bool>>? then = null,
+                                                Func<Task<bool>>? otherwise = null,
                                                 CancellationToken ct = default,
                                                 int interval = 100)
         {
-
+            if (papper == null) return false;
             do
             {
-                var result = await papper.IfAsync(variable1, then, otherwise);
+                var result = await papper.IfAsync(variable1, then, otherwise).ConfigureAwait(false);
                 if (result) return true;
-                await Task.Delay(interval, ct);
+                await Task.Delay(interval, ct).ConfigureAwait(false);
             } while (ct.IsCancellationRequested);
             return false;
         }
@@ -36,20 +36,21 @@ namespace Papper.Extensions.Conditions
                     PlcReadReference variable1,
                     PlcReadReference variable2,
                     Func<T1, T2, bool> cmp,
-                    Func<Task<bool>> then = null,
-                    Func<Task<bool>> otherwise = null,
+                    Func<Task<bool>>? then = null,
+                    Func<Task<bool>>? otherwise = null,
                     CancellationToken ct = default,
                     int interval = 100)
         {
+            if (papper == null) return false;
             do
             {
                 var result = await papper.IfAsync(variable1,
                                                     variable2,
                                                     cmp,
                                                     then,
-                                                    otherwise);
+                                                    otherwise).ConfigureAwait(false);
                 if (result) return true;
-                await Task.Delay(interval, ct);
+                await Task.Delay(interval, ct).ConfigureAwait(false);
             } while (ct.IsCancellationRequested);
             return false;
         }
@@ -77,11 +78,12 @@ namespace Papper.Extensions.Conditions
                     PlcReadReference variable2,
                     PlcReadReference variable3,
                     Func<T1, T2, T3, bool> cmp,
-                    Func<Task<bool>> then = null,
-                    Func<Task<bool>> otherwise = null,
+                    Func<Task<bool>>? then = null,
+                    Func<Task<bool>>? otherwise = null,
                     CancellationToken ct = default,
                     int interval = 100)
         {
+            if (papper == null) return false;
             do
             {
                 var result = await papper.IfAsync(variable1,
@@ -89,9 +91,9 @@ namespace Papper.Extensions.Conditions
                                                     variable3,
                                                     cmp,
                                                     then,
-                                                    otherwise);
+                                                    otherwise).ConfigureAwait(false);
                 if (result) return true;
-                await Task.Delay(interval, ct);
+                await Task.Delay(interval, ct).ConfigureAwait(false);
             } while (ct.IsCancellationRequested);
             return false;
         }
@@ -120,11 +122,12 @@ namespace Papper.Extensions.Conditions
                             PlcReadReference variable3,
                             PlcReadReference variable4,
                             Func<T1, T2, T3, T4, bool> cmp,
-                            Func<Task<bool>> then = null,
-                            Func<Task<bool>> otherwise = null,
+                            Func<Task<bool>>? then = null,
+                            Func<Task<bool>>? otherwise = null,
                             CancellationToken ct = default,
                             int interval = 100)
         {
+            if (papper == null) return false;
             do
             {
                 var result = await papper.IfAsync(variable1,
@@ -133,9 +136,9 @@ namespace Papper.Extensions.Conditions
                                                     variable4,
                                                     cmp,
                                                     then,
-                                                    otherwise);
+                                                    otherwise).ConfigureAwait(false);
                 if (result) return true;
-                await Task.Delay(interval, ct);
+                await Task.Delay(interval, ct).ConfigureAwait(false);
             } while (ct.IsCancellationRequested);
             return false;
         }
@@ -167,11 +170,12 @@ namespace Papper.Extensions.Conditions
                                     PlcReadReference variable4,
                                     PlcReadReference variable5,
                                     Func<T1, T2, T3, T4, T5, bool> cmp,
-                                    Func<Task<bool>> then = null,
-                                    Func<Task<bool>> otherwise = null,
+                                    Func<Task<bool>>? then = null,
+                                    Func<Task<bool>>? otherwise = null,
                                     CancellationToken ct = default,
                                     int interval = 100)
         {
+            if (papper == null) return false;
             do
             {
                 var result = await papper.IfAsync(variable1,
@@ -181,9 +185,9 @@ namespace Papper.Extensions.Conditions
                                                     variable5,
                                                     cmp,
                                                     then,
-                                                    otherwise);
+                                                    otherwise).ConfigureAwait(false);
                 if (result) return true;
-                await Task.Delay(interval, ct);
+                await Task.Delay(interval, ct).ConfigureAwait(false);
             } while (ct.IsCancellationRequested);
             return false;
         }
@@ -219,11 +223,13 @@ namespace Papper.Extensions.Conditions
                                             PlcReadReference variable5,
                                             PlcReadReference variable6,
                                             Func<T1, T2, T3, T4, T5, T6, bool> cmp,
-                                            Func<Task<bool>> then = null,
-                                            Func<Task<bool>> otherwise = null,
+                                            Func<Task<bool>>? then = null,
+                                            Func<Task<bool>>? otherwise = null,
                                             CancellationToken ct = default,
                                             int interval = 100)
         {
+            if (papper == null) return false;
+
             do
             {
                 var result = await papper.IfAsync(variable1,
@@ -234,9 +240,9 @@ namespace Papper.Extensions.Conditions
                                                     variable6,
                                                     cmp,
                                                     then,
-                                                    otherwise);
+                                                    otherwise).ConfigureAwait(false);
                 if (result) return true;
-                await Task.Delay(interval, ct);
+                await Task.Delay(interval, ct).ConfigureAwait(false);
             } while (ct.IsCancellationRequested);
             return false;
         }
@@ -276,11 +282,13 @@ namespace Papper.Extensions.Conditions
                                             PlcReadReference variable6,
                                             PlcReadReference variable7,
                                             Func<T1, T2, T3, T4, T5, T6, T7, bool> cmp,
-                                            Func<Task<bool>> then = null,
-                                            Func<Task<bool>> otherwise = null,
+                                            Func<Task<bool>>? then = null,
+                                            Func<Task<bool>>? otherwise = null,
                                             CancellationToken ct = default,
                                             int interval = 100)
         {
+            if (papper == null) return false;
+
             do
             {
                 var result = await papper.IfAsync(variable1,
@@ -292,9 +300,9 @@ namespace Papper.Extensions.Conditions
                                                     variable7,
                                                     cmp,
                                                     then,
-                                                    otherwise);
+                                                    otherwise).ConfigureAwait(false);
                 if (result) return true;
-                await Task.Delay(interval, ct);
+                await Task.Delay(interval, ct).ConfigureAwait(false);
             } while (ct.IsCancellationRequested);
             return false;
         }
@@ -339,11 +347,13 @@ namespace Papper.Extensions.Conditions
                                                 PlcReadReference variable7,
                                                 PlcReadReference variable8,
                                                 Func<T1, T2, T3, T4, T5, T6, T7, T8, bool> cmp,
-                                                Func<Task<bool>> then = null,
-                                                Func<Task<bool>> otherwise = null,
+                                                Func<Task<bool>>? then = null,
+                                                Func<Task<bool>>? otherwise = null,
                                                 CancellationToken ct = default,
                                                 int interval = 100)
         {
+            if (papper == null) return false;
+
             do
             {
                 var result = await papper.IfAsync(variable1,
@@ -356,9 +366,9 @@ namespace Papper.Extensions.Conditions
                                                     variable8,
                                                     cmp,
                                                     then,
-                                                    otherwise);
+                                                    otherwise).ConfigureAwait(false);
                 if (result) return true;
-                await Task.Delay(interval, ct);
+                await Task.Delay(interval, ct).ConfigureAwait(false);
             } while (ct.IsCancellationRequested);
             return false;
         }

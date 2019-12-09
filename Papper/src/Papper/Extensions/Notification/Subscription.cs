@@ -13,17 +13,17 @@ namespace Papper.Extensions.Notification
     /// </summary>
     public sealed class Subscription : IDisposable
     {
-        private readonly TaskCompletionSource<object> _watchingTcs = new TaskCompletionSource<object>();
+        private readonly TaskCompletionSource<object?> _watchingTcs = new TaskCompletionSource<object?>();
         private readonly PlcDataMapper _mapper;
         private readonly LruCache _lruCache = new LruCache();
         private readonly Dictionary<string, PlcWatchReference> _variables = new Dictionary<string, PlcWatchReference>();
         private readonly ReaderWriterLockSlim _lock;
         private readonly ChangeDetectionStrategy _changeDetectionStrategy;
         private readonly int _defaultInterval;
-        private AsyncAutoResetEvent<IEnumerable<DataPack>> _changeEvent;
+        private readonly AsyncAutoResetEvent<IEnumerable<DataPack>>? _changeEvent;
 
-        private CancellationTokenSource _cts;
-        private List<Execution> _executions;
+        private CancellationTokenSource? _cts;
+        private List<Execution>? _executions;
         private bool _modified = true;
         private DateTime _lastRun = DateTime.MinValue;
 
@@ -55,7 +55,7 @@ namespace Papper.Extensions.Notification
         /// <param name="mapper">The reference to the plcDatamapper.</param>
         /// <param name="vars">The variables we should watch.</param>
         /// <param name="defaultInterval">setup the default interval, if none was given by the <see cref="PlcWatchReference"/></param>
-        public Subscription(PlcDataMapper mapper, ChangeDetectionStrategy changeDetectionStrategy = ChangeDetectionStrategy.Polling , IEnumerable<PlcWatchReference> vars = null, int defaultInterval = 1000)
+        public Subscription(PlcDataMapper mapper, ChangeDetectionStrategy changeDetectionStrategy = ChangeDetectionStrategy.Polling , IEnumerable<PlcWatchReference>? vars = null, int defaultInterval = 1000)
         {
             _mapper = mapper ?? ExceptionThrowHelper.ThrowArgumentNullException<PlcDataMapper>(nameof(mapper));
             _changeDetectionStrategy = changeDetectionStrategy;
@@ -146,13 +146,13 @@ namespace Papper.Extensions.Notification
         /// </summary>
         /// <param name="vars"></param>
         /// <returns></returns>
-        public PlcReadResult[] ReadResultsFromCache(IEnumerable<PlcWatchReference> vars)
+        public PlcReadResult[]? ReadResultsFromCache(IEnumerable<PlcWatchReference> vars)
         {
-            if (_executions.IsNullOrEmpty() || !vars.Any()) return null;
+            if (_executions!.IsNullOrEmpty() || !vars.Any()) return null;
             var variables = vars.Select(x => x.Address).ToList();
             using (new ReaderGuard(_lock))
             {
-                if (_executions.IsNullOrEmpty()) return null;
+                if (_executions!.IsNullOrEmpty()) return null;
                 return _executions.GroupBy(exec => exec.ExecutionResult) // Group by execution result
                                                      .SelectMany(group => group.SelectMany(g => g.Bindings)
                                                                                .Where(b => variables.Contains(b.Key))
@@ -178,7 +178,7 @@ namespace Papper.Extensions.Notification
 
             try
             {
-                Dictionary<string, int> cycles = null;
+                Dictionary<string, int>? cycles = null;
                 var interval = Interval;
                 while (!Watching.IsCompleted)
                 {
@@ -198,8 +198,8 @@ namespace Papper.Extensions.Notification
                                 _executions = _mapper.DetermineExecutions(_variables.Values);
                                 if (_changeDetectionStrategy == ChangeDetectionStrategy.Event)
                                 {
-                                    var needUpdate = _mapper.UpdateableItems(_executions, false);
-                                    await _mapper.UpdateMonitoringItemsAsync(needUpdate.Values);
+                                    var needUpdate = PlcDataMapper.UpdateableItems(_executions, false);
+                                    await _mapper.UpdateMonitoringItemsAsync(needUpdate.Values).ConfigureAwait(false);
                                 }
                                 _modified = false;
                             }
@@ -212,25 +212,25 @@ namespace Papper.Extensions.Notification
                         continue;
                     }
 
-                    PlcReadResult[] readRes = null;
+                    PlcReadResult[]? readRes = null;
                     var detect = DateTime.Now;
-                    if (_changeDetectionStrategy == ChangeDetectionStrategy.Polling)
+                    if (_changeDetectionStrategy == ChangeDetectionStrategy.Polling || _changeEvent == null)
                     {
                         // determine outdated
-                        var needUpdate = _mapper.UpdateableItems(_executions, true, DetermineChanges(cycles, interval));
+                        var needUpdate = PlcDataMapper.UpdateableItems(_executions, true, DetermineChanges(cycles, interval));
 
                         // read outdated
-                        await _mapper.ReadFromPlcAsync(needUpdate); // Update the read cache;
+                        await _mapper.ReadFromPlcAsync(needUpdate).ConfigureAwait(false); // Update the read cache;
 
                         // filter to get only changed items
-                        readRes = _mapper.CreatePlcReadResults(needUpdate.Keys, needUpdate, _lastRun, (x) => FilterChanged(detect, x));
+                        readRes = PlcDataMapper.CreatePlcReadResults(needUpdate.Keys, needUpdate, _lastRun, (x) => FilterChanged(detect, x));
                     }
                     else
                     {
-                        var packs = await _changeEvent.WaitAsync();
+                        var packs = await _changeEvent.WaitAsync().ConfigureAwait(false);
                         if (packs != null && packs.Any())
                         {
-                            readRes = _mapper.CreatePlcReadResults(_executions, packs);
+                            readRes = PlcDataMapper.CreatePlcReadResults(_executions, packs);
                         }
                     }
 
@@ -247,7 +247,7 @@ namespace Papper.Extensions.Notification
 
                     try
                     {
-                        await Task.Delay(interval, _cts.Token);
+                        await Task.Delay(interval, _cts.Token).ConfigureAwait(false);
                     }
                     catch(TaskCanceledException){}
 
@@ -271,8 +271,9 @@ namespace Papper.Extensions.Notification
         /// <param name="cycles">the cycle interval of the current variable</param>
         /// <param name="cycleInterval">the minimum of all watches</param>
         /// <returns></returns>
-        private static Func<IEnumerable<string>, DateTime, bool> DetermineChanges(Dictionary<string, int> cycles, int cycleInterval)
-            =>  (variables, lastChange) => !cycles.Any() && 
+        private static Func<IEnumerable<string>, DateTime, bool> DetermineChanges(Dictionary<string, int>? cycles, int cycleInterval)
+            =>  (variables, lastChange) => cycles != null && 
+                                           !cycles.Any() && 
                                            !string.IsNullOrWhiteSpace(variables.FirstOrDefault(x => cycles.TryGetValue(x, out var interval) && 
                                                                                                     lastChange.AddMilliseconds(interval < cycleInterval * 2 ? cycleInterval : interval) < DateTime.Now));
 
@@ -288,8 +289,9 @@ namespace Papper.Extensions.Notification
             }
         }
 
-        private bool InternalAddItems(IEnumerable<PlcWatchReference> vars, bool throwExceptions)
+        private bool InternalAddItems(IEnumerable<PlcWatchReference>? vars, bool throwExceptions)
         {
+            if (vars == null || !vars.Any()) return false;
             using (new WriterGuard(_lock))
             {
                 var variables = new Dictionary<string, PlcWatchReference>();
@@ -377,7 +379,7 @@ namespace Papper.Extensions.Notification
         }
 
 
-        private void UpdateWatchCycle(IEnumerable<PlcWatchReference> vars)
+        private void UpdateWatchCycle(IEnumerable<PlcWatchReference>? vars)
         {
             if (vars != null)
             {

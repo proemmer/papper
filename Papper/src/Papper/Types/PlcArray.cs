@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -12,7 +13,6 @@ namespace Papper.Types
     {
 
         public override Type DotNetType => typeof(ExpandoObject);
-
 
         private readonly Dictionary<Type, object> _typeInstances = new Dictionary<Type, object>();
         private readonly Dictionary<int, ITreeNode> _indexCache = new Dictionary<int, ITreeNode>();
@@ -69,14 +69,15 @@ namespace Papper.Types
             }
         }
 
-        public PlcObject LeafElementType { get; set; }
+        public PlcObject? LeafElementType { get; set; }
 
         public override PlcSize Size => _size;
 
         public PlcArray(string name, PlcObject arrayType, int from = 0, int to = 0)
             : base(name)
         {
-            ArrayType = arrayType;
+            _arrayType = arrayType;
+            CalculateSize();
             From = from;
             To = to;
         }
@@ -118,14 +119,15 @@ namespace Papper.Types
 
             if (type == typeof(PlcArray))
                 return ArrayType.ConvertFromRaw(plcObjectBinding, data);
-            if (plcObjectBinding.FullType)
+            if (plcObjectBinding.FullType && plcObjectBinding.MetaData.ElemenType != null)
             {
                 if (!_typeInstances.TryGetValue(plcObjectBinding.MetaData.ElemenType, out var instance))
                 {
                     instance = Activator.CreateInstance(plcObjectBinding.MetaData.ElemenType);
                     _typeInstances.Add(plcObjectBinding.MetaData.ElemenType, instance);
                 }
-                return InternalConvert(plcObjectBinding, instance, data, true, plcObjectBinding.MetaData.ElemenType);
+
+                return InternalConvert(plcObjectBinding, instance ?? null, data, true, plcObjectBinding.MetaData.ElemenType);
             }
             return InternalConvert<ExpandoObject>(plcObjectBinding, data);
 
@@ -146,15 +148,19 @@ namespace Papper.Types
                 //Special handling for byte and char, because of performance (specially with big data)
                 if (type == typeof(PlcByte) && (value is byte[] || value is Memory<byte>))
                 {
-                    var byteArray = value as byte[];
-                    byteArray.CopyTo(data.Slice(plcObjectBinding.Offset, byteArray.Length));
+                    if (value is byte[] byteArray)
+                    {
+                        byteArray.CopyTo(data.Slice(plcObjectBinding.Offset, byteArray.Length));
+                    }
                 }
                 else if (type == typeof(PlcChar) && (value is char[] || value is Memory<char>))
                 {
-                    var charArray = value as char[];
-                    for (int i = 0; i < charArray.Length; i++)
+                    if (value is char[] charArray)
                     {
-                        data[plcObjectBinding.Offset + i] = Convert.ToByte(charArray[i]);
+                        for (int i = 0; i < charArray.Length; i++)
+                        {
+                            data[plcObjectBinding.Offset + i] = Convert.ToByte(charArray[i]);
+                        }
                     }
                 }
                 else
@@ -194,7 +200,7 @@ namespace Papper.Types
         /// <param name="plcObjectBinding"></param>
         /// <param name="type">instance of target type</param>
         /// <returns></returns>
-        private object InternalConvert<T>(PlcObjectBinding plcObjectBinding, T type, Span<byte> data, bool fully = false, Type t = null)
+        private object InternalConvert<T>(PlcObjectBinding plcObjectBinding, T type, Span<byte> data, bool fully = false, Type? t = null)
             => InternalConvert<T>(plcObjectBinding, data, fully, t);
 
         /// <summary>
@@ -204,7 +210,7 @@ namespace Papper.Types
         /// <param name="plcObjectBinding"></param>
         /// <param name="type">instance of target type</param>
         /// <returns></returns>
-        private object InternalConvert<T>(PlcObjectBinding plcObjectBinding, Span<byte> data, bool fully = false, Type t = null)
+        private object InternalConvert<T>(PlcObjectBinding plcObjectBinding, Span<byte> data, bool fully = false, Type? t = null)
         {
 
             if (!data.IsEmpty)
@@ -313,7 +319,7 @@ namespace Papper.Types
         /// </summary>
         /// <param name="name">Name of the child</param>
         /// <returns></returns>
-        public override ITreeNode GetChildByName(string name) => base.GetChildByName(name);
+        public override ITreeNode? GetChildByName(string name) => base.GetChildByName(name);
 
         /// <summary>
         /// Get a Node by it's path recursively
@@ -322,7 +328,7 @@ namespace Papper.Types
         /// <param name="offset">we have to give the offset to the next element of the array (because of recursive data structures)</param>
         /// <param name="getRef"></param>
         /// <returns></returns>
-        public override ITreeNode Get(ITreePath path, ref int offset, bool getRef = false)
+        public override ITreeNode? Get(ITreePath path, ref int offset, bool getRef = false)
         {
             if (path.IsPathToCurrent && !path.IsPathIndexed)
                 return this;
@@ -340,7 +346,7 @@ namespace Papper.Types
         private int GetElementSizeForOffset()
         {
             var elem = LeafElementType ?? ArrayType;
-            var size = elem.Size.Bytes;
+            var size = elem.Size == null ? 0 : elem.Size.Bytes;
             if (!elem.AllowOddByteOffsetInArray && size % 2 != 0)
                 size++;
             return size;
@@ -367,10 +373,10 @@ namespace Papper.Types
 
         private void CalculateSize()
         {
-            var isBoolean = _arrayType is PlcBool;
-            Size.Bits = isBoolean ? ArrayLength * _arrayType.Size.Bits : 0;
+            var isBoolean = _arrayType is PlcBool || _arrayType.Size == null;
+            Size.Bits = isBoolean ? ArrayLength * _arrayType.Size!.Bits : 0;
             Offset.Bits = _arrayType.Offset.Bits;
-            if (_arrayType is ISupportStringLengthAttribute && _arrayType.Size.Bytes % 2 != 0)
+            if (_arrayType is ISupportStringLengthAttribute && _arrayType.Size!.Bytes % 2 != 0)
             {
                 var result = 0;
                 for (var i = 0; i < ArrayLength; i++)
@@ -383,7 +389,7 @@ namespace Papper.Types
             }
             else
             {
-                Size.Bytes = isBoolean ? 0 : ArrayLength * _arrayType.Size.Bytes;
+                Size.Bytes = isBoolean ? 0 : ArrayLength * _arrayType.Size!.Bytes;
             }
 
             if (isBoolean)
@@ -403,6 +409,7 @@ namespace Papper.Types
                 ret = ArrayType is PlcStruct
                     ? new PlcObjectRef($"[{idx}]", ArrayType)
                     : PlcObjectFactory.CreatePlcObjectForArrayIndex(ArrayType, idx, From);
+                (ret as PlcObject).ElemenType = ElemenType;
                 _indexCache.Add(idx, ret);
                 return ret as PlcObject;
             }
@@ -415,7 +422,7 @@ namespace Papper.Types
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public override object StringToObject(string value)
+        public override object? StringToObject(string value)
         {
             try
             {
@@ -429,7 +436,7 @@ namespace Papper.Types
                     return value.ToArray();
                 }
                 var parts = value.Split(';');
-                return parts.Select(part => Convert.ChangeType(value, type)).ToList();
+                return parts.Select(part => Convert.ChangeType(value, type, CultureInfo.InvariantCulture)).ToList();
             }
             catch
             { }

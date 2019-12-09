@@ -26,7 +26,7 @@ namespace Papper.Internal
         public PlcObject MetaData { get; }
 
         public int Offset { get; private set; }
-        public int Size => MetaData.Size.Bytes;
+        public int Size => MetaData.Size == null ? 0 : MetaData.Size.Bytes;
 
         public object ConvertFromRaw(Span<byte> data) => MetaData.ConvertFromRaw(this, data);
 

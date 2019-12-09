@@ -16,7 +16,7 @@ namespace Papper.Internal
         public IEnumerable<PlcRawData> CreateRawReadOperations(string selector, IEnumerable<KeyValuePair<string, Tuple<int, PlcObject>>> objects, int readDataBlockSize)
         {
             var rawBlocks = new List<PlcRawData>();
-            PlcRawData pred = null;
+            PlcRawData? pred = null;
             var offsetCountedAsBoolean = -1;
             var offset = 0;
             foreach (var item in objects.OrderBy(i => i.Value.Item1 + i.Value.Item2.Offset.Bytes)
@@ -25,7 +25,7 @@ namespace Papper.Internal
             {
                 var count = true;
                 var currentOffset = item.Value.Item1 + item.Value.Item2.Offset.Bytes;
-                var sizeInBytes = item.Value.Item2.Size.Bytes;
+                var sizeInBytes = item.Value.Item2.Size == null ? 0 : item.Value.Item2.Size.Bytes;
 
                 if (item.Value.Item2 is PlcBool)
                 {
@@ -123,17 +123,17 @@ namespace Papper.Internal
 
                 var name = $"{item.Key}{index}";
                 var elemName = string.IsNullOrWhiteSpace(dimension) ? name :  $"{dimension}{index}";
-                if (element is PlcArray)
+                if (element is PlcArray plcArray)
                 {
                     
                     pred.AddReference(elemName, arrayOffset, element);
-                    HandleArray(arrayOffset, element as PlcArray, item, pred, name);
-                    arrayOffset += array.ArrayType.Size.Bytes;
+                    HandleArray(arrayOffset, plcArray, item, pred, name);
+                    arrayOffset += array.ArrayType.Size == null ? 0 : array.ArrayType.Size.Bytes;
                 }
-                else
+                else if(element != null)
                 {
                     pred.AddReference(elemName, arrayOffset, element);
-                    arrayOffset += array.ArrayType.Size.Bytes;
+                    arrayOffset += array.ArrayType.Size == null ? 0 : array.ArrayType.Size.Bytes;
                 }
             }
         }

@@ -1,5 +1,6 @@
 ﻿using Papper.Internal;
 using System;
+using System.Globalization;
 
 namespace Papper.Types
 {
@@ -17,6 +18,6 @@ namespace Papper.Types
 
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
-         => Converter.WriteSingleBigEndian(data.Slice(plcObjectBinding.Offset), Convert.ToSingle(value));
+         => Converter.WriteSingleBigEndian(data.Slice(plcObjectBinding.Offset), Convert.ToSingle(value, CultureInfo.InvariantCulture));
     }
 }

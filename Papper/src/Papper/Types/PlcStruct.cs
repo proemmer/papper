@@ -24,9 +24,9 @@ namespace Papper.Types
                     var last = Childs.OfType<PlcObject>().LastOrDefault();
 
                     if (first != last)
-                        byteOffset = (last.Offset.Bytes + (last.Size.Bytes == 0 ? 1 : last.Size.Bytes)) - first.Offset.Bytes;
+                        byteOffset = (last.Offset.Bytes + (last.Size == null || last.Size.Bytes == 0 ? 1 : last.Size.Bytes)) - first.Offset.Bytes;
                     else
-                        byteOffset = (first.Size.Bytes == 0 ? 1 : first.Size.Bytes);
+                        byteOffset = (first.Size == null || first.Size.Bytes == 0 ? 1 : first.Size.Bytes);
                 }
 
                 return new PlcSize
@@ -88,8 +88,7 @@ namespace Papper.Types
             }
             else
             {
-                var dictionary = parent as IDictionary<string, object>;
-                if (dictionary != null)
+                if (parent is IDictionary<string, object> dictionary)
                     dictionary[name] = value;
             }
         }

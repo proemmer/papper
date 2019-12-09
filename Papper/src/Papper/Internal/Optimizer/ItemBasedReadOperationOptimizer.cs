@@ -2,6 +2,7 @@
 using Papper.Types;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -18,7 +19,7 @@ namespace Papper.Internal
         public IEnumerable<PlcRawData> CreateRawReadOperations(string selector, IEnumerable<KeyValuePair<string, Tuple<int, PlcObject>>> objects, int readDataBlockSize)
         {
             var rawBlocks = new List<PlcRawData>();
-            PlcRawData pred = null;
+            PlcRawData? pred = null;
             var offsetCountedAsBoolean = -1;
             var offset = 0;
             foreach (var item in objects.OrderBy(i => i.Value.Item1 + i.Value.Item2.Offset.Bytes).ThenBy(i => i.Value.Item2.Offset.Bits).ThenBy(i => i.Key.Length).ToList())
@@ -36,7 +37,7 @@ namespace Papper.Internal
                 var current = new PlcRawData(readDataBlockSize)
                 {
                     Offset = item.Value.Item1 + item.Value.Item2.Offset.Bytes,
-                    Size = item.Value.Item2.Size.Bytes == 0 && count ? 1 : item.Value.Item2.Size.Bytes,
+                    Size = item.Value.Item2.Size == null || item.Value.Item2.Size.Bytes == 0 && count ? 1 : item.Value.Item2.Size.Bytes,
                     Selector = selector
                 };
 
@@ -97,21 +98,21 @@ namespace Papper.Internal
             for (var i = array.From; i <= array.To; i++)
             {
                 var element = array.ArrayType is PlcStruct
-                    ? new PlcObjectRef(string.Format("[{0}]", i), array.ArrayType)
+                    ? new PlcObjectRef(string.Format(CultureInfo.InvariantCulture, "[{0}]", i), array.ArrayType)
                     : PlcObjectFactory.CreatePlcObjectForArrayIndex(array.ArrayType, i, array.From);
 
-                if (element is PlcArray)
+                if (element is PlcArray plcArray)
                 {
-                    var elemName = string.IsNullOrWhiteSpace(dimension) ? string.Format("{0}[{1}]", item.Key, i) : dimension + string.Format("[{0}]", i);
+                    var elemName = string.IsNullOrWhiteSpace(dimension) ? string.Format(CultureInfo.InvariantCulture, "{0}[{1}]", item.Key, i) : dimension + string.Format(CultureInfo.InvariantCulture, "[{0}]", i);
                     pred.AddReference(elemName, arrayOffset, element);
-                    HandleArray(arrayOffset, element as PlcArray, item, pred, string.Format("{0}[{1}]", item.Key, i));
-                    arrayOffset += array.ArrayType.Size.Bytes;
+                    HandleArray(arrayOffset, plcArray, item, pred, string.Format(CultureInfo.InvariantCulture, "{0}[{1}]", item.Key, i));
+                    arrayOffset += array.ArrayType.Size == null ? 0 : array.ArrayType.Size.Bytes;
                 }
-                else
+                else if(element != null)
                 {
-                    var elemName = string.IsNullOrWhiteSpace(dimension) ? string.Format("{0}[{1}]", item.Key, i) : dimension + string.Format("[{0}]", i);
+                    var elemName = string.IsNullOrWhiteSpace(dimension) ? string.Format(CultureInfo.InvariantCulture, "{0}[{1}]", item.Key, i) : dimension + string.Format(CultureInfo.InvariantCulture, "[{0}]", i);
                     pred.AddReference(elemName, arrayOffset, element);
-                    arrayOffset += array.ArrayType.Size.Bytes;
+                    arrayOffset += array.ArrayType.Size == null ? 0 : array.ArrayType.Size.Bytes;
                 }
             }
         }

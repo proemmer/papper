@@ -9,15 +9,15 @@ namespace Papper.Extensions.Notification
     {
         private readonly int _dot;
 
-
+        /// <summary>
         /// mapping part of the address
         /// </summary>
-        public string Mapping => Address.Substring(0, _dot);
+        public string Mapping => _dot == -1 ? Address : Address.Substring(0, _dot);
 
         /// <summary>
         /// variable part of the address.
         /// </summary>
-        public string Variable => Address.Substring(_dot + 1);
+        public string Variable => _dot == -1 ? string.Empty : Address.Substring(_dot + 1);
 
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace Papper.Extensions.Notification
         {
             Address = address;
             WatchCycle = watchCycle;
-            _dot = address.IndexOf(".");
+            _dot = address == null ? -1 : address.IndexOf(".", System.StringComparison.InvariantCulture);
         }
 
 

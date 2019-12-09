@@ -6,7 +6,7 @@ namespace Papper
     {
         private readonly MappingEntryProvider _mappingEntryProvider;
 
-        public PlcDataMapperSerializer(MappingEntryProvider mappingEntryProvider = null) => _mappingEntryProvider = mappingEntryProvider ?? new MappingEntryProvider();
+        public PlcDataMapperSerializer(MappingEntryProvider? mappingEntryProvider = null) => _mappingEntryProvider = mappingEntryProvider ?? new MappingEntryProvider();
 
 
         /// <summary>
@@ -24,11 +24,15 @@ namespace Papper
         /// <param name="type"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        public byte[] Serialize(Type type, object data)
+        public byte[] Serialize(Type type, object? data)
         {
-            var binding = _mappingEntryProvider.GetMappingEntryForType(type, data).BaseBinding;
+            if (type == null) ExceptionThrowHelper.ThrowArgumentNullException<byte[]>(nameof(type));
+            if (data == null) ExceptionThrowHelper.ThrowArgumentNullException<byte[]>(nameof(data));
+            var entry = _mappingEntryProvider.GetMappingEntryForType(type!, data);
+            if (entry == null) ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type!);
+            var binding = entry!.BaseBinding;
             var buffer = new byte[binding.RawData.MemoryAllocationSize];  // TODO handle a reusable buffer
-            binding.ConvertToRaw(data, buffer);
+            binding.ConvertToRaw(data!, buffer);
             return buffer;
         }
 
@@ -41,10 +45,14 @@ namespace Papper
         public T Deserialize<T>(byte[] data)
             => (T)Deserialize(typeof(T), data);
 
-        public object Deserialize(Type t, byte[] data)
+        public object Deserialize(Type type, byte[] data)
         {
-            var binding = _mappingEntryProvider.GetMappingEntryForType(t).BaseBinding;
-            if (t != typeof(string) && data.Length < binding.Size) ExceptionThrowHelper.ThrowArgumentOutOfRangeException(nameof(data));
+            if (type == null) ExceptionThrowHelper.ThrowArgumentNullException<object>(nameof(type));
+            if (data == null) ExceptionThrowHelper.ThrowArgumentNullException<object>(nameof(data));
+            var entry = _mappingEntryProvider.GetMappingEntryForType(type!);
+            if (entry == null) ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type!);
+            var binding = entry!.BaseBinding;
+            if (type != typeof(string) && data!.Length < binding.Size) ExceptionThrowHelper.ThrowArgumentOutOfRangeException(nameof(data));
             return binding.ConvertFromRaw(data);
         }
 
@@ -54,15 +62,31 @@ namespace Papper
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public int SerializedByteSize<T>() => _mappingEntryProvider.GetMappingEntryForType(typeof(T)).PlcObject.ByteSize;
+        public int SerializedByteSize<T>()
+        {
+            if (_mappingEntryProvider == null) return 0;
+            var type = typeof(T);
+            var entry = _mappingEntryProvider.GetMappingEntryForType(typeof(T));
+            if (entry == null) ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type!);
+            return entry!.PlcObject.ByteSize;
+        }
+
+
 
 
         /// <summary>
         /// Returns the size in bytes of the given type.
         /// </summary>
-        /// <param name="t"></param>
+        /// <param name="type"></param>
         /// <returns></returns>
-        public int SerializedByteSize(Type t) => _mappingEntryProvider.GetMappingEntryForType(t).PlcObject.ByteSize;
+        public int SerializedByteSize(Type type)
+        {
+            if (_mappingEntryProvider == null) return 0;
+            if (type == null) ExceptionThrowHelper.ThrowArgumentNullException<object>(nameof(type));
+            var entry = _mappingEntryProvider.GetMappingEntryForType(type!);
+            if (entry == null) ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type!);
+            return entry!.PlcObject.ByteSize;
+        }
 
 
 

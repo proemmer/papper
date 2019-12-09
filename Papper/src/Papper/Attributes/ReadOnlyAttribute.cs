@@ -19,7 +19,6 @@ namespace Papper.Attributes
     [AttributeUsage(AttributeTargets.All)]
     public sealed class ReadOnlyAttribute : Attribute
     {
-        private bool isReadOnly = false;
 
         /// <devdoc>
         ///    <para>
@@ -51,10 +50,7 @@ namespace Papper.Attributes
         ///       Initializes a new instance of the <see cref='System.ComponentModel.ReadOnlyAttribute'/> class.
         ///    </para>
         /// </devdoc>
-        public ReadOnlyAttribute(bool isReadOnly)
-        {
-            this.isReadOnly = isReadOnly;
-        }
+        public ReadOnlyAttribute(bool isReadOnly) => IsReadOnly = isReadOnly;
 
         /// <devdoc>
         ///    <para>
@@ -62,24 +58,19 @@ namespace Papper.Attributes
         ///       read-only.
         ///    </para>
         /// </devdoc>
-        public bool IsReadOnly
-        {
-            get
-            {
-                return isReadOnly;
-            }
-        }
+        public bool IsReadOnly { get; } = false;
 
         /// <internalonly/>
         /// <devdoc>
         /// </devdoc>
         public override bool Equals(object value)
         {
-
             if (this == value)
+            {
                 return true;
-            var other = value as ReadOnlyAttribute;
-            return other != null && other.IsReadOnly == IsReadOnly;
+            }
+
+            return value is ReadOnlyAttribute other && other.IsReadOnly == IsReadOnly;
         }
 
         /// <devdoc>
@@ -87,10 +78,7 @@ namespace Papper.Attributes
         ///       Returns the hashcode for this object.
         ///    </para>
         /// </devdoc>
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
+        public override int GetHashCode() => base.GetHashCode();
 
     }
 }

@@ -11,12 +11,12 @@ namespace Papper.Types
 
         public override Type DotNetType => _referencedObject.DotNetType;
 
-        public override PlcSize Size => _referencedObject.Size;
+        public override PlcSize? Size => _referencedObject?.Size;
 
         public override int ByteOffset => Offset.Bytes;
         public override int BitOffset => Offset.Bits;
-        public override int ByteSize => Size.Bytes;
-        public override int BitSize => Size.Bits;
+        public override int ByteSize => Size == null ? 0 : Size.Bytes;
+        public override int BitSize => Size == null ? 0 : Size.Bits;
 
         public PlcObjectRef(string name, PlcObject reference) :
             base(name) => _referencedObject = reference;
@@ -34,14 +34,14 @@ namespace Papper.Types
         public override ITreeNode RemoveChild(string name)
         {
             ExceptionThrowHelper.ThrowNotSupportedException();
-            return default;
+            return default!;
         }
 
         public override void AddChild(ITreePath path, ITreeNode node) => ExceptionThrowHelper.ThrowNotSupportedException();
 
-        public override ITreeNode GetChildByName(string name) => _referencedObject.GetChildByName(name);
+        public override ITreeNode? GetChildByName(string name) => _referencedObject.GetChildByName(name);
 
-        public override ITreeNode Get(ITreePath path, ref int offset, bool getRef = false)
+        public override ITreeNode? Get(ITreePath path, ref int offset, bool getRef = false)
         {
             offset += Offset.Bytes;
             if (path.IsPathToCurrent && getRef)

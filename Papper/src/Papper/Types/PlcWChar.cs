@@ -14,7 +14,7 @@ namespace Papper.Types
          => Size = _size;
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
-         => data.IsEmpty ? default : Encoding.BigEndianUnicode.GetString(data.Slice(plcObjectBinding.Offset, 2).ToArray());
+         => data.IsEmpty ? string.Empty : Encoding.BigEndianUnicode.GetString(data.Slice(plcObjectBinding.Offset, 2).ToArray());
 
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)

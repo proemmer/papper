@@ -1,5 +1,6 @@
 ﻿using Papper.Internal;
 using System;
+using System.Globalization;
 using System.Linq;
 
 namespace Papper.Types
@@ -24,8 +25,7 @@ namespace Papper.Types
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            var s = value as string;
-            data[plcObjectBinding.Offset] = s != null ? Convert.ToByte(s.FirstOrDefault()) : Convert.ToByte(value);
+            data[plcObjectBinding.Offset] = value is string s ? Convert.ToByte(s.FirstOrDefault()) : Convert.ToByte(value, CultureInfo.InvariantCulture);
         }
     }
 }

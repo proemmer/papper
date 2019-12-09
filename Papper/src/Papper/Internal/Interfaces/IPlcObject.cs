@@ -5,7 +5,7 @@ namespace Papper.Internal
     internal interface IPlcObject
     {
         string Name { get; }
-        string Selector { get; }
+        string? Selector { get; }
         int ByteOffset { get; }
         int BitOffset { get; }
         int ByteSize { get; }

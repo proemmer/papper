@@ -1,6 +1,7 @@
 ﻿using Papper.Types;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace Papper.Internal
@@ -10,7 +11,7 @@ namespace Papper.Internal
         public const string Separator = ".";
         private static readonly string[] _splitSeparator = { Separator };
         private readonly List<string> _nodes = new List<string>();
-        private int[] _arrayIndizes;
+        private int[]? _arrayIndizes;
 
         public static PlcMetaDataTreePath CreateAbsolutePath(string nodeName)
         {
@@ -35,13 +36,12 @@ namespace Papper.Internal
             return new PlcMetaDataTreePath(nodeNames, isAbsolute);
         }
 
-        public static PlcMetaDataTreePath CreateNodePath(ITreePath path, PlcObject plcObject) => path.Extend(plcObject.Name) as PlcMetaDataTreePath;
+        public static PlcMetaDataTreePath? CreateNodePath(ITreePath path, PlcObject plcObject) => path?.Extend(plcObject.Name) as PlcMetaDataTreePath;
 
         public PlcMetaDataTreePath(string path)
         {
             path = Normalize(path);
-
-            if (!string.IsNullOrWhiteSpace(path) && path.StartsWith(Separator))
+            if (!string.IsNullOrWhiteSpace(path) && path.StartsWith(Separator, false, CultureInfo.InvariantCulture))
             {
                 path = path.Substring(1);
                 _nodes.Add(Separator);
@@ -66,8 +66,9 @@ namespace Papper.Internal
 
         private static string Normalize(string path)
         {
+            path ??= string.Empty;
             path = path.Trim();
-            if (path.Length > 0 && path.EndsWith(Separator))
+            if (path.Length > 0 && path.EndsWith(Separator, false, CultureInfo.InvariantCulture))
             {
                 path = path.Substring(path.Length - 1);
             }
@@ -95,7 +96,7 @@ namespace Papper.Internal
             get
             {
                 var node = _nodes.FirstOrDefault();
-                return !string.IsNullOrEmpty(node) && node.EndsWith("]");
+                return !string.IsNullOrEmpty(node) && node.EndsWith("]", false, CultureInfo.InvariantCulture);
             }
         }
 
@@ -119,11 +120,11 @@ namespace Papper.Internal
                 if (node != null)
                 {
                     var v = node.Split(new[] { "[", "]" }, StringSplitOptions.RemoveEmptyEntries);
-                    _arrayIndizes = !node.StartsWith("[") ? v.Skip(1).Select(int.Parse).ToArray() : v.Select(int.Parse).ToArray();
+                    _arrayIndizes = !node.StartsWith("[", false, CultureInfo.InvariantCulture) ? v.Skip(1).Select(int.Parse).ToArray() : v.Select(int.Parse).ToArray();
                 }
                 else
                 {
-                    _arrayIndizes = new int[0];
+                    _arrayIndizes = Array.Empty<int>();
                 }
 
                 return _arrayIndizes;

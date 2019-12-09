@@ -1,5 +1,6 @@
 ﻿using Papper.Internal;
 using System;
+using System.Globalization;
 
 namespace Papper.Types
 {
@@ -17,7 +18,7 @@ namespace Papper.Types
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            var subset = Convert.ToInt32(value).SetBcdWord();
+            var subset = Convert.ToInt32(value, CultureInfo.InvariantCulture).SetBcdWord();
             for (var i = 0; i < subset.Length; i++)
                 data[plcObjectBinding.Offset + i] = subset[i];
         }

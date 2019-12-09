@@ -19,7 +19,7 @@ namespace Papper.Types
             set => _size.Bytes = value + 2;
         }
 
-        public override PlcSize Size
+        public override PlcSize? Size
         {
             get => _size;
             protected set {; }
@@ -40,13 +40,13 @@ namespace Papper.Types
 
             var maxLength = data[plcObjectBinding.Offset];
             var curLength = data[plcObjectBinding.Offset + 1];
-            var take = Math.Min(Math.Min(maxLength, curLength), Size.Bytes - 2);
+            var take = Math.Min(Math.Min(maxLength, curLength), Size!.Bytes - 2);
             return Encoding.UTF7.GetString(data.ToArray(), plcObjectBinding.Offset + 2, take);
         }
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            var maxLength = Convert.ToByte(Size.Bytes - 2);
+            var maxLength = Convert.ToByte(Size!.Bytes - 2);
             var i = plcObjectBinding.Offset;
             data[i++] = maxLength;
             var fill = string.Empty;

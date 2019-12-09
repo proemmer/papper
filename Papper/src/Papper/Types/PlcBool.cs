@@ -1,5 +1,6 @@
 ﻿using Papper.Internal;
 using System;
+using System.Globalization;
 
 namespace Papper.Types
 {
@@ -32,7 +33,7 @@ namespace Papper.Types
         {
             var baseOffset = plcObjectBinding.Offset + (plcObjectBinding.MetaData.Offset.Bits) / 8;
             var bit = plcObjectBinding.Offset + plcObjectBinding.MetaData.Offset.Bits - baseOffset;
-            data[baseOffset] = data[baseOffset].SetBit(bit, Convert.ToBoolean(value));
+            data[baseOffset] = data[baseOffset].SetBit(bit, Convert.ToBoolean(value, CultureInfo.InvariantCulture));
         }
 
         public void AssigneOffsetFrom(int bitoffset)
