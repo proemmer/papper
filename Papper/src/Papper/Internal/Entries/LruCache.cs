@@ -6,7 +6,7 @@ namespace Papper.Internal
 {
     internal class LruCache : IDisposable
     {
-        private Dictionary<string, LruState> _states = new Dictionary<string, LruState>();
+        private readonly Dictionary<string, LruState> _states = new Dictionary<string, LruState>();
 
         public bool TryGetValue(string key, out LruState state)
         {
@@ -20,12 +20,12 @@ namespace Papper.Internal
             return state;
         }
 
-        public void Update(LruState state, DateTime detect)
+        public static void Update(LruState state, DateTime detect)
         {
             state?.ApplyUsage(detect);
         }
 
-        public void Update(LruState state, Memory<byte> data, DateTime detect)
+        public static void Update(LruState state, Memory<byte> data, DateTime detect)
         {
             state?.ApplyChange(data, detect);
         }

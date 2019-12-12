@@ -225,6 +225,7 @@ namespace Papper.Internal
                 if (item == null)
                 {
                     ExceptionThrowHelper.ThrowInvalidVariableException($"{plcObj.Name}.{value}");
+                    return false;
                 }
 
                 var key = prefix + value;

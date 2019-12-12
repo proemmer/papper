@@ -309,7 +309,12 @@ namespace Papper.Types
             {
                 for (var i = From; i <= To; i++)
                 {
-                    yield return GetIndex(i);
+                    var idx = GetIndex(i);
+                    if (idx != null)
+                        yield return idx;
+                    else
+                        yield break;
+
                 }
             }
         }
@@ -338,7 +343,7 @@ namespace Papper.Types
                 offset += Offset.Bytes + ((idx - From) * GetElementSizeForOffset());
                 return (_indexCache.TryGetValue(idx, out var ret) ?
                             ret :
-                            GetIndex(idx)).Get(CreateSubPath(path), ref offset);
+                            GetIndex(idx))?.Get(CreateSubPath(path), ref offset);
             }
             return null;
         }
@@ -400,18 +405,23 @@ namespace Papper.Types
             }
         }
 
-        private PlcObject GetIndex(int idx)
+        private PlcObject? GetIndex(int idx)
         {
             lock (_indexCache)
             {
-                if (_indexCache.TryGetValue(idx, out var ret))
-                    return ret as PlcObject;
-                ret = ArrayType is PlcStruct
+                if (_indexCache.TryGetValue(idx, out var ret) && ret is PlcObject plco)
+                    return plco;
+
+                var objResult = ArrayType is PlcStruct
                     ? new PlcObjectRef($"[{idx}]", ArrayType)
                     : PlcObjectFactory.CreatePlcObjectForArrayIndex(ArrayType, idx, From);
-                (ret as PlcObject).ElemenType = ElemenType;
-                _indexCache.Add(idx, ret);
-                return ret as PlcObject;
+                if (objResult is PlcObject plcObj)
+                {
+                    plcObj.ElemenType = ElemenType;
+                    _indexCache.Add(idx, ret);
+                    return plcObj;
+                }
+                return null;
             }
         }
 

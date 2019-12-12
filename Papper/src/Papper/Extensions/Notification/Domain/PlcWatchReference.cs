@@ -5,7 +5,7 @@ namespace Papper.Extensions.Notification
     /// <summary>
     /// This class is used to define read operations.
     /// </summary>
-    public struct PlcWatchReference : IPlcReference
+    public struct PlcWatchReference : IPlcReference, System.IEquatable<PlcWatchReference>
     {
         private readonly int _dot;
 
@@ -66,7 +66,7 @@ namespace Papper.Extensions.Notification
         /// <param name="root">Rootpart of a variable</param>
         /// <param name="variables">variables</param>
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="PlcReadReference"/></returns>
-        public static IEnumerable<PlcWatchReference> FromRoot(string root, int watchCycle, params string[] variables) 
+        public static IEnumerable<PlcWatchReference> FromRoot(string root, int watchCycle, params string[] variables)
             => FromRoot(root, variables as IEnumerable<string>, watchCycle);
 
         /// <summary>
@@ -78,7 +78,12 @@ namespace Papper.Extensions.Notification
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="PlcReadReference"/></returns>
         public static IEnumerable<PlcWatchReference> FromRoot(string root, IEnumerable<string> variables, int watchCycle)
         {
-            foreach (var variable in variables)
+            if (variables == null)
+            {
+                yield break;
+            }
+
+            foreach (string variable in variables)
             {
                 yield return FromAddress($"{root}.{variable}", watchCycle);
             }
@@ -103,10 +108,43 @@ namespace Papper.Extensions.Notification
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="PlcReadReference"/></returns>
         public static IEnumerable<PlcWatchReference> FromRoot(string root, IEnumerable<(string variable, int watchCycle)> variables)
         {
-            foreach (var variable in variables)
+            if (variables == null)
+            {
+                yield break;
+            }
+
+            foreach ((string variable, int watchCycle) variable in variables)
             {
                 yield return FromAddress($"{root}.{variable.variable}", variable.watchCycle);
             }
         }
+
+        public override bool Equals(object? obj) => obj is PlcWatchReference reference &&
+                                                    Mapping == reference.Mapping &&
+                                                    Variable == reference.Variable &&
+                                                    Address == reference.Address &&
+                                                    WatchCycle == reference.WatchCycle;
+
+        public bool Equals(PlcWatchReference other) => other != null &&
+                                                    Mapping == other.Mapping &&
+                                                    Variable == other.Variable &&
+                                                    Address == other.Address &&
+                                                    WatchCycle == other.WatchCycle;
+
+        public override int GetHashCode()
+        {
+            var hashCode = -1177666424;
+            hashCode = hashCode * -1521134295 + _dot.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Mapping);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Variable);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Address);
+            hashCode = hashCode * -1521134295 + WatchCycle.GetHashCode();
+            return hashCode;
+        }
+
+        public static bool operator ==(PlcWatchReference left, PlcWatchReference right) => left.Equals(right);
+
+        public static bool operator !=(PlcWatchReference left, PlcWatchReference right) => !(left == right);
+
     }
 }

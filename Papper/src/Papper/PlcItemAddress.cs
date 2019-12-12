@@ -55,7 +55,7 @@ namespace Papper
 
         private string GetTypeSign<T>()
         {
-            var t = default(T);
+            var t = default(T)!;
             return t switch
             {
                 bool _ => "X",

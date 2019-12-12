@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 
 namespace Papper.Extensions.Conditions
 {
+
+#pragma warning disable CA1068
     public static class WhenConditionExtensions
     {
 
@@ -402,4 +404,6 @@ namespace Papper.Extensions.Conditions
                                         interval);
 
     }
+
+#pragma warning restore CA1068
 }

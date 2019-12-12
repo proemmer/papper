@@ -48,6 +48,11 @@ namespace Papper.Extensions.Notification
         /// </summary>
         public int Count => _variables.Count;
 
+        /// <summary>
+        /// Returns true if the subscription has active variables.
+        /// </summary>
+        public bool HasVariables => _variables.Any();
+
 
         /// <summary>
         /// Create an instance of a subscription to detect plc data changes
@@ -117,7 +122,6 @@ namespace Papper.Extensions.Notification
         public bool TryAddItems(IEnumerable<PlcWatchReference> vars) => InternalAddItems(vars, false);
 
 
-
         /// <summary>
         /// Remove items from the watch list. This items will be removed before the next what cycle.
         /// The internal 
@@ -164,7 +168,8 @@ namespace Papper.Extensions.Notification
         }
 
         /// <summary>
-        /// Starts a detection an returns the changes if any occurred
+        /// Starts a detection an returns the changes if any occurred.
+        /// Also if no items are available, the detection runs as long as it will be stopper. 
         /// </summary>
         /// <returns></returns>
         public async Task<ChangeResult> DetectChangesAsync()
@@ -214,30 +219,33 @@ namespace Papper.Extensions.Notification
 
                     PlcReadResult[]? readRes = null;
                     var detect = DateTime.Now;
-                    if (_changeDetectionStrategy == ChangeDetectionStrategy.Polling || _changeEvent == null)
+                    if (_executions.Any())
                     {
-                        // determine outdated
-                        var needUpdate = PlcDataMapper.UpdateableItems(_executions, true, DetermineChanges(cycles, interval));
-
-                        // read outdated
-                        await _mapper.ReadFromPlcAsync(needUpdate).ConfigureAwait(false); // Update the read cache;
-
-                        // filter to get only changed items
-                        readRes = PlcDataMapper.CreatePlcReadResults(needUpdate.Keys, needUpdate, _lastRun, (x) => FilterChanged(detect, x));
-                    }
-                    else
-                    {
-                        var packs = await _changeEvent.WaitAsync().ConfigureAwait(false);
-                        if (packs != null && packs.Any())
+                        if (_changeDetectionStrategy == ChangeDetectionStrategy.Polling || _changeEvent == null)
                         {
-                            readRes = PlcDataMapper.CreatePlcReadResults(_executions, packs);
-                        }
-                    }
+                            // determine outdated
+                            var needUpdate = PlcDataMapper.UpdateableItems(_executions, true, DetermineChanges(cycles, interval));
 
-                    if (readRes != null && readRes.Any())
-                    {
-                        _lastRun = detect;
-                        return new ChangeResult(readRes, Watching.IsCanceled, Watching.IsCompleted);
+                            // read outdated
+                            await _mapper.ReadFromPlcAsync(needUpdate).ConfigureAwait(false); // Update the read cache;
+
+                            // filter to get only changed items
+                            readRes = PlcDataMapper.CreatePlcReadResults(needUpdate.Keys, needUpdate, _lastRun, (x) => FilterChanged(detect, x));
+                        }
+                        else
+                        {
+                            var packs = await _changeEvent.WaitAsync().ConfigureAwait(false);
+                            if (packs != null && packs.Any())
+                            {
+                                readRes = PlcDataMapper.CreatePlcReadResults(_executions, packs);
+                            }
+                        }
+
+                        if (readRes != null && readRes.Any())
+                        {
+                            _lastRun = detect;
+                            return new ChangeResult(readRes, Watching.IsCanceled, Watching.IsCompleted);
+                        }
                     }
 
                     if (_cts.IsCancellationRequested)
@@ -359,16 +367,16 @@ namespace Papper.Extensions.Notification
                         var data = objBinding.Data.Slice(objBinding.Offset, size);
                         if (saved == null)
                         {
-                            saved = _lruCache.Create(binding.Key, data, detect, objBinding.ValidationTimeInMs);
+                            _lruCache.Create(binding.Key, data, detect, objBinding.ValidationTimeInMs);
                         }
                         else
                         {
-                            _lruCache.Update(saved, data, detect);
+                            LruCache.Update(saved, data, detect);
                         }
                     }
                     else
                     {
-                        _lruCache.Update(saved, detect);
+                        LruCache.Update(saved, detect);
                     }
                 }
             }
@@ -381,11 +389,12 @@ namespace Papper.Extensions.Notification
 
         private void UpdateWatchCycle(IEnumerable<PlcWatchReference>? vars)
         {
-            if (vars != null)
+            var hasItems = vars != null && vars.Any();
+            if (hasItems)
             {
                 Interval = vars.Select(x => x.WatchCycle).Min();
             }
-            if (Interval <= 0)
+            if (Interval <= 0 || (!hasItems && Interval < _defaultInterval))
             {
                 Interval = _defaultInterval;
             }

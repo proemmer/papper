@@ -95,11 +95,13 @@ namespace Papper
             if (first == null)
             {
                 ExceptionThrowHelper.ThrowArgumentNullException(nameof(first));
+                return false;
             }
 
             if (second == null)
             {
                 ExceptionThrowHelper.ThrowArgumentNullException(nameof(second));
+                return false;
             }
 
             using (IEnumerator<TSource> e1 = first!.GetEnumerator())
@@ -402,7 +404,7 @@ namespace Papper
 
         public static byte[] HexGetBytes(this string hexString) => (HexGetBytes(hexString, out _));
 
-        public static T HexGet<T>(this string hexString)
+        public static T HexGet<T>(this string hexString) where T: struct
         {
             object value = default(T);
 
@@ -457,28 +459,31 @@ namespace Papper
 
         public static byte[] BinGetBytes(this string binString) => (BinGetBytes(binString, out _));
 
-        public static T BinGet<T>(this string binString)
+        public static T BinGet<T>(this string binString) where T : struct
         {
             object? value = default(T);
 
             try
             {
-                long val = 0;
-                foreach (char b in binString)
-                {
-                    switch (b)
+                if (!string.IsNullOrWhiteSpace(binString))
+                { 
+                    long val = 0;
+                    foreach (char b in binString)
                     {
-                        case '1':
-                            val *= 2;
-                            val += 1;
-                            break;
-                        case '0':
-                            val *= 2;
-                            break;
+                        switch (b)
+                        {
+                            case '1':
+                                val *= 2;
+                                val += 1;
+                                break;
+                            case '0':
+                                val *= 2;
+                                break;
+                        }
                     }
-                }
 
-                value = Convert.ChangeType(val, typeof(T), CultureInfo.InvariantCulture);
+                    value = Convert.ChangeType(val, typeof(T), CultureInfo.InvariantCulture);
+                }
             }
             catch { }
             return (T)value;
@@ -492,7 +497,7 @@ namespace Papper
         /// <returns>DateTime</returns>
         public static DateTime ToDateTime(this byte[] data, int offset = 0)
         {
-            string str = string.Format("{2}/{1}/{0} {3}:{4}:{5}.{6}{7}",
+            string str = string.Format(CultureInfo.InvariantCulture,"{2}/{1}/{0} {3}:{4}:{5}.{6}{7}",
                 data.ToHexString("", offset, 1),
                 data.ToHexString("", offset + 1, 1),
                 data.ToHexString("", offset + 2, 1),
@@ -526,12 +531,13 @@ namespace Papper
         /// <param name="hexString">string to convert to byte array</param>
         /// <param name="discarded">number of characters in string ignored</param>
         /// <returns>byte array, in the same left-to-right order as the hexString</returns>
-        private static byte[] HexGetBytes(string hexString, out int discarded)
+        private static byte[] HexGetBytes(string? hexString, out int discarded)
         {
             discarded = 0;
+            if (string.IsNullOrEmpty(hexString)) return Array.Empty<byte>();
             StringBuilder newString = new StringBuilder();
             // remove all none A-F, 0-9, characters
-            foreach (char c in hexString)
+            foreach (char c in hexString!)
             {
                 if (IsHexDigit(c))
                 {
@@ -583,6 +589,7 @@ namespace Papper
         private static byte[] BinGetBytes(string binString, out int discarded)
         {
             discarded = 0;
+            if (string.IsNullOrEmpty(binString)) return Array.Empty<byte>();
             StringBuilder newString = new StringBuilder();
 
             // remove all none 0-1,characters

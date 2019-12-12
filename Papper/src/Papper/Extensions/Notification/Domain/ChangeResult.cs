@@ -50,6 +50,9 @@ namespace Papper
             return !(left == right);
         }
 
-        public bool Equals(ChangeResult other) => Equals(other);
+        public bool Equals(ChangeResult other) =>  other != null &&
+                                                    IsCanceled == other.IsCanceled &&
+                                                    IsCompleted == other.IsCompleted &&
+                                                    EqualityComparer<IEnumerable<PlcReadResult>?>.Default.Equals(Results, other.Results);
     }
 }

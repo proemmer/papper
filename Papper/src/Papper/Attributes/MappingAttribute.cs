@@ -89,10 +89,9 @@ namespace Papper.Attributes
         public override bool Equals(object obj)
         {
             var rc = false;
-            if (obj is MappingAttribute)
+            if (obj is MappingAttribute p2)
             {
-                var p2 = obj as MappingAttribute;
-                rc = (this == p2);
+                rc = this == p2;
             }
             return rc;
         }

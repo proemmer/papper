@@ -572,77 +572,8 @@ namespace DataTypeTests
             }
         }
 
-        [Fact]
-        public void AddAndRemoveSubscriptions()
-        {
-            var writeData = new Dictionary<string, object> {
-                    { "W88", (UInt16)3},
-                    { "X99.0", true  },
-                };
-            var items = writeData.Keys.Select(variable => PlcWatchReference.FromAddress($"DB15.{variable}", 100)).ToArray();
 
-            using (var sub = _papper.CreateSubscription())
-            {
-                Assert.True(sub.TryAddItems(items));
-                var c = sub.DetectChangesAsync();  // returns because we start a new detection
-                Thread.Sleep(100);
-                Assert.True(sub.RemoveItems(items.FirstOrDefault()));
-                Assert.True(sub.RemoveItems(items.FirstOrDefault())); // <- modified is already true
-                c = sub.DetectChangesAsync();      // returns because we modified the detection
-                Assert.False(sub.RemoveItems(items.FirstOrDefault()));
-            }
-        }
 
-        [Fact]
-        public async void TestDuplicateDetection()
-        {
-            var writeData = new Dictionary<string, object> {
-                    { "W88", (UInt16)3},
-                    { "X99_0", true  },
-                };
-            var items = writeData.Keys.Select(variable => PlcReadReference.FromAddress($"DB15.{variable}")).ToArray();
-
-            using (var sub = _papper.CreateSubscription())
-            {
-                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-                {
-                    var c1 = sub.DetectChangesAsync();  // returns because we start a new detection
-                    var c2 = await sub.DetectChangesAsync();  // returns because we start a new detection
-                    await c1;
-                });
-            }
-        }
-
-        [Fact]
-        public async void TestCancellation()
-        {
-            var writeData = new Dictionary<string, object> {
-                    { "W88", (UInt16)3},
-                    { "X99_0", true  },
-                };
-            var items = writeData.Keys.Select(variable => PlcWatchReference.FromAddress($"DB15.{variable}", 100)).ToArray();
-
-            using (var sub = _papper.CreateSubscription())
-            {
-                Assert.True(sub.TryAddItems(items));
-                var c = sub.DetectChangesAsync();  // returns because we start a new detection
-                Thread.Sleep(500);
-                var res = await c;
-                Assert.False(res.IsCanceled);
-                Assert.False(res.IsCompleted);
-                Assert.NotNull(res.Results);
-                Assert.Equal(2, res.Results.Count());
-
-                c = sub.DetectChangesAsync(); 
-                Thread.Sleep(500);
-                sub.Pause();
-                res = await c;
-                Assert.True(res.IsCanceled);
-                Assert.False(res.IsCompleted);
-                Assert.Null(res.Results);
-
-            }
-        }
 
         [Theory]
         [InlineData("DB2000.W2", (UInt16)3)]

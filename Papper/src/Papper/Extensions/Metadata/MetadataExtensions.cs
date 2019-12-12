@@ -30,10 +30,10 @@ namespace Papper.Extensions.Metadata
                     if (papper.EntriesByName.TryGetValue(mapping, out var entry))
                     {
                         results.Add(new MetaDataPack
-                        {
-                            MappingName = entry.PlcObject.Name,
-                            AbsoluteName = entry.PlcObject.Selector ?? string.Empty
-                        });
+                        (
+                            mappingName: entry.PlcObject.Name,
+                            absoluteName: entry.PlcObject.Selector ?? string.Empty
+                        ));
                     }
                     else
                     {
@@ -63,10 +63,10 @@ namespace Papper.Extensions.Metadata
                 if (entry.Variables.TryGetValue(var.Variable, out var varibleEntry))
                 {
                     return new PlcItemAddress(
-                        entry.PlcObject.Selector,
-                        varibleEntry.Item2 is PlcArray arr ? arr.ElemenType.MakeArrayType() : varibleEntry.Item2.ElemenType ?? varibleEntry.Item2.DotNetType,
+                        entry.PlcObject.Selector ?? string.Empty,
+                        (varibleEntry.Item2 is PlcArray arr ? arr.ElemenType?.MakeArrayType() : varibleEntry.Item2.ElemenType ?? varibleEntry.Item2.DotNetType) ?? typeof(object),
                         new PlcSize { Bytes = varibleEntry.Item1 + varibleEntry.Item2.ByteOffset, Bits = varibleEntry.Item2.BitOffset },
-                        varibleEntry.Item2.Size
+                        varibleEntry.Item2.Size ?? new PlcSize()
                         );
                 }
             }

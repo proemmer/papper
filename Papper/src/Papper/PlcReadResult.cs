@@ -87,6 +87,11 @@ namespace Papper
             return !(left == right);
         }
 
-        public bool Equals(PlcReadResult other) => Equals(other);
+        public bool Equals(PlcReadResult other) => other != null &&
+                                                    Address == other.Address &&
+                                                    EqualityComparer<object?>.Default.Equals(Value, other.Value) &&
+                                                    ActionResult == other.ActionResult &&
+                                                    Mapping == other.Mapping &&
+                                                    Variable == other.Variable;
     }
 }
