@@ -4,9 +4,8 @@
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <TargetFrameworks>netcoreapp3.0</TargetFrameworks>
     <AssemblyName>PapperTests</AssemblyName>
-    <PackageId>Papper</PackageId>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-	<IsPackable>false</IsPackable>
+	  <IsPackable>false</IsPackable>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <RootNamespace>Papper.Tests</RootNamespace>
     <!--<SignAssembly>true</SignAssembly>
