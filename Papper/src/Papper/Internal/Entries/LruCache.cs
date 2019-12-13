@@ -8,10 +8,7 @@ namespace Papper.Internal
     {
         private readonly Dictionary<string, LruState> _states = new Dictionary<string, LruState>();
 
-        public bool TryGetValue(string key, out LruState state)
-        {
-            return _states.TryGetValue(key, out state);
-        }
+        public bool TryGetValue(string key, out LruState state) => _states.TryGetValue(key, out state);
 
         public LruState Create(string key, Memory<byte> data, DateTime detect, int validationTime)
         {
@@ -20,15 +17,9 @@ namespace Papper.Internal
             return state;
         }
 
-        public static void Update(LruState state, DateTime detect)
-        {
-            state?.ApplyUsage(detect);
-        }
+        public static void Update(LruState state, DateTime detect) => state?.ApplyUsage(detect);
 
-        public static void Update(LruState state, Memory<byte> data, DateTime detect)
-        {
-            state?.ApplyChange(data, detect);
-        }
+        public static void Update(LruState state, Memory<byte> data, DateTime detect) => state?.ApplyChange(data, detect);
 
         public void RemoveUnused(DateTime detect)
         {

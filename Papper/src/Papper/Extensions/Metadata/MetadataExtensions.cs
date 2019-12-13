@@ -59,7 +59,11 @@ namespace Papper.Extensions.Metadata
         {
             if (papper != null && var != null && papper.EntriesByName.TryGetValue(var.Mapping, out var entry))
             {
-                if (entry is Entry e) e.UpdateInternalState(new List<string>() { var.Variable });
+                if (entry is Entry e)
+                {
+                    e.UpdateInternalState(new List<string>() { var.Variable });
+                }
+
                 if (entry.Variables.TryGetValue(var.Variable, out var varibleEntry))
                 {
                     return new PlcItemAddress(

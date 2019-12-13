@@ -6,11 +6,8 @@ namespace Papper.Tests.Util
 {
     internal class ConsoleOutputConverter : TextWriter
     {
-        readonly ITestOutputHelper _output;
-        public ConsoleOutputConverter(ITestOutputHelper output)
-        {
-            _output = output;
-        }
+        private readonly ITestOutputHelper _output;
+        public ConsoleOutputConverter(ITestOutputHelper output) => _output = output;
         public override Encoding Encoding => Encoding.ASCII;
 
         public override void WriteLine(string message) => _output.WriteLine(message);

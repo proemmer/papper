@@ -1,11 +1,7 @@
-﻿using Papper;
-using System.Collections.Generic;
-using System;
-using System.Text;
-using Xunit;
+﻿using Papper.Internal;
 using Papper.Types;
-using Papper.Internal;
-using System.Buffers.Binary;
+using System;
+using Xunit;
 
 namespace Papper.Tests
 {
@@ -34,7 +30,7 @@ namespace Papper.Tests
         public void TestUSInt()
         {
             byte value = 44;
-            
+
             var type = new PlcUSInt("TEST");
             var data = new byte[type.Size.Bytes];
             var binding = new PlcObjectBinding(new PlcRawData(512), type, 0, 0);
@@ -166,7 +162,7 @@ namespace Papper.Tests
         [Fact]
         public void TestDINt()
         {
-            int value = 44;
+            var value = 44;
 
             var type = new PlcDInt("TEST");
             var data = new byte[type.Size.Bytes];
@@ -202,7 +198,7 @@ namespace Papper.Tests
         [Fact]
         public void TestWChar()
         {
-            string value = "↕";
+            var value = "↕";
 
             var type = new PlcWChar("TEST");
             var data = new byte[type.Size.Bytes];
@@ -216,7 +212,7 @@ namespace Papper.Tests
         [Fact]
         public void TestWString()
         {
-            string value = "↕TEst░iä";
+            var value = "↕TEst░iä";
 
             var type = new PlcWString("TEST");
             var data = new byte[type.Size.Bytes];
@@ -230,7 +226,7 @@ namespace Papper.Tests
         [Fact]
         public void TestWStringNormal()
         {
-            string value = "Test123";
+            var value = "Test123";
 
             var type = new PlcWString("TEST");
             var data = new byte[type.Size.Bytes];

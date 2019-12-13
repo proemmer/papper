@@ -5,7 +5,7 @@ namespace Papper.Internal
 {
     internal class AsyncAutoResetEvent<T>
     {
-        private readonly static Task<T> _completed = Task.FromResult<T>(default!);
+        private static readonly Task<T> _completed = Task.FromResult<T>(default!);
         private readonly Queue<TaskCompletionSource<T>> _waits = new Queue<TaskCompletionSource<T>>();
         private bool _signaled;
 
@@ -32,12 +32,18 @@ namespace Papper.Internal
             lock (_waits)
             {
                 if (_waits.Count > 0)
+                {
                     toRelease = _waits.Dequeue();
+                }
                 else if (!_signaled)
+                {
                     _signaled = true;
+                }
             }
             if (toRelease != null)
+            {
                 toRelease.SetResult(value);
+            }
         }
     }
 }

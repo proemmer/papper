@@ -1,17 +1,15 @@
-﻿using Papper;
+﻿using Papper.Extensions.Metadata;
 using Papper.Extensions.Notification;
+using Papper.Tests.Mappings;
+using Papper.Tests.Util;
 using PapperTests.Mappings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Papper.Tests.Mappings;
-using Papper.Tests.Util;
 using Xunit;
 using Xunit.Abstractions;
-using Papper.Extensions.Metadata;
 
 namespace Papper.Tests
 {
@@ -38,7 +36,7 @@ namespace Papper.Tests
         public void AddAndRemoveSubscriptionsTest()
         {
             var writeData = new Dictionary<string, object> {
-                    { "W88", (UInt16)3},
+                    { "W88", (ushort)3},
                     { "X99.0", true  },
                 };
             var items = writeData.Keys.Select(variable => PlcWatchReference.FromAddress($"DB115.{variable}", 100)).ToArray();
@@ -72,12 +70,12 @@ namespace Papper.Tests
             var mapping = "DB_SafetyDataChange1";
             var originData = new Dictionary<string, object> {
                     { "SafeMotion.Slots[15].SlotId", (byte)0},
-                    { "SafeMotion.Slots[15].HmiId", (UInt32)0},
+                    { "SafeMotion.Slots[15].HmiId", (uint)0},
                     { "SafeMotion.Slots[15].Commands.TakeoverPermitted", false },
                 };
             var writeData = new Dictionary<string, object> {
                     { "SafeMotion.Slots[15].SlotId", (byte)3},
-                    { "SafeMotion.Slots[15].HmiId", (UInt32)4},
+                    { "SafeMotion.Slots[15].HmiId", (uint)4},
                     { "SafeMotion.Slots[15].Commands.TakeoverPermitted", false },
                 };
             using (var are = new AutoResetEvent(false))
@@ -109,7 +107,7 @@ namespace Papper.Tests
         public async void DuplicateDetectionTest()
         {
             var writeData = new Dictionary<string, object> {
-                    { "W88", (UInt16)3},
+                    { "W88", (ushort)3},
                     { "X99_0", true  },
                 };
             var items = writeData.Keys.Select(variable => PlcReadReference.FromAddress($"DB116.{variable}")).ToArray();
@@ -129,7 +127,7 @@ namespace Papper.Tests
         public async void SubscriptionCancellationTest()
         {
             var writeData = new Dictionary<string, object> {
-                    { "W88", (UInt16)3},
+                    { "W88", (ushort)3},
                     { "X99_0", true  },
                 };
             var items = writeData.Keys.Select(variable => PlcWatchReference.FromAddress($"DB117.{variable}", 100)).ToArray();
@@ -164,12 +162,12 @@ namespace Papper.Tests
             var intiState = true;
             var originData = new Dictionary<string, object> {
                     { "SafeMotion.Slots[15].SlotId", (byte)0},
-                    { "SafeMotion.Slots[15].HmiId", (UInt32)0},
+                    { "SafeMotion.Slots[15].HmiId", (uint)0},
                     { "SafeMotion.Slots[15].Commands.TakeoverPermitted", false },
                 };
             var writeData = new Dictionary<string, object> {
                     { "SafeMotion.Slots[15].SlotId", (byte)3},
-                    { "SafeMotion.Slots[15].HmiId", (UInt32)4},
+                    { "SafeMotion.Slots[15].HmiId", (uint)4},
                     { "SafeMotion.Slots[15].Commands.TakeoverPermitted", false },
                 };
             using (var are = new AutoResetEvent(false))
@@ -201,9 +199,13 @@ namespace Papper.Tests
                                         try
                                         {
                                             if (!intiState)
+                                            {
                                                 Assert.Equal(writeData[item.Variable], item.Value);
+                                            }
                                             else
+                                            {
                                                 Assert.Equal(originData[item.Variable], item.Value);
+                                            }
                                         }
                                         catch (Exception)
                                         {
@@ -245,7 +247,7 @@ namespace Papper.Tests
             var sleepTime = 10000;
             var address = "DB_SafetyDataChange.SafeMotion.Slots[15].Commands.TakeoverPermitted";
             var are = new AutoResetEvent(false);
-            int changes = 0;
+            var changes = 0;
 
             using (var subscription = _papper.CreateSubscription())
             {
@@ -274,7 +276,7 @@ namespace Papper.Tests
                 //waiting for initialize
                 Assert.True(are.WaitOne(sleepTime));
 
-                for (int i = 0; i < 5; i++)
+                for (var i = 0; i < 5; i++)
                 {
                     var writeResults = _papper.WriteAsync(PlcWriteReference.FromAddress(address, i % 2 == 0)).GetAwaiter().GetResult();
                     foreach (var item in writeResults)
@@ -304,14 +306,14 @@ namespace Papper.Tests
         {
             var intiState = true;
             var originData = new Dictionary<string, object> {
-                    { "W88", (UInt16)0},
+                    { "W88", (ushort)0},
                     { "X99_0", false  },
-                    { "DW100", (UInt32)0},
+                    { "DW100", (uint)0},
                 };
             var writeData = new Dictionary<string, object> {
-                    { "W88", (UInt16)3},
+                    { "W88", (ushort)3},
                     { "X99_0", true  },
-                    { "DW100", (UInt32)5},
+                    { "DW100", (uint)5},
                 };
             using var are = new AutoResetEvent(false);
             void callback(object s, PlcNotificationEventArgs e)
@@ -319,9 +321,13 @@ namespace Papper.Tests
                 foreach (var item in e)
                 {
                     if (!intiState)
+                    {
                         Assert.Equal(writeData[item.Variable], item.Value);
+                    }
                     else
+                    {
                         Assert.Equal(originData[item.Variable], item.Value);
+                    }
                 }
                 are.Set();
             }
@@ -374,12 +380,12 @@ namespace Papper.Tests
             var intiState = true;
             var originData = new Dictionary<string, object> {
                     { "SafeMotion.Slots[16].SlotId", (byte)0},
-                    { "SafeMotion.Slots[16].HmiId", (UInt32)0},
+                    { "SafeMotion.Slots[16].HmiId", (uint)0},
                     { "SafeMotion.Slots[16].Commands.TakeoverPermitted", false },
                 };
             var writeData = new Dictionary<string, object> {
                     { "SafeMotion.Slots[16].SlotId", (byte)3},
-                    { "SafeMotion.Slots[16].HmiId", (UInt32)4},
+                    { "SafeMotion.Slots[16].HmiId", (uint)4},
                     { "SafeMotion.Slots[16].Commands.TakeoverPermitted", false },
                 };
             using var are = new AutoResetEvent(false);
@@ -417,9 +423,13 @@ namespace Papper.Tests
                                         _output.WriteLine($"Changed: {item.Variable} = {item.Value}");
 
                                         if (!intiState)
+                                        {
                                             Assert.Equal(writeData[item.Variable], item.Value);
+                                        }
                                         else
+                                        {
                                             Assert.Equal(originData[item.Variable], item.Value);
+                                        }
                                     }
                                     catch (Exception)
                                     {
@@ -496,7 +506,7 @@ namespace Papper.Tests
                 else
                 {
                     var lastItem = item.Data.Length - 1;
-                    for (int j = 0; j < item.Data.Length; j++)
+                    for (var j = 0; j < item.Data.Length; j++)
                     {
                         var bItem = item.Data.Span[j];
                         if (j > 0 && j < lastItem)
@@ -524,7 +534,9 @@ namespace Papper.Tests
                                         item.ExecutionResult = ExecutionResult.Ok;
                                         bm = bm.SetBit(i, false);
                                         if (bm == 0)
+                                        {
                                             break;
+                                        }
                                     }
                                 }
                             }
@@ -553,9 +565,6 @@ namespace Papper.Tests
             }
             return Task.CompletedTask;
         }
-        public void Dispose()
-        {
-            _papper?.Dispose();
-        }
+        public void Dispose() => _papper?.Dispose();
     }
 }

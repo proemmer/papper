@@ -1,5 +1,4 @@
-﻿using Papper.Internal;
-using Papper.Types;
+﻿using Papper.Types;
 using System;
 using System.Collections.Generic;
 

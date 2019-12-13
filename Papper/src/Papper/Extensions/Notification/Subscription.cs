@@ -60,7 +60,7 @@ namespace Papper.Extensions.Notification
         /// <param name="mapper">The reference to the plcDatamapper.</param>
         /// <param name="vars">The variables we should watch.</param>
         /// <param name="defaultInterval">setup the default interval, if none was given by the <see cref="PlcWatchReference"/></param>
-        public Subscription(PlcDataMapper mapper, ChangeDetectionStrategy changeDetectionStrategy = ChangeDetectionStrategy.Polling , IEnumerable<PlcWatchReference>? vars = null, int defaultInterval = 1000)
+        public Subscription(PlcDataMapper mapper, ChangeDetectionStrategy changeDetectionStrategy = ChangeDetectionStrategy.Polling, IEnumerable<PlcWatchReference>? vars = null, int defaultInterval = 1000)
         {
             _mapper = mapper ?? ExceptionThrowHelper.ThrowArgumentNullException<PlcDataMapper>(nameof(mapper));
             _changeDetectionStrategy = changeDetectionStrategy;
@@ -72,8 +72,10 @@ namespace Papper.Extensions.Notification
             {
                 _changeEvent = new AsyncAutoResetEvent<IEnumerable<DataPack>>();
             }
-            if (vars != null) AddItems(vars);
-
+            if (vars != null)
+            {
+                AddItems(vars);
+            }
         }
 
         /// <summary>
@@ -92,10 +94,7 @@ namespace Papper.Extensions.Notification
         /// This method cancels the current call of DetectChangesAsync. After calling the DetectChangesAsync again,
         /// this cancellation is automatically reseted and ready for a newly cancellation.
         /// </summary>
-        public void CancelCurrentDetection()
-        {
-            _cts?.Cancel();
-        }
+        public void CancelCurrentDetection() => _cts?.Cancel();
 
         /// <summary>
         /// Add items to the subscription. This items are active in the next watch cycle, so you will get a data change if the update was activated.
@@ -139,7 +138,11 @@ namespace Papper.Extensions.Notification
             using (new WriterGuard(_lock))
             {
                 var result = vars.Any(item => _variables.Remove(item.Address)) | _modified;
-                if(result)  UpdateWatchCycle(_variables.Values);
+                if (result)
+                {
+                    UpdateWatchCycle(_variables.Values);
+                }
+
                 _modified = result;
                 return result;
             }
@@ -152,11 +155,19 @@ namespace Papper.Extensions.Notification
         /// <returns></returns>
         public PlcReadResult[]? ReadResultsFromCache(IEnumerable<PlcWatchReference> vars)
         {
-            if (_executions!.IsNullOrEmpty() || !vars.Any()) return null;
+            if (_executions!.IsNullOrEmpty() || !vars.Any())
+            {
+                return null;
+            }
+
             var variables = vars.Select(x => x.Address).ToList();
             using (new ReaderGuard(_lock))
             {
-                if (_executions!.IsNullOrEmpty()) return null;
+                if (_executions!.IsNullOrEmpty())
+                {
+                    return null;
+                }
+
                 return _executions.GroupBy(exec => exec.ExecutionResult) // Group by execution result
                                                      .SelectMany(group => group.SelectMany(g => g.Bindings)
                                                                                .Where(b => variables.Contains(b.Key))
@@ -280,10 +291,10 @@ namespace Papper.Extensions.Notification
         /// <param name="cycleInterval">the minimum of all watches</param>
         /// <returns></returns>
         private static Func<IEnumerable<string>, DateTime, bool> DetermineChanges(Dictionary<string, int>? cycles, int cycleInterval)
-            =>  (variables, lastChange) => cycles != null && 
-                                           !cycles.Any() && 
-                                           !string.IsNullOrWhiteSpace(variables.FirstOrDefault(x => cycles.TryGetValue(x, out var interval) && 
-                                                                                                    lastChange.AddMilliseconds(interval < cycleInterval * 2 ? cycleInterval : interval) < DateTime.Now));
+            => (variables, lastChange) => cycles != null &&
+                                          !cycles.Any() &&
+                                          !string.IsNullOrWhiteSpace(variables.FirstOrDefault(x => cycles.TryGetValue(x, out var interval) &&
+                                                                                                   lastChange.AddMilliseconds(interval < cycleInterval * 2 ? cycleInterval : interval) < DateTime.Now));
 
         internal void OnDataChanged(IEnumerable<DataPack> changed)
         {
@@ -299,7 +310,11 @@ namespace Papper.Extensions.Notification
 
         private bool InternalAddItems(IEnumerable<PlcWatchReference>? vars, bool throwExceptions)
         {
-            if (vars == null || !vars.Any()) return false;
+            if (vars == null || !vars.Any())
+            {
+                return false;
+            }
+
             using (new WriterGuard(_lock))
             {
                 var variables = new Dictionary<string, PlcWatchReference>();

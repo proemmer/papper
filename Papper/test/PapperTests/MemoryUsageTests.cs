@@ -1,12 +1,9 @@
-﻿using Papper;
-using Papper.Extensions.Metadata;
+﻿using Papper.Tests.Mappings;
+using Papper.Tests.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Papper.Tests.Mappings;
-using Papper.Tests.Util;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -16,13 +13,10 @@ namespace Papper.Tests
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
     public sealed class MemoryUsageTests : IDisposable
     {
-        private PlcDataMapper _papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
+        private readonly PlcDataMapper _papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
         private readonly ITestOutputHelper _output;
 
-        public MemoryUsageTests(ITestOutputHelper output)
-        {
-            _output = output;
-        }
+        public MemoryUsageTests(ITestOutputHelper output) => _output = output;
 
         [Theory]
         [InlineData(typeof(DB_Safety), nameof(DB_Safety))]
@@ -70,7 +64,7 @@ namespace Papper.Tests
                 else
                 {
                     var lastItem = item.Data.Length - 1;
-                    for (int j = 0; j < item.Data.Length; j++)
+                    for (var j = 0; j < item.Data.Length; j++)
                     {
                         var bItem = item.Data.Span[j];
                         if (j > 0 && j < lastItem)
@@ -98,7 +92,9 @@ namespace Papper.Tests
                                         item.ExecutionResult = ExecutionResult.Ok;
                                         bm = bm.SetBit(i, false);
                                         if (bm == 0)
+                                        {
                                             break;
+                                        }
                                     }
                                 }
                             }
@@ -109,9 +105,6 @@ namespace Papper.Tests
             return Task.CompletedTask;
         }
 
-        public void Dispose()
-        {
-            _papper?.Dispose();
-        }
+        public void Dispose() => _papper?.Dispose();
     }
 }

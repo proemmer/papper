@@ -28,7 +28,7 @@ namespace Papper.Internal
             }
         }
 
-  
+
         public Entry(PlcDataMapper mapper, PlcObject? plcObject, int validationTimeInMs)
         {
             _mapper = mapper ?? ExceptionThrowHelper.ThrowArgumentNullException<PlcDataMapper>(nameof(mapper));
@@ -54,7 +54,9 @@ namespace Papper.Internal
                     if (rawDataBlock.References.Any())
                     {
                         foreach (var reference in rawDataBlock.References)
+                        {
                             bindings.Add(reference.Key, new PlcObjectBinding(rawDataBlock, reference.Value.Item2, reference.Value.Item1, ValidationTimeMs));
+                        }
                     }
                 }
 

@@ -1,7 +1,5 @@
 ﻿using Papper.Attributes;
 using System;
-using System.Collections.Generic;
-using System.Text;
 #pragma warning disable CA1707 // Identifiers should not contain underscores
 #pragma warning disable CA1819 // Properties should not return arrays
 namespace PapperTests.Mappings
@@ -38,8 +36,8 @@ namespace PapperTests.Mappings
     public class UDT_Programs_MSpindle_Component_Programe
     {
         [ArrayBounds(1, 2, 0)]
-        public Char[] Prg_Name { get; set; }    //ProgramName
-        public Int16 Cnt_Tightenings { get; set; }  //Count TightenProgs
+        public char[] Prg_Name { get; set; }    //ProgramName
+        public short Cnt_Tightenings { get; set; }  //Count TightenProgs
     }
 
 
@@ -48,11 +46,11 @@ namespace PapperTests.Mappings
 
         [StringLength(60)]
         public string CompTitle { get; set; }   //title
-        public Int16 Channel_No { get; set; }   //Number from TighteningChannels
-        public Int16 Slot { get; set; } //SocketNumber
-        public Int16 TighteningSequence { get; set; }   //TighteningSequence
-        public Int16 SF { get; set; }   //TightenProg for Socket
-        public Int16 unTightenTightenProg { get; set; } //TightenProg release Global
+        public short Channel_No { get; set; }   //Number from TighteningChannels
+        public short Slot { get; set; } //SocketNumber
+        public short TighteningSequence { get; set; }   //TighteningSequence
+        public short SF { get; set; }   //TightenProg for Socket
+        public short unTightenTightenProg { get; set; } //TightenProg release Global
 
         [ArrayBounds(1, 64, 0)]
         public UDT_Programs_MSpindle_Component_Programe[] Programe { get; set; }

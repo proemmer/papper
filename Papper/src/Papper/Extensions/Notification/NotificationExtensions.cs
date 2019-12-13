@@ -19,7 +19,7 @@ namespace Papper.Extensions.Notification
         /// <param name="callback">Callback method</param>
         /// <param name="items">items to watch</param>
         /// <returns></returns>
-        public static Subscription SubscribeDataChanges(this PlcDataMapper mapper, OnChangeEventHandler callback, params PlcWatchReference[] items) 
+        public static Subscription SubscribeDataChanges(this PlcDataMapper mapper, OnChangeEventHandler callback, params PlcWatchReference[] items)
             => SubscribeDataChanges(mapper, callback, items as IEnumerable<PlcWatchReference>);
 
         /// <summary>
@@ -40,8 +40,8 @@ namespace Papper.Extensions.Notification
         /// <param name="items">items to watch</param>
         /// <param name="changeDetectionStrategy">setup the strategy to detect changes. <see cref="ChangeDetectionStrategy"/>. This setting depends on the access library.</param>
         /// <returns></returns>
-        public static Subscription SubscribeDataChanges(this PlcDataMapper mapper, 
-                                                        OnChangeEventHandler callback, 
+        public static Subscription SubscribeDataChanges(this PlcDataMapper mapper,
+                                                        OnChangeEventHandler callback,
                                                         IEnumerable<PlcWatchReference> items,
                                                         ChangeDetectionStrategy changeDetectionStrategy = ChangeDetectionStrategy.Polling)
          => SubscribeDataChanges(mapper, callback, DefaultInterval, items as IEnumerable<PlcWatchReference>, changeDetectionStrategy);
@@ -72,7 +72,11 @@ namespace Papper.Extensions.Notification
         /// <returns></returns>
         public static Subscription Pause(this Subscription subscription)
         {
-            if (subscription == null) return ExceptionThrowHelper.ThrowArgumentNullException<Subscription>(nameof(subscription));
+            if (subscription == null)
+            {
+                return ExceptionThrowHelper.ThrowArgumentNullException<Subscription>(nameof(subscription));
+            }
+
             subscription!.CancelCurrentDetection();
             return subscription;
         }
@@ -91,10 +95,7 @@ namespace Papper.Extensions.Notification
 
 
 
-        private static void RunWatchTask(Subscription subscription, OnChangeEventHandler callback)
-        {
-            _ = Task.Factory.StartNew(async() => await  WatchLoop(subscription, callback).ConfigureAwait(false), System.Threading.CancellationToken.None , TaskCreationOptions.LongRunning, TaskScheduler.Current);
-        }
+        private static void RunWatchTask(Subscription subscription, OnChangeEventHandler callback) => _ = Task.Factory.StartNew(async () => await WatchLoop(subscription, callback).ConfigureAwait(false), System.Threading.CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Current);
 
         private static async Task WatchLoop(Subscription subscription, OnChangeEventHandler callback)
         {

@@ -4,7 +4,7 @@ using System.Globalization;
 namespace Papper.Attributes
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-    public sealed class MappingAttribute :  Attribute
+    public sealed class MappingAttribute : Attribute
     {
         //public MappingAttribute()
         //{
@@ -16,8 +16,16 @@ namespace Papper.Attributes
 
         public MappingAttribute(string name, string selector, int offset = 0, int observationRate = 0)
         {
-            if (string.IsNullOrWhiteSpace(name)) ExceptionThrowHelper.ThrowArgumentCouldNotBeNullOrWhitespaceException(nameof(name));
-            if (string.IsNullOrWhiteSpace(selector)) ExceptionThrowHelper.ThrowArgumentCouldNotBeNullOrWhitespaceException(nameof(selector));
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                ExceptionThrowHelper.ThrowArgumentCouldNotBeNullOrWhitespaceException(nameof(name));
+            }
+
+            if (string.IsNullOrWhiteSpace(selector))
+            {
+                ExceptionThrowHelper.ThrowArgumentCouldNotBeNullOrWhitespaceException(nameof(selector));
+            }
+
             Name = name;
             Selector = selector;
             Offset = offset;
@@ -70,7 +78,7 @@ namespace Papper.Attributes
             }
             else
             {
-                rc = (string.Compare(a.Name, b.Name, StringComparison.Ordinal) == 0  &&
+                rc = (string.Compare(a.Name, b.Name, StringComparison.Ordinal) == 0 &&
                       string.Compare(a.Selector, b.Selector, StringComparison.Ordinal) == 0 &&
                       a.Offset == b.Offset &&
                       a.ObservationRate == b.ObservationRate);
@@ -81,10 +89,7 @@ namespace Papper.Attributes
 
 
 
-        public static bool operator !=(MappingAttribute p1, MappingAttribute p2)
-        {
-            return !(p1 == p2);
-        }
+        public static bool operator !=(MappingAttribute p1, MappingAttribute p2) => !(p1 == p2);
 
         public override bool Equals(object obj)
         {
@@ -96,9 +101,6 @@ namespace Papper.Attributes
             return rc;
         }
 
-        public override int GetHashCode()
-        {
-            return string.Format(CultureInfo.InvariantCulture, "{0}.{1}.{2}",Name,Selector,Offset).GetHashCode();
-        }
+        public override int GetHashCode() => string.Format(CultureInfo.InvariantCulture, "{0}.{1}.{2}", Name, Selector, Offset).GetHashCode();
     }
 }

@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
 
 namespace Papper.Types
 {
@@ -89,36 +88,80 @@ namespace Papper.Types
             var type = ArrayType.GetType();
 
             if (type == typeof(PlcByte) || type == typeof(PlcUSInt))
+            {
                 return InternalConvert<byte>(plcObjectBinding, data);
+            }
+
             if (type == typeof(PlcBool))
+            {
                 return InternalConvert<bool>(plcObjectBinding, data);
+            }
+
             if (type == typeof(PlcChar))
+            {
                 return InternalConvert<char>(plcObjectBinding, data);
+            }
+
             if (type == typeof(PlcString) || type == typeof(PlcWString) || type == typeof(PlcWChar))
+            {
                 return InternalConvert<string>(plcObjectBinding, data);
+            }
+
             if (type == typeof(PlcSInt))
+            {
                 return InternalConvert<sbyte>(plcObjectBinding, data);
+            }
+
             if (type == typeof(PlcInt))
+            {
                 return InternalConvert<short>(plcObjectBinding, data);
+            }
+
             if (type == typeof(PlcUInt) || type == typeof(PlcWord))
+            {
                 return InternalConvert<ushort>(plcObjectBinding, data);
+            }
+
             if (type == typeof(PlcDInt) || type == typeof(PlcS7Counter))
+            {
                 return InternalConvert<int>(plcObjectBinding, data);
+            }
+
             if (type == typeof(PlcUDInt) || type == typeof(PlcDWord))
+            {
                 return InternalConvert<uint>(plcObjectBinding, data);
+            }
+
             if (type == typeof(PlcLInt))
+            {
                 return InternalConvert<long>(plcObjectBinding, data);
+            }
+
             if (type == typeof(PlcULInt) || type == typeof(PlcLWord))
+            {
                 return InternalConvert<ulong>(plcObjectBinding, data);
+            }
+
             if (type == typeof(PlcDate) || type == typeof(PlcDateTime) || type == typeof(PlcLDateTime))
+            {
                 return InternalConvert<DateTime>(plcObjectBinding, data);
+            }
+
             if (type == typeof(PlcS5Time) || type == typeof(PlcTime) || type == typeof(PlcTimeOfDay) || type == typeof(PlcLTime))
+            {
                 return InternalConvert<TimeSpan>(plcObjectBinding, data);
+            }
+
             if (type == typeof(PlcReal))
+            {
                 return InternalConvert<float>(plcObjectBinding, data);
+            }
 
             if (type == typeof(PlcArray))
+            {
                 return ArrayType.ConvertFromRaw(plcObjectBinding, data);
+            }
+
             if (plcObjectBinding.FullType && plcObjectBinding.MetaData.ElemenType != null)
             {
                 if (!_typeInstances.TryGetValue(plcObjectBinding.MetaData.ElemenType, out var instance))
@@ -141,7 +184,9 @@ namespace Papper.Types
 
             //handle byte array for Json --- TODO:  not so beautiful here
             if (list is string convert && (type == typeof(PlcByte) || ArrayType.ElemenType == typeof(byte)))
+            {
                 value = list = Convert.FromBase64String(convert);
+            }
 
             if (list != null)
             {
@@ -157,7 +202,7 @@ namespace Papper.Types
                 {
                     if (value is char[] charArray)
                     {
-                        for (int i = 0; i < charArray.Length; i++)
+                        for (var i = 0; i < charArray.Length; i++)
                         {
                             data[plcObjectBinding.Offset + i] = Convert.ToByte(charArray[i]);
                         }
@@ -225,7 +270,7 @@ namespace Papper.Types
                 {
                     var d = data.Slice(plcObjectBinding.Offset, ArrayLength).ToArray();
                     var result = new char[ArrayLength];
-                    for (int i = 0; i < ArrayLength; i++)
+                    for (var i = 0; i < ArrayLength; i++)
                     {
                         result[i] = Convert.ToChar(d[i]);
                     }
@@ -239,7 +284,11 @@ namespace Papper.Types
                     var childEnumerator = Childs.OfType<PlcObject>().GetEnumerator();
                     for (var i = 0; i < ArrayLength; i++)
                     {
-                        if (!childEnumerator.MoveNext()) ExceptionThrowHelper.ThrowArrayIndexExeption(idx);
+                        if (!childEnumerator.MoveNext())
+                        {
+                            ExceptionThrowHelper.ThrowArrayIndexExeption(idx);
+                        }
+
                         var child = childEnumerator.Current;
                         var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + ((idx - From) * GetElementSizeForOffset()), plcObjectBinding.ValidationTimeInMs, fully);
                         list.SetValue(((T)ArrayType.ConvertFromRaw(binding, data)), i);
@@ -254,7 +303,11 @@ namespace Papper.Types
                     var childEnumerator = Childs.OfType<PlcObject>().GetEnumerator();
                     for (var i = 0; i < ArrayLength; i++)
                     {
-                        if (!childEnumerator.MoveNext()) ExceptionThrowHelper.ThrowArrayIndexExeption(idx);
+                        if (!childEnumerator.MoveNext())
+                        {
+                            ExceptionThrowHelper.ThrowArrayIndexExeption(idx);
+                        }
+
                         var child = childEnumerator.Current;
                         var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes + ((idx - From) * GetElementSizeForOffset()), plcObjectBinding.ValidationTimeInMs, fully);
                         list[i] = ((T)ArrayType.ConvertFromRaw(binding, data));
@@ -284,7 +337,9 @@ namespace Papper.Types
                     if (enumerator1.MoveNext() && enumerator2.MoveNext())
                     {
                         if (!base.AreDataEqual(enumerator1.Current, enumerator2.Current))
+                        {
                             return false;
+                        }
                     }
                     else
                     {
@@ -311,10 +366,13 @@ namespace Papper.Types
                 {
                     var idx = GetIndex(i);
                     if (idx != null)
+                    {
                         yield return idx;
+                    }
                     else
+                    {
                         yield break;
-
+                    }
                 }
             }
         }
@@ -336,7 +394,10 @@ namespace Papper.Types
         public override ITreeNode? Get(ITreePath path, ref int offset, bool getRef = false)
         {
             if (path.IsPathToCurrent && !path.IsPathIndexed)
+            {
                 return this;
+            }
+
             var idx = path.ArrayIndizes[0];
             if (idx >= From && idx <= To)
             {
@@ -353,7 +414,10 @@ namespace Papper.Types
             var elem = LeafElementType ?? ArrayType;
             var size = elem.Size == null ? 0 : elem.Size.Bytes;
             if (!elem.AllowOddByteOffsetInArray && size % 2 != 0)
+            {
                 size++;
+            }
+
             return size;
         }
 
@@ -387,7 +451,10 @@ namespace Papper.Types
                 for (var i = 0; i < ArrayLength; i++)
                 {
                     if (result % 2 != 0)
+                    {
                         result++;
+                    }
+
                     result += _arrayType.Size.Bytes;
                 }
                 Size.Bytes = result;
@@ -410,7 +477,9 @@ namespace Papper.Types
             lock (_indexCache)
             {
                 if (_indexCache.TryGetValue(idx, out var ret) && ret is PlcObject plco)
+                {
                     return plco;
+                }
 
                 var objResult = ArrayType is PlcStruct
                     ? new PlcObjectRef($"[{idx}]", ArrayType)

@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Papper.Internal;
+using System;
 using System.Buffers.Binary;
 using System.Globalization;
-using Papper.Internal;
 
 namespace Papper.Types
 {
@@ -11,7 +11,7 @@ namespace Papper.Types
         private static readonly PlcSize _size = new PlcSize { Bytes = 2 };
         public override Type DotNetType => typeof(ushort);
 
-        public PlcUInt(string name) :  base(name)
+        public PlcUInt(string name) : base(name)
          => Size = _size;
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)

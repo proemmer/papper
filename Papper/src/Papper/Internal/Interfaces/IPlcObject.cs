@@ -12,6 +12,6 @@ namespace Papper.Internal
         int BitSize { get; }
         bool IsReadOnly { get; }
 
-        IEnumerable<IPlcObject> ChildVars { get; } 
+        IEnumerable<IPlcObject> ChildVars { get; }
     }
 }

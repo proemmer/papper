@@ -28,7 +28,7 @@ namespace Papper.Tests.Mappings
         public bool MotionSelected { get; set; }
         public bool Button1Pressed { get; set; }
         public bool Button2Pressed { get; set; }
-        public Int16 HandshakeTime { get; set; }
+        public short HandshakeTime { get; set; }
     }
 
     public class UDT_SafeMotionSlot_Motion
@@ -42,7 +42,7 @@ namespace Papper.Tests.Mappings
     public class UDT_SafeMotionHeader
     {
         public DateTime Generated { get; set; }
-        public Int16 NumberOfActiveSlots { get; set; }
+        public short NumberOfActiveSlots { get; set; }
         public UDT_SafeMotionHeader_States States { get; set; }
         public UDT_SafeMotionHeader_Commands Commands { get; set; }
 
@@ -50,14 +50,14 @@ namespace Papper.Tests.Mappings
 
     public class UDT_SafeMotionSlot
     {
-        public Int16 SafeSlotVersion { get; set; }
+        public short SafeSlotVersion { get; set; }
         public byte SlotId { get; set; }
         public DateTime UnitTimestamp { get; set; }
-        public UInt16 UnitChecksum { get; set; }
-        public Int16 AggregateDBNummer { get; set; }
-        public Int16 AggregateOffset { get; set; }
-        public UInt32 HmiId { get; set; }
-        public UInt32 AccessRightReqFromHmiId { get; set; }
+        public ushort UnitChecksum { get; set; }
+        public short AggregateDBNummer { get; set; }
+        public short AggregateOffset { get; set; }
+        public uint HmiId { get; set; }
+        public uint AccessRightReqFromHmiId { get; set; }
         public UDT_SafeMotionSlot_Commands Commands { get; set; }
         public UDT_SafeMotionSlot_Handshake Handshake { get; set; }
         public UDT_SafeMotionSlot_Motion Motion { get; set; }

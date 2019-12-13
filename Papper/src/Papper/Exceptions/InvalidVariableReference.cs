@@ -14,10 +14,7 @@ namespace Papper
         {
         }
 
-        public InvalidVariableException(string variable) : base($"Could not resolve Variable <{variable}>!")
-        {
-            Varibale = variable;
-        }
+        public InvalidVariableException(string variable) : base($"Could not resolve Variable <{variable}>!") => Varibale = variable;
 
     }
 }

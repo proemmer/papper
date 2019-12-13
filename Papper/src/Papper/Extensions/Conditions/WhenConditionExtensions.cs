@@ -9,18 +9,26 @@ namespace Papper.Extensions.Conditions
     public static class WhenConditionExtensions
     {
 
-        public async static Task<bool> WhenAsync<T1>(this PlcDataMapper papper,
+        public static async Task<bool> WhenAsync<T1>(this PlcDataMapper papper,
                                                 (PlcReadReference reference, Func<T1, bool> cmp) variable1,
                                                 Func<Task<bool>>? then = null,
                                                 Func<Task<bool>>? otherwise = null,
                                                 CancellationToken ct = default,
                                                 int interval = 100)
         {
-            if (papper == null) return false;
+            if (papper == null)
+            {
+                return false;
+            }
+
             do
             {
                 var result = await papper.IfAsync(variable1, then, otherwise).ConfigureAwait(false);
-                if (result) return true;
+                if (result)
+                {
+                    return true;
+                }
+
                 await Task.Delay(interval, ct).ConfigureAwait(false);
             } while (ct.IsCancellationRequested);
             return false;
@@ -34,7 +42,7 @@ namespace Papper.Extensions.Conditions
 
 
 
-        public async static Task<bool> WhenAsync<T1, T2>(this PlcDataMapper papper,
+        public static async Task<bool> WhenAsync<T1, T2>(this PlcDataMapper papper,
                     PlcReadReference variable1,
                     PlcReadReference variable2,
                     Func<T1, T2, bool> cmp,
@@ -43,7 +51,11 @@ namespace Papper.Extensions.Conditions
                     CancellationToken ct = default,
                     int interval = 100)
         {
-            if (papper == null) return false;
+            if (papper == null)
+            {
+                return false;
+            }
+
             do
             {
                 var result = await papper.IfAsync(variable1,
@@ -51,7 +63,11 @@ namespace Papper.Extensions.Conditions
                                                     cmp,
                                                     then,
                                                     otherwise).ConfigureAwait(false);
-                if (result) return true;
+                if (result)
+                {
+                    return true;
+                }
+
                 await Task.Delay(interval, ct).ConfigureAwait(false);
             } while (ct.IsCancellationRequested);
             return false;
@@ -75,7 +91,7 @@ namespace Papper.Extensions.Conditions
 
 
 
-        public async static Task<bool> WhenAsync<T1, T2, T3>(this PlcDataMapper papper,
+        public static async Task<bool> WhenAsync<T1, T2, T3>(this PlcDataMapper papper,
                     PlcReadReference variable1,
                     PlcReadReference variable2,
                     PlcReadReference variable3,
@@ -85,7 +101,11 @@ namespace Papper.Extensions.Conditions
                     CancellationToken ct = default,
                     int interval = 100)
         {
-            if (papper == null) return false;
+            if (papper == null)
+            {
+                return false;
+            }
+
             do
             {
                 var result = await papper.IfAsync(variable1,
@@ -94,7 +114,11 @@ namespace Papper.Extensions.Conditions
                                                     cmp,
                                                     then,
                                                     otherwise).ConfigureAwait(false);
-                if (result) return true;
+                if (result)
+                {
+                    return true;
+                }
+
                 await Task.Delay(interval, ct).ConfigureAwait(false);
             } while (ct.IsCancellationRequested);
             return false;
@@ -118,7 +142,7 @@ namespace Papper.Extensions.Conditions
                                 ct,
                                 interval);
 
-        public async static Task<bool> WhenAsync<T1, T2, T3, T4>(this PlcDataMapper papper,
+        public static async Task<bool> WhenAsync<T1, T2, T3, T4>(this PlcDataMapper papper,
                             PlcReadReference variable1,
                             PlcReadReference variable2,
                             PlcReadReference variable3,
@@ -129,7 +153,11 @@ namespace Papper.Extensions.Conditions
                             CancellationToken ct = default,
                             int interval = 100)
         {
-            if (papper == null) return false;
+            if (papper == null)
+            {
+                return false;
+            }
+
             do
             {
                 var result = await papper.IfAsync(variable1,
@@ -139,7 +167,11 @@ namespace Papper.Extensions.Conditions
                                                     cmp,
                                                     then,
                                                     otherwise).ConfigureAwait(false);
-                if (result) return true;
+                if (result)
+                {
+                    return true;
+                }
+
                 await Task.Delay(interval, ct).ConfigureAwait(false);
             } while (ct.IsCancellationRequested);
             return false;
@@ -165,7 +197,7 @@ namespace Papper.Extensions.Conditions
                                 ct,
                                 interval);
 
-        public async static Task<bool> WhenAsync<T1, T2, T3, T4, T5>(this PlcDataMapper papper,
+        public static async Task<bool> WhenAsync<T1, T2, T3, T4, T5>(this PlcDataMapper papper,
                                     PlcReadReference variable1,
                                     PlcReadReference variable2,
                                     PlcReadReference variable3,
@@ -177,7 +209,11 @@ namespace Papper.Extensions.Conditions
                                     CancellationToken ct = default,
                                     int interval = 100)
         {
-            if (papper == null) return false;
+            if (papper == null)
+            {
+                return false;
+            }
+
             do
             {
                 var result = await papper.IfAsync(variable1,
@@ -188,7 +224,11 @@ namespace Papper.Extensions.Conditions
                                                     cmp,
                                                     then,
                                                     otherwise).ConfigureAwait(false);
-                if (result) return true;
+                if (result)
+                {
+                    return true;
+                }
+
                 await Task.Delay(interval, ct).ConfigureAwait(false);
             } while (ct.IsCancellationRequested);
             return false;
@@ -217,7 +257,7 @@ namespace Papper.Extensions.Conditions
                                 interval);
 
 
-        public async static Task<bool> WhenAsync<T1, T2, T3, T4, T5, T6>(this PlcDataMapper papper,
+        public static async Task<bool> WhenAsync<T1, T2, T3, T4, T5, T6>(this PlcDataMapper papper,
                                             PlcReadReference variable1,
                                             PlcReadReference variable2,
                                             PlcReadReference variable3,
@@ -230,7 +270,10 @@ namespace Papper.Extensions.Conditions
                                             CancellationToken ct = default,
                                             int interval = 100)
         {
-            if (papper == null) return false;
+            if (papper == null)
+            {
+                return false;
+            }
 
             do
             {
@@ -243,7 +286,11 @@ namespace Papper.Extensions.Conditions
                                                     cmp,
                                                     then,
                                                     otherwise).ConfigureAwait(false);
-                if (result) return true;
+                if (result)
+                {
+                    return true;
+                }
+
                 await Task.Delay(interval, ct).ConfigureAwait(false);
             } while (ct.IsCancellationRequested);
             return false;
@@ -275,7 +322,7 @@ namespace Papper.Extensions.Conditions
 
 
 
-        public async static Task<bool> WhenAsync<T1, T2, T3, T4, T5, T6, T7>(this PlcDataMapper papper,
+        public static async Task<bool> WhenAsync<T1, T2, T3, T4, T5, T6, T7>(this PlcDataMapper papper,
                                             PlcReadReference variable1,
                                             PlcReadReference variable2,
                                             PlcReadReference variable3,
@@ -289,7 +336,10 @@ namespace Papper.Extensions.Conditions
                                             CancellationToken ct = default,
                                             int interval = 100)
         {
-            if (papper == null) return false;
+            if (papper == null)
+            {
+                return false;
+            }
 
             do
             {
@@ -303,7 +353,11 @@ namespace Papper.Extensions.Conditions
                                                     cmp,
                                                     then,
                                                     otherwise).ConfigureAwait(false);
-                if (result) return true;
+                if (result)
+                {
+                    return true;
+                }
+
                 await Task.Delay(interval, ct).ConfigureAwait(false);
             } while (ct.IsCancellationRequested);
             return false;
@@ -339,7 +393,7 @@ namespace Papper.Extensions.Conditions
 
 
 
-        public async static Task<bool> WhenAsync<T1, T2, T3, T4, T5, T6, T7, T8>(this PlcDataMapper papper,
+        public static async Task<bool> WhenAsync<T1, T2, T3, T4, T5, T6, T7, T8>(this PlcDataMapper papper,
                                                 PlcReadReference variable1,
                                                 PlcReadReference variable2,
                                                 PlcReadReference variable3,
@@ -354,7 +408,10 @@ namespace Papper.Extensions.Conditions
                                                 CancellationToken ct = default,
                                                 int interval = 100)
         {
-            if (papper == null) return false;
+            if (papper == null)
+            {
+                return false;
+            }
 
             do
             {
@@ -369,7 +426,11 @@ namespace Papper.Extensions.Conditions
                                                     cmp,
                                                     then,
                                                     otherwise).ConfigureAwait(false);
-                if (result) return true;
+                if (result)
+                {
+                    return true;
+                }
+
                 await Task.Delay(interval, ct).ConfigureAwait(false);
             } while (ct.IsCancellationRequested);
             return false;

@@ -83,7 +83,7 @@ namespace Papper.Extensions.Notification
                 yield break;
             }
 
-            foreach (string variable in variables)
+            foreach (var variable in variables)
             {
                 yield return FromAddress($"{root}.{variable}", watchCycle);
             }
@@ -113,7 +113,7 @@ namespace Papper.Extensions.Notification
                 yield break;
             }
 
-            foreach ((string variable, int watchCycle) variable in variables)
+            foreach (var variable in variables)
             {
                 yield return FromAddress($"{root}.{variable.variable}", variable.watchCycle);
             }

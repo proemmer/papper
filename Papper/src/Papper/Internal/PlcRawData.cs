@@ -16,7 +16,7 @@ namespace Papper.Internal
         private Dictionary<int, Partiton>? _partitons = null;
 
         public IDictionary<string, Tuple<int, PlcObject>> References { get; private set; }
-        
+
         public string? Selector { get; set; }
         public int Offset { get; set; }
         public int Size
@@ -29,7 +29,7 @@ namespace Papper.Internal
             }
         }
 
-        
+
 
         public int MemoryAllocationSize { get; private set; }
 
@@ -37,7 +37,10 @@ namespace Papper.Internal
         {
             size = size > 0 ? size : 2;
             if (size % 2 != 0)
+            {
                 size++;
+            }
+
             return size;
         }
 
@@ -59,7 +62,9 @@ namespace Papper.Internal
                     lock (_lock)
                     {
                         if (_partitons == null || !_partitons.Any())
+                        {
                             CreatePartitions();
+                        }
                     }
                 }
             }
@@ -71,7 +76,11 @@ namespace Papper.Internal
             set
             {
                 _lastUpdate = value;
-                if (_partitons == null) return;
+                if (_partitons == null)
+                {
+                    return;
+                }
+
                 foreach (var p in _partitons)
                 {
                     p.Value.LastUpdate = value;
@@ -97,7 +106,9 @@ namespace Papper.Internal
                 foreach (var p in part)
                 {
                     if (!partitions.Contains(p))
+                    {
                         partitions.Add(p);
+                    }
                 }
             }
             return partitions;
@@ -106,7 +117,11 @@ namespace Papper.Internal
 
         public IList<Partiton> GetPartitonsByOffset(int offset, int size)
         {
-            if (_partitons == null) return new List<Partiton>();
+            if (_partitons == null)
+            {
+                return new List<Partiton>();
+            }
+
             if (!ReadDataCache.IsEmpty && ReadDataCache.Length > _partitionSize && size != ReadDataCache.Length)
             {
                 var partitions = new List<Partiton>();
@@ -142,11 +157,17 @@ namespace Papper.Internal
 
         private void CreatePartitions()
         {
-            if (_partitons == null) _partitons = new Dictionary<int, Partiton>();
+            if (_partitons == null)
+            {
+                _partitons = new Dictionary<int, Partiton>();
+            }
+
             var length = ReadDataCache.Length;
             var numberOfPartitons = ReadDataCache.Length / _partitionSize;
             if ((length % _partitionSize) > 0)
+            {
                 numberOfPartitons++;
+            }
 
             var offset = 0;
             for (var i = 0; i < numberOfPartitons; i++)

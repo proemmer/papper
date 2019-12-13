@@ -1,5 +1,4 @@
 ﻿using Papper.Attributes;
-using System;
 #pragma warning disable CA1707 // Identifiers should not contain underscores
 #pragma warning disable CA1819 // Properties should not return arrays
 namespace Papper.Tests.Mappings
@@ -21,9 +20,9 @@ namespace Papper.Tests.Mappings
 
         [StringLength(9)]
         public string Data2 { get; set; }
-        public Int16 Aktion { get; set; }
-        public Int16 Anzahl { get; set; }
-        public Int16 Signal_Auslauf { get; set; }
+        public short Aktion { get; set; }
+        public short Anzahl { get; set; }
+        public short Signal_Auslauf { get; set; }
     }
 
 
@@ -42,9 +41,9 @@ namespace Papper.Tests.Mappings
 
         [StringLength(9)]
         public string Data2 { get; set; }   //Daten
-        public Int16 Action { get; set; }
-        public Int16 Count { get; set; }
-        public Int16 Signal_Out { get; set; }
+        public short Action { get; set; }
+        public short Count { get; set; }
+        public short Signal_Out { get; set; }
     }
 
 
@@ -53,15 +52,15 @@ namespace Papper.Tests.Mappings
     {
         public bool Inconsistent { get; set; }  //Eintrag inkonsistent
         public bool Deactivated { get; set; }   //Eintrag deaktiviert -> wird an diesem Platz nicht verbaut
-        public Int16 InputAdrTrayChange { get; set; }   //Eingangsadresse für Behälterwechsel
-        public Int16 InputAdrBitTrayChange { get; set; }    //Eingangsadresse Bit für Behälterwechsel
-        public Int16 MaxCntPiecesInTray { get; set; }   //Stück im Behälter
+        public short InputAdrTrayChange { get; set; }   //Eingangsadresse für Behälterwechsel
+        public short InputAdrBitTrayChange { get; set; }    //Eingangsadresse Bit für Behälterwechsel
+        public short MaxCntPiecesInTray { get; set; }   //Stück im Behälter
 
         [ReadOnly(true)]
-        public Int16 ActCntPieces { get; set; } //Aktuelle Stückzahl
+        public short ActCntPieces { get; set; } //Aktuelle Stückzahl
 
         [ReadOnly(true)]
-        public Int16 ActCntPiecePerUnit { get; set; }   //Aktuelle Stückzahl verbaute Stück pro Einheit (nur Ausgabe)
+        public short ActCntPiecePerUnit { get; set; }   //Aktuelle Stückzahl verbaute Stück pro Einheit (nur Ausgabe)
 
         [ArrayBounds(1, 8, 0)]
         public UDT_ChargenRV_Data_Element_CntPiecePerUnit[] CntPiecePerUnit { get; set; }   //verbaute Stückzahl je Einheit (Motor)
@@ -70,7 +69,7 @@ namespace Papper.Tests.Mappings
         public string SDesc { get; set; }   //Bauteil Kurzbezeichnung
 
         [ArrayBounds(1, 9, 0)]
-        public Char[] Partnumber { get; set; }  //Sachnummer
+        public char[] Partnumber { get; set; }  //Sachnummer
 
         [StringLength(40)]
         public string ScanData { get; set; }    //gescannte Daten
@@ -103,7 +102,7 @@ namespace Papper.Tests.Mappings
 
     public class UDT_ChargenRV_PlcVars_ElemList
     {
-        public Int16 LastElem { get; set; }
+        public short LastElem { get; set; }
 
         [ArrayBounds(1, 50, 0)]
 
@@ -111,7 +110,7 @@ namespace Papper.Tests.Mappings
         public string[] SDesc { get; set; }
 
         [ArrayBounds(1, 50, 0)]
-        public Int16[] Index { get; set; }
+        public short[] Index { get; set; }
 
         [ArrayBounds(1, 50, 0)]
         public bool[] IpmFinished { get; set; }
@@ -136,9 +135,9 @@ namespace Papper.Tests.Mappings
 
         [StringLength(9)]
         public string Data2 { get; set; }
-        public Int16 Action { get; set; }
-        public Int16 Count { get; set; }
-        public Int16 Signal_Out { get; set; }
+        public short Action { get; set; }
+        public short Count { get; set; }
+        public short Signal_Out { get; set; }
     }
 
 
@@ -153,7 +152,7 @@ namespace Papper.Tests.Mappings
 
     public class UDT_ChargenRV_PlcVars
     {
-        public Int16 ClearLineNo { get; set; }  //Zeilen Nummer zum löschen
+        public short ClearLineNo { get; set; }  //Zeilen Nummer zum löschen
         public bool ScanRequired { get; set; }  //Scan erforderlich
         public bool Finished { get; set; }  //Komplett fertig
         public bool HM_FL_WpcIn { get; set; }
@@ -175,9 +174,9 @@ namespace Papper.Tests.Mappings
 
     public class UDT_DatenErgeb_Univ
     {
-        public Int16 IO_Nr { get; set; }    //Nr der gefundenen Auswertung
-        public Int16 Fehler_Nr { get; set; }    //Fehler Nummer
-        public Int16 Fehler_Position { get; set; }  //Zeilen Position des Fehlers
+        public short IO_Nr { get; set; }    //Nr der gefundenen Auswertung
+        public short Fehler_Nr { get; set; }    //Fehler Nummer
+        public short Fehler_Position { get; set; }  //Zeilen Position des Fehlers
 
         [StringLength(80)]
         public string Fehler_Text { get; set; } //Fehler Text

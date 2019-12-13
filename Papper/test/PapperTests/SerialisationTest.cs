@@ -6772,9 +6772,6 @@ namespace Papper.Tests
 
         };
 
-        public void Dispose()
-        {
-            _converter?.Dispose();
-        }
+        public void Dispose() => _converter?.Dispose();
     }
 }

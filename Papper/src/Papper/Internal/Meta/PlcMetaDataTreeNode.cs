@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using Papper.Internal;
 
 namespace Papper.Internal
 {
@@ -17,18 +15,25 @@ namespace Papper.Internal
         {
         }
 
-        public override IEnumerable<ITreeNode> Childs
-        {
-            get { return _childs ?? _empty; }
-        }
+        public override IEnumerable<ITreeNode> Childs => _childs ?? _empty;
 
         public override void AddChild(ITreeNode child)
         {
             if (GetChildByName(child.Name) != null)
+            {
                 ExceptionThrowHelper.ThrowChildNodeException(child.Name, true);
-            if (child is PlcMetaDataBaseTreeNode baseTreeNode) baseTreeNode.Parent = this;
+            }
 
-            if (_childs == null) _childs = new List<ITreeNode>();
+            if (child is PlcMetaDataBaseTreeNode baseTreeNode)
+            {
+                baseTreeNode.Parent = this;
+            }
+
+            if (_childs == null)
+            {
+                _childs = new List<ITreeNode>();
+            }
+
             _childs.Add(child);
         }
 
@@ -36,9 +41,16 @@ namespace Papper.Internal
         {
             var child = GetChildByName(name);
             if (child == null)
+            {
                 ExceptionThrowHelper.ThrowChildNodeException(name, false);
+            }
+
             _childs?.Remove(child!);
-            if (child is PlcMetaDataBaseTreeNode baseTreeNode) baseTreeNode.Parent = null;
+            if (child is PlcMetaDataBaseTreeNode baseTreeNode)
+            {
+                baseTreeNode.Parent = null;
+            }
+
             return child!;
         }
 
@@ -46,14 +58,21 @@ namespace Papper.Internal
         {
             ITreeNode? tn;
             if (_childByNameCache == null)
+            {
                 _childByNameCache = new Dictionary<string, ITreeNode>();
+            }
             else if (_childByNameCache.TryGetValue(name, out tn))
+            {
                 return tn;
+            }
 
             tn = _childs?.Find(node => node.Name == name);
 
             if (tn != null)
+            {
                 _childByNameCache[name] = tn;
+            }
+
             return tn;
         }
 
@@ -64,7 +83,9 @@ namespace Papper.Internal
                 if (_childs != null)
                 {
                     foreach (var childNode in _childs)
+                    {
                         childNode.Accept(visit);
+                    }
                 }
             }
         }
@@ -72,19 +93,23 @@ namespace Papper.Internal
         public override void ReverseAccept(VisitNode visit)
         {
             if (visit(this) && Parent != null)
+            {
                 Parent.ReverseAccept(visit);
+            }
         }
 
         public override ITreeNode? Get(ITreePath path)
         {
-            int dummy = 0;
+            var dummy = 0;
             return Get(path, ref dummy);
         }
 
         public override ITreeNode? Get(ITreePath path, ref int offset, bool getRef = false)
         {
             if (path.IsPathToCurrent)
+            {
                 return this;
+            }
 
             if (path.IsAbsolute)
             {
@@ -103,9 +128,13 @@ namespace Papper.Internal
         public override void AddChild(ITreePath path, ITreeNode node)
         {
             if (path.IsPathToCurrent)
+            {
                 AddChild(node);
+            }
             else if (path.IsAbsolute)
+            {
                 Root.AddChild(path.StepDown(), node);
+            }
             else
             {
                 var nextNode = path.Nodes.First();
@@ -122,10 +151,14 @@ namespace Papper.Internal
         public virtual void ClearCache()
         {
             foreach (var c in Childs.OfType<PlcMetaDataTreeNode>())
+            {
                 c.ClearCache();
+            }
 
             if (_childByNameCache != null)
+            {
                 _childByNameCache.Clear();
+            }
         }
     }
 

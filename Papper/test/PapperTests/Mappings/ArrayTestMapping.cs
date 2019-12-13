@@ -1,5 +1,4 @@
 ﻿using Papper.Attributes;
-using System;
 
 #pragma warning disable CA1819 // Properties should not return arrays
 namespace Papper.Tests.Mappings
@@ -18,7 +17,7 @@ namespace Papper.Tests.Mappings
         public char[] BigCharArray { get; set; }
 
         [ArrayBounds(1, 5000, 0)]
-        public Int32[] BigIntArray { get; set; }
+        public int[] BigIntArray { get; set; }
 
         [ArrayBounds(1, 10, 0)]
         public byte[] ByteElements { get; set; }
@@ -27,7 +26,7 @@ namespace Papper.Tests.Mappings
         public char[] CharElements { get; set; }
 
         [ArrayBounds(1, 10, 0)]
-        public Int32[] IntElements { get; set; }
+        public int[] IntElements { get; set; }
     }
 }
 #pragma warning restore CA1819 // Properties should not return arrays

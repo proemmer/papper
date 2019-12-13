@@ -1,7 +1,6 @@
-﻿using System;
+﻿using Papper.Types;
+using System;
 using System.Collections.Generic;
-using Papper.Internal;
-using Papper.Types;
 
 namespace Papper.Internal
 {

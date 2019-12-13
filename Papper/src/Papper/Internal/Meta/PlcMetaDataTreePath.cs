@@ -48,19 +48,29 @@ namespace Papper.Internal
             }
 
             if (!string.IsNullOrWhiteSpace(path))
+            {
                 _nodes.AddRange(path.Split(_splitSeparator, StringSplitOptions.None));
+            }
         }
 
 
         private PlcMetaDataTreePath(IEnumerable<string> nodes, bool isAbsolute = false)
         {
-            if (isAbsolute) _nodes.Add(Separator);
+            if (isAbsolute)
+            {
+                _nodes.Add(Separator);
+            }
+
             _nodes.AddRange(nodes);
         }
 
         private PlcMetaDataTreePath(string node, bool isAbsolute = false)
         {
-            if (isAbsolute) _nodes.Add(Separator);
+            if (isAbsolute)
+            {
+                _nodes.Add(Separator);
+            }
+
             _nodes.Add(node);
         }
 
@@ -75,15 +85,9 @@ namespace Papper.Internal
             return path;
         }
 
-        public string Path
-        {
-            get
-            {
-                return IsRelative
+        public string Path => IsRelative
                     ? string.Join(Separator, _nodes)
                     : _nodes[0] + string.Join(Separator, _nodes.Skip(1));
-            }
-        }
 
         public IEnumerable<string> Nodes => _nodes;
 
@@ -114,7 +118,9 @@ namespace Papper.Internal
             get
             {
                 if (_arrayIndizes != null)
+                {
                     return _arrayIndizes;
+                }
 
                 var node = _nodes.FirstOrDefault();
                 if (node != null)
@@ -137,7 +143,11 @@ namespace Papper.Internal
 
         public ITreePath StepDown()
         {
-            if (!_nodes.Any()) ExceptionThrowHelper.ThrowEmptyNodePathCollectionException();
+            if (!_nodes.Any())
+            {
+                ExceptionThrowHelper.ThrowEmptyNodePathCollectionException();
+            }
+
             return new PlcMetaDataTreePath(_nodes.Skip(1));
         }
 

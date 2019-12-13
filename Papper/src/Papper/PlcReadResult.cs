@@ -58,12 +58,12 @@ namespace Papper
         /// <param name="mapping">mapping to test</param>
         /// <returns></returns>
         public bool IsPartOfMapping(string mapping) => mapping.AsSpan().SequenceEqual(Address.AsSpan().Slice(0, Address!.IndexOf(".", StringComparison.InvariantCulture)));
-        
-        public override bool Equals(object? obj) => obj is PlcReadResult result && 
-                                                    Address == result.Address && 
-                                                    EqualityComparer<object?>.Default.Equals(Value, result.Value) && 
-                                                    ActionResult == result.ActionResult && 
-                                                    Mapping == result.Mapping && 
+
+        public override bool Equals(object? obj) => obj is PlcReadResult result &&
+                                                    Address == result.Address &&
+                                                    EqualityComparer<object?>.Default.Equals(Value, result.Value) &&
+                                                    ActionResult == result.ActionResult &&
+                                                    Mapping == result.Mapping &&
                                                     Variable == result.Variable;
 
         public override int GetHashCode()
@@ -77,15 +77,9 @@ namespace Papper
             return hashCode;
         }
 
-        public static bool operator ==(PlcReadResult left, PlcReadResult right)
-        {
-            return left.Equals(right);
-        }
+        public static bool operator ==(PlcReadResult left, PlcReadResult right) => left.Equals(right);
 
-        public static bool operator !=(PlcReadResult left, PlcReadResult right)
-        {
-            return !(left == right);
-        }
+        public static bool operator !=(PlcReadResult left, PlcReadResult right) => !(left == right);
 
         public bool Equals(PlcReadResult other) => other != null &&
                                                     Address == other.Address &&

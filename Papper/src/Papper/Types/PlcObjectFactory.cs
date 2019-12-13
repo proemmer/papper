@@ -67,7 +67,7 @@ namespace Papper.Types
 
                 if (plcObject is ISupportStringLengthAttribute s)
                 {
-                    if(value is string str)
+                    if (value is string str)
                     {
                         s.StringLength = str.Length;
                     }
@@ -123,7 +123,9 @@ namespace Papper.Types
                         UpdateSize(pi, element);
                     }
                     else
+                    {
                         element = Activator.CreateInstance(typeof(PlcStruct), name, pi.PropertyType) as PlcObject;
+                    }
 
                     leafPlcObject = element;
                     for (var i = dimensions; i > 0; i--)
@@ -137,7 +139,7 @@ namespace Papper.Types
                     element = Activator.CreateInstance(typeof(PlcStruct), name, pi.PropertyType) as PlcObject;
                 }
 
-                if(element != null)
+                if (element != null)
                 {
                     element.ElemenType = elementType;
                 }
@@ -148,7 +150,9 @@ namespace Papper.Types
                     if (leafPlcObject != null)
                     {
                         if (instance is PlcArray plcArray)
+                        {
                             plcArray.LeafElementType = leafPlcObject;
+                        }
                     }
 
                     instance.ElemenType = elementType;
@@ -192,7 +196,7 @@ namespace Papper.Types
                         {
 
                             plcbool.AssigneOffsetFrom((((int)arrayIndex - @from) * (obj.Size != null ? obj.Size.Bits : 0) + obj.Offset.Bits));
-                            
+
                         }
                         break;
                     case ISupportStringLengthAttribute plcString:
@@ -226,7 +230,9 @@ namespace Papper.Types
             {
                 var stringLength = pi.GetCustomAttributes<StringLengthAttribute>().FirstOrDefault();
                 if (stringLength != null)
+                {
                     s.StringLength = stringLength.MaximumLength;
+                }
             }
             else if (plcObject is PlcArray)
             {
@@ -264,7 +270,10 @@ namespace Papper.Types
 
                 off = mappingOffsets.BitOffset;
                 if (off != -1)
+                {
                     bitOffset = off;
+                }
+
                 return true;
             }
             return false;
@@ -276,7 +285,9 @@ namespace Papper.Types
             if (attribute != null)
             {
                 if (TypeNameMatch.TryGetValue(attribute.Name, out var plcType))
+                {
                     return plcType;
+                }
             }
             return null;
         }

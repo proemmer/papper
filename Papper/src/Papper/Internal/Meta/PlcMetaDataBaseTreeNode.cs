@@ -22,10 +22,15 @@ namespace Papper.Internal
             internal set
             {
                 if (_parent != null && value != null)
+                {
                     ExceptionThrowHelper.ThrowAttemptToAssignNewParentException();
+                }
+
                 _parent = value;
                 if (_parent == null)
+                {
                     _savedPath = null;
+                }
             }
         }
 

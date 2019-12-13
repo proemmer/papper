@@ -7,7 +7,7 @@
         public BlockMetaData? MetaData { get; private set; }
         public ExecutionResult ActionResult { get; private set; }
 
-        public MetaDataResult(BlockMetaData?  resultData, ExecutionResult result)
+        public MetaDataResult(BlockMetaData? resultData, ExecutionResult result)
         {
             MetaData = resultData;
             ActionResult = result;

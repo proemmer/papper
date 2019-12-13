@@ -31,11 +31,15 @@ namespace Papper.Internal
                 if (item.Value.Item2 is PlcBool)
                 {
                     if (currentOffset != offsetCountedAsBoolean)
+                    {
                         offsetCountedAsBoolean = currentOffset;
+                    }
                     else
+                    {
                         count = false;
+                    }
                 }
-                if(item.Value.Item2 is PlcArray arr && arr.Size.Bits > 0)
+                if (item.Value.Item2 is PlcArray arr && arr.Size.Bits > 0)
                 {
                     sizeInBytes += 1;
                 }

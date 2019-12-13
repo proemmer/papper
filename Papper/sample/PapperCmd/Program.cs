@@ -39,7 +39,7 @@ namespace PapperCmd
         public bool MotionSelected { get; set; }
         public bool Button1Pressed { get; set; }
         public bool Button2Pressed { get; set; }
-        public Int16 HandshakeTime { get; set; }
+        public short HandshakeTime { get; set; }
     }
 
 
@@ -57,7 +57,7 @@ namespace PapperCmd
     public class UDT_SafeMotionHeader
     {
         public DateTime Generated { get; set; }
-        public Int16 NumberOfActiveSlots { get; set; }
+        public short NumberOfActiveSlots { get; set; }
         public UDT_SafeMotionHeader_States States { get; set; }
         public UDT_SafeMotionHeader_Commands Commands { get; set; }
 
@@ -66,14 +66,14 @@ namespace PapperCmd
 
     public class UDT_SafeMotionSlot
     {
-        public Int16 SafeSlotVersion { get; set; }
+        public short SafeSlotVersion { get; set; }
         public byte SlotId { get; set; }
         public DateTime UnitTimestamp { get; set; }
-        public UInt16 UnitChecksum { get; set; }
-        public Int16 AggregateDBNummer { get; set; }
-        public Int16 AggregateOffset { get; set; }
-        public UInt32 HmiId { get; set; }
-        public UInt32 AccessRightReqFromHmiId { get; set; }
+        public ushort UnitChecksum { get; set; }
+        public short AggregateDBNummer { get; set; }
+        public short AggregateOffset { get; set; }
+        public uint HmiId { get; set; }
+        public uint AccessRightReqFromHmiId { get; set; }
         public UDT_SafeMotionSlot_Commands Commands { get; set; }
         public UDT_SafeMotionSlot_Handshake Handshake { get; set; }
         public UDT_SafeMotionSlot_Motion Motion { get; set; }
@@ -85,7 +85,7 @@ namespace PapperCmd
     {
         public UDT_SafeMotionHeader Header { get; set; }
 
-        [ArrayBounds(0,254)]
+        [ArrayBounds(0, 254)]
         public UDT_SafeMotionSlot[] Slots { get; set; }
 
     }
@@ -105,16 +105,13 @@ namespace PapperCmd
         private class PlcBlock
         {
             public Memory<byte> Data { get; private set; }
-            public int MinSize { get { return Data.Length; } }
+            public int MinSize => Data.Length;
 
-            public PlcBlock(int minSize)
-            {
-                Data = new byte[minSize];
-            }
+            public PlcBlock(int minSize) => Data = new byte[minSize];
 
             public void UpdateBlockSize(int size)
             {
-                if(Data.Length < size)
+                if (Data.Length < size)
                 {
                     var tmp = new byte[size];
                     Data.CopyTo(tmp);
@@ -157,8 +154,8 @@ namespace PapperCmd
         {
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.DarkGreen;
-            var result = papper.ReadAsync(PlcReadReference.FromRoot("DB_Safety", 
-                                     "SafeMotion.Header.NumberOfActiveSlots", 
+            var result = papper.ReadAsync(PlcReadReference.FromRoot("DB_Safety",
+                                     "SafeMotion.Header.NumberOfActiveSlots",
                                      "SafeMotion.Header.Generated",
                                      "SafeMotion.Slots[42].SlotId",
                                      "SafeMotion.Slots[42].HmiId",
@@ -194,7 +191,7 @@ namespace PapperCmd
 
         private static PlcBlock GetPlcEntry(string selector, int minSize)
         {
-            if (!_plc.TryGetValue(selector, out PlcBlock plcblock))
+            if (!_plc.TryGetValue(selector, out var plcblock))
             {
                 plcblock = new PlcBlock(minSize);
                 _plc.Add(selector, plcblock);
@@ -220,7 +217,10 @@ namespace PapperCmd
             void callback(object s, PlcNotificationEventArgs e)
             {
                 foreach (var item in e)
+                {
                     Console.WriteLine($"DataChanged detected: {item.Address} = {item.Value}");
+                }
+
                 are.Set();
             }
             var items = writeData.Keys.Select(variable => PlcWatchReference.FromAddress($"{mapping}.{variable}", 100)).ToArray();
@@ -228,20 +228,28 @@ namespace PapperCmd
 
             //waiting for initialize
             if (!are.WaitOne(10000))
+            {
                 Console.WriteLine($"Error-> change!!!!!");
+            }
 
             foreach (var item in writeData)
+            {
                 Console.WriteLine($"Write:{item.Key} = {item.Value}");
+            }
 
             var result = papper.WriteAsync(PlcWriteReference.FromRoot("DB_Safety", writeData.ToArray()).ToArray()).GetAwaiter().GetResult();
 
             //waiting for write update
             if (!are.WaitOne(10000))
+            {
                 Console.WriteLine($"Error-> change!!!!!");
+            }
 
             //test if data change only occurred if data changed
             if (are.WaitOne(5000))
+            {
                 Console.WriteLine($"Error-> no change!!!!!");
+            }
 
             subscription.Dispose();
             Console.ResetColor();
@@ -262,7 +270,10 @@ namespace PapperCmd
             OnChangeEventHandler callback = (s, e) =>
             {
                 foreach (var item in e)
+                {
                     Console.WriteLine($"DataChanged detected:{item.Address} = {item.Value}");
+                }
+
                 are.Set();
             };
             //papper.SubscribeRawDataChanges("DB15", callback);
@@ -306,7 +317,7 @@ namespace PapperCmd
                 else
                 {
                     var lastItem = item.Data.Length - 1;
-                    for (int j = 0; j < item.Data.Length; j++)
+                    for (var j = 0; j < item.Data.Length; j++)
                     {
                         var bItem = item.Data.Span[j];
                         if (j > 0 && j < lastItem)
@@ -334,7 +345,9 @@ namespace PapperCmd
                                         item.ExecutionResult = ExecutionResult.Ok;
                                         bm = bm.SetBit(i, false);
                                         if (bm == 0)
+                                        {
                                             break;
+                                        }
                                     }
                                 }
                             }

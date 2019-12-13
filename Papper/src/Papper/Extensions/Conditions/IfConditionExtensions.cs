@@ -18,10 +18,10 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(variable1.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
+            var result = (await papper.ReadAsync(variable1.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.reference.Address, out object? tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))))
+                (!result!.TryGetValue(variable1.reference.Address, out var tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))))
             {
                 if (otherwise == null)
                 {
@@ -53,12 +53,12 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(variable1.reference,
+            var result = (await papper.ReadAsync(variable1.reference,
                                                 variable2.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.reference.Address, out object? tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
-                (!result!.TryGetValue(variable2.reference.Address, out object? tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))))
+                (!result!.TryGetValue(variable1.reference.Address, out var tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
+                (!result!.TryGetValue(variable2.reference.Address, out var tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))))
             {
                 if (otherwise == null)
                 {
@@ -89,15 +89,15 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(
+            var result = (await papper.ReadAsync(
                                                  variable1.reference,
                                                  variable2.reference,
                                                  variable3.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.reference.Address, out object? tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
-                (!result!.TryGetValue(variable2.reference.Address, out object? tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
-                (!result!.TryGetValue(variable3.reference.Address, out object? tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))))
+                (!result!.TryGetValue(variable1.reference.Address, out var tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
+                (!result!.TryGetValue(variable2.reference.Address, out var tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
+                (!result!.TryGetValue(variable3.reference.Address, out var tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))))
             {
                 if (otherwise == null)
                 {
@@ -129,17 +129,17 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(
+            var result = (await papper.ReadAsync(
                                                  variable1.reference,
                                                  variable2.reference,
                                                  variable3.reference,
                                                  variable4.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.reference.Address, out object? tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
-                (!result!.TryGetValue(variable2.reference.Address, out object? tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
-                (!result!.TryGetValue(variable3.reference.Address, out object? tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
-                (!result!.TryGetValue(variable4.reference.Address, out object? tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))))
+                (!result!.TryGetValue(variable1.reference.Address, out var tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
+                (!result!.TryGetValue(variable2.reference.Address, out var tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
+                (!result!.TryGetValue(variable3.reference.Address, out var tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
+                (!result!.TryGetValue(variable4.reference.Address, out var tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))))
             {
                 if (otherwise == null)
                 {
@@ -173,7 +173,7 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(
+            var result = (await papper.ReadAsync(
                                                  variable1.reference,
                                                  variable2.reference,
                                                  variable3.reference,
@@ -181,11 +181,11 @@ namespace Papper.Extensions.Conditions
                                                  variable5.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.reference.Address, out object? tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
-                (!result!.TryGetValue(variable2.reference.Address, out object? tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
-                (!result!.TryGetValue(variable3.reference.Address, out object? tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
-                (!result!.TryGetValue(variable4.reference.Address, out object? tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
-                (!result!.TryGetValue(variable5.reference.Address, out object? tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))))
+                (!result!.TryGetValue(variable1.reference.Address, out var tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
+                (!result!.TryGetValue(variable2.reference.Address, out var tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
+                (!result!.TryGetValue(variable3.reference.Address, out var tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
+                (!result!.TryGetValue(variable4.reference.Address, out var tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
+                (!result!.TryGetValue(variable5.reference.Address, out var tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))))
             {
                 if (otherwise == null)
                 {
@@ -219,7 +219,7 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(
+            var result = (await papper.ReadAsync(
                                                  variable1.reference,
                                                  variable2.reference,
                                                  variable3.reference,
@@ -228,12 +228,12 @@ namespace Papper.Extensions.Conditions
                                                  variable6.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.reference.Address, out object? tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
-                (!result!.TryGetValue(variable2.reference.Address, out object? tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
-                (!result!.TryGetValue(variable3.reference.Address, out object? tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
-                (!result!.TryGetValue(variable4.reference.Address, out object? tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
-                (!result!.TryGetValue(variable5.reference.Address, out object? tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
-                (!result!.TryGetValue(variable6.reference.Address, out object? tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))))
+                (!result!.TryGetValue(variable1.reference.Address, out var tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
+                (!result!.TryGetValue(variable2.reference.Address, out var tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
+                (!result!.TryGetValue(variable3.reference.Address, out var tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
+                (!result!.TryGetValue(variable4.reference.Address, out var tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
+                (!result!.TryGetValue(variable5.reference.Address, out var tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
+                (!result!.TryGetValue(variable6.reference.Address, out var tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))))
             {
                 if (otherwise == null)
                 {
@@ -268,7 +268,7 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(
+            var result = (await papper.ReadAsync(
                                                  variable1.reference,
                                                  variable2.reference,
                                                  variable3.reference,
@@ -278,13 +278,13 @@ namespace Papper.Extensions.Conditions
                                                  variable7.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.reference.Address, out object? tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
-                (!result!.TryGetValue(variable2.reference.Address, out object? tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
-                (!result!.TryGetValue(variable3.reference.Address, out object? tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
-                (!result!.TryGetValue(variable4.reference.Address, out object? tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
-                (!result!.TryGetValue(variable5.reference.Address, out object? tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
-                (!result!.TryGetValue(variable6.reference.Address, out object? tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
-                (!result!.TryGetValue(variable7.reference.Address, out object? tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))))
+                (!result!.TryGetValue(variable1.reference.Address, out var tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
+                (!result!.TryGetValue(variable2.reference.Address, out var tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
+                (!result!.TryGetValue(variable3.reference.Address, out var tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
+                (!result!.TryGetValue(variable4.reference.Address, out var tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
+                (!result!.TryGetValue(variable5.reference.Address, out var tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
+                (!result!.TryGetValue(variable6.reference.Address, out var tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
+                (!result!.TryGetValue(variable7.reference.Address, out var tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))))
             {
                 if (otherwise == null)
                 {
@@ -320,7 +320,7 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(
+            var result = (await papper.ReadAsync(
                                                  variable1.reference,
                                                  variable2.reference,
                                                  variable3.reference,
@@ -331,14 +331,14 @@ namespace Papper.Extensions.Conditions
                                                  variable8.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.reference.Address, out object? tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
-                (!result!.TryGetValue(variable2.reference.Address, out object? tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
-                (!result!.TryGetValue(variable3.reference.Address, out object? tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
-                (!result!.TryGetValue(variable4.reference.Address, out object? tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
-                (!result!.TryGetValue(variable5.reference.Address, out object? tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
-                (!result!.TryGetValue(variable6.reference.Address, out object? tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
-                (!result!.TryGetValue(variable7.reference.Address, out object? tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
-                (!result!.TryGetValue(variable8.reference.Address, out object? tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))))
+                (!result!.TryGetValue(variable1.reference.Address, out var tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
+                (!result!.TryGetValue(variable2.reference.Address, out var tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
+                (!result!.TryGetValue(variable3.reference.Address, out var tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
+                (!result!.TryGetValue(variable4.reference.Address, out var tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
+                (!result!.TryGetValue(variable5.reference.Address, out var tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
+                (!result!.TryGetValue(variable6.reference.Address, out var tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
+                (!result!.TryGetValue(variable7.reference.Address, out var tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
+                (!result!.TryGetValue(variable8.reference.Address, out var tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))))
             {
                 if (otherwise == null)
                 {
@@ -375,7 +375,7 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(
+            var result = (await papper.ReadAsync(
                                                  variable1.reference,
                                                  variable2.reference,
                                                  variable3.reference,
@@ -387,15 +387,15 @@ namespace Papper.Extensions.Conditions
                                                  variable9.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.reference.Address, out object? tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
-                (!result!.TryGetValue(variable2.reference.Address, out object? tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
-                (!result!.TryGetValue(variable3.reference.Address, out object? tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
-                (!result!.TryGetValue(variable4.reference.Address, out object? tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
-                (!result!.TryGetValue(variable5.reference.Address, out object? tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
-                (!result!.TryGetValue(variable6.reference.Address, out object? tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
-                (!result!.TryGetValue(variable7.reference.Address, out object? tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
-                (!result!.TryGetValue(variable8.reference.Address, out object? tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))) ||
-                (!result!.TryGetValue(variable9.reference.Address, out object? tmp9) || (tmp9 is T9 t9 && !variable9.cmp.Invoke(t9))))
+                (!result!.TryGetValue(variable1.reference.Address, out var tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
+                (!result!.TryGetValue(variable2.reference.Address, out var tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
+                (!result!.TryGetValue(variable3.reference.Address, out var tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
+                (!result!.TryGetValue(variable4.reference.Address, out var tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
+                (!result!.TryGetValue(variable5.reference.Address, out var tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
+                (!result!.TryGetValue(variable6.reference.Address, out var tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
+                (!result!.TryGetValue(variable7.reference.Address, out var tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
+                (!result!.TryGetValue(variable8.reference.Address, out var tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))) ||
+                (!result!.TryGetValue(variable9.reference.Address, out var tmp9) || (tmp9 is T9 t9 && !variable9.cmp.Invoke(t9))))
             {
                 if (otherwise == null)
                 {
@@ -433,7 +433,7 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(
+            var result = (await papper.ReadAsync(
                                                  variable1.reference,
                                                  variable2.reference,
                                                  variable3.reference,
@@ -446,16 +446,16 @@ namespace Papper.Extensions.Conditions
                                                  variable10.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.reference.Address, out object? tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
-                (!result!.TryGetValue(variable2.reference.Address, out object? tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
-                (!result!.TryGetValue(variable3.reference.Address, out object? tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
-                (!result!.TryGetValue(variable4.reference.Address, out object? tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
-                (!result!.TryGetValue(variable5.reference.Address, out object? tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
-                (!result!.TryGetValue(variable6.reference.Address, out object? tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
-                (!result!.TryGetValue(variable7.reference.Address, out object? tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
-                (!result!.TryGetValue(variable8.reference.Address, out object? tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))) ||
-                (!result!.TryGetValue(variable9.reference.Address, out object? tmp9) || (tmp9 is T9 t9 && !variable9.cmp.Invoke(t9))) ||
-                (!result!.TryGetValue(variable10.reference.Address, out object? tmp10) || (tmp10 is T10 t10 && !variable10.cmp.Invoke(t10))))
+                (!result!.TryGetValue(variable1.reference.Address, out var tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
+                (!result!.TryGetValue(variable2.reference.Address, out var tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
+                (!result!.TryGetValue(variable3.reference.Address, out var tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
+                (!result!.TryGetValue(variable4.reference.Address, out var tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
+                (!result!.TryGetValue(variable5.reference.Address, out var tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
+                (!result!.TryGetValue(variable6.reference.Address, out var tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
+                (!result!.TryGetValue(variable7.reference.Address, out var tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
+                (!result!.TryGetValue(variable8.reference.Address, out var tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))) ||
+                (!result!.TryGetValue(variable9.reference.Address, out var tmp9) || (tmp9 is T9 t9 && !variable9.cmp.Invoke(t9))) ||
+                (!result!.TryGetValue(variable10.reference.Address, out var tmp10) || (tmp10 is T10 t10 && !variable10.cmp.Invoke(t10))))
             {
                 if (otherwise == null)
                 {
@@ -494,7 +494,7 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(
+            var result = (await papper.ReadAsync(
                                                  variable1.reference,
                                                  variable2.reference,
                                                  variable3.reference,
@@ -508,17 +508,17 @@ namespace Papper.Extensions.Conditions
                                                  variable11.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.reference.Address, out object? tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
-                (!result!.TryGetValue(variable2.reference.Address, out object? tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
-                (!result!.TryGetValue(variable3.reference.Address, out object? tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
-                (!result!.TryGetValue(variable4.reference.Address, out object? tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
-                (!result!.TryGetValue(variable5.reference.Address, out object? tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
-                (!result!.TryGetValue(variable6.reference.Address, out object? tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
-                (!result!.TryGetValue(variable7.reference.Address, out object? tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
-                (!result!.TryGetValue(variable8.reference.Address, out object? tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))) ||
-                (!result!.TryGetValue(variable9.reference.Address, out object? tmp9) || (tmp9 is T9 t9 && !variable9.cmp.Invoke(t9))) ||
-                (!result!.TryGetValue(variable10.reference.Address, out object? tmp10) || (tmp10 is T10 t10 && !variable10.cmp.Invoke(t10))) ||
-                (!result!.TryGetValue(variable11.reference.Address, out object? tmp11) || (tmp11 is T11 t11 && !variable11.cmp.Invoke(t11))))
+                (!result!.TryGetValue(variable1.reference.Address, out var tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
+                (!result!.TryGetValue(variable2.reference.Address, out var tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
+                (!result!.TryGetValue(variable3.reference.Address, out var tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
+                (!result!.TryGetValue(variable4.reference.Address, out var tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
+                (!result!.TryGetValue(variable5.reference.Address, out var tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
+                (!result!.TryGetValue(variable6.reference.Address, out var tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
+                (!result!.TryGetValue(variable7.reference.Address, out var tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
+                (!result!.TryGetValue(variable8.reference.Address, out var tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))) ||
+                (!result!.TryGetValue(variable9.reference.Address, out var tmp9) || (tmp9 is T9 t9 && !variable9.cmp.Invoke(t9))) ||
+                (!result!.TryGetValue(variable10.reference.Address, out var tmp10) || (tmp10 is T10 t10 && !variable10.cmp.Invoke(t10))) ||
+                (!result!.TryGetValue(variable11.reference.Address, out var tmp11) || (tmp11 is T11 t11 && !variable11.cmp.Invoke(t11))))
             {
                 if (otherwise == null)
                 {
@@ -558,7 +558,7 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(
+            var result = (await papper.ReadAsync(
                                                  variable1.reference,
                                                  variable2.reference,
                                                  variable3.reference,
@@ -573,18 +573,18 @@ namespace Papper.Extensions.Conditions
                                                  variable12.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.reference.Address, out object? tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
-                (!result!.TryGetValue(variable2.reference.Address, out object? tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
-                (!result!.TryGetValue(variable3.reference.Address, out object? tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
-                (!result!.TryGetValue(variable4.reference.Address, out object? tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
-                (!result!.TryGetValue(variable5.reference.Address, out object? tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
-                (!result!.TryGetValue(variable6.reference.Address, out object? tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
-                (!result!.TryGetValue(variable7.reference.Address, out object? tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
-                (!result!.TryGetValue(variable8.reference.Address, out object? tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))) ||
-                (!result!.TryGetValue(variable9.reference.Address, out object? tmp9) || (tmp9 is T9 t9 && !variable9.cmp.Invoke(t9))) ||
-                (!result!.TryGetValue(variable10.reference.Address, out object? tmp10) || (tmp10 is T10 t10 && !variable10.cmp.Invoke(t10))) ||
-                (!result!.TryGetValue(variable11.reference.Address, out object? tmp11) || (tmp11 is T11 t11 && !variable11.cmp.Invoke(t11))) ||
-                (!result!.TryGetValue(variable12.reference.Address, out object? tmp12) || (tmp12 is T12 t12 && !variable12.cmp.Invoke(t12))))
+                (!result!.TryGetValue(variable1.reference.Address, out var tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
+                (!result!.TryGetValue(variable2.reference.Address, out var tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
+                (!result!.TryGetValue(variable3.reference.Address, out var tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
+                (!result!.TryGetValue(variable4.reference.Address, out var tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
+                (!result!.TryGetValue(variable5.reference.Address, out var tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
+                (!result!.TryGetValue(variable6.reference.Address, out var tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
+                (!result!.TryGetValue(variable7.reference.Address, out var tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
+                (!result!.TryGetValue(variable8.reference.Address, out var tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))) ||
+                (!result!.TryGetValue(variable9.reference.Address, out var tmp9) || (tmp9 is T9 t9 && !variable9.cmp.Invoke(t9))) ||
+                (!result!.TryGetValue(variable10.reference.Address, out var tmp10) || (tmp10 is T10 t10 && !variable10.cmp.Invoke(t10))) ||
+                (!result!.TryGetValue(variable11.reference.Address, out var tmp11) || (tmp11 is T11 t11 && !variable11.cmp.Invoke(t11))) ||
+                (!result!.TryGetValue(variable12.reference.Address, out var tmp12) || (tmp12 is T12 t12 && !variable12.cmp.Invoke(t12))))
             {
                 if (otherwise == null)
                 {
@@ -625,7 +625,7 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(
+            var result = (await papper.ReadAsync(
                                                  variable1.reference,
                                                  variable2.reference,
                                                  variable3.reference,
@@ -641,19 +641,19 @@ namespace Papper.Extensions.Conditions
                                                  variable13.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.reference.Address, out object? tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
-                (!result!.TryGetValue(variable2.reference.Address, out object? tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
-                (!result!.TryGetValue(variable3.reference.Address, out object? tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
-                (!result!.TryGetValue(variable4.reference.Address, out object? tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
-                (!result!.TryGetValue(variable5.reference.Address, out object? tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
-                (!result!.TryGetValue(variable6.reference.Address, out object? tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
-                (!result!.TryGetValue(variable7.reference.Address, out object? tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
-                (!result!.TryGetValue(variable8.reference.Address, out object? tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))) ||
-                (!result!.TryGetValue(variable9.reference.Address, out object? tmp9) || (tmp9 is T9 t9 && !variable9.cmp.Invoke(t9))) ||
-                (!result!.TryGetValue(variable10.reference.Address, out object? tmp10) || (tmp10 is T10 t10 && !variable10.cmp.Invoke(t10))) ||
-                (!result!.TryGetValue(variable11.reference.Address, out object? tmp11) || (tmp11 is T11 t11 && !variable11.cmp.Invoke(t11))) ||
-                (!result!.TryGetValue(variable12.reference.Address, out object? tmp12) || (tmp12 is T12 t12 && !variable12.cmp.Invoke(t12))) ||
-                (!result!.TryGetValue(variable13.reference.Address, out object? tmp13) || (tmp13 is T13 t13 && !variable13.cmp.Invoke(t13))))
+                (!result!.TryGetValue(variable1.reference.Address, out var tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
+                (!result!.TryGetValue(variable2.reference.Address, out var tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
+                (!result!.TryGetValue(variable3.reference.Address, out var tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
+                (!result!.TryGetValue(variable4.reference.Address, out var tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
+                (!result!.TryGetValue(variable5.reference.Address, out var tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
+                (!result!.TryGetValue(variable6.reference.Address, out var tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
+                (!result!.TryGetValue(variable7.reference.Address, out var tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
+                (!result!.TryGetValue(variable8.reference.Address, out var tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))) ||
+                (!result!.TryGetValue(variable9.reference.Address, out var tmp9) || (tmp9 is T9 t9 && !variable9.cmp.Invoke(t9))) ||
+                (!result!.TryGetValue(variable10.reference.Address, out var tmp10) || (tmp10 is T10 t10 && !variable10.cmp.Invoke(t10))) ||
+                (!result!.TryGetValue(variable11.reference.Address, out var tmp11) || (tmp11 is T11 t11 && !variable11.cmp.Invoke(t11))) ||
+                (!result!.TryGetValue(variable12.reference.Address, out var tmp12) || (tmp12 is T12 t12 && !variable12.cmp.Invoke(t12))) ||
+                (!result!.TryGetValue(variable13.reference.Address, out var tmp13) || (tmp13 is T13 t13 && !variable13.cmp.Invoke(t13))))
             {
                 if (otherwise == null)
                 {
@@ -695,7 +695,7 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(
+            var result = (await papper.ReadAsync(
                                                  variable1.reference,
                                                  variable2.reference,
                                                  variable3.reference,
@@ -712,20 +712,20 @@ namespace Papper.Extensions.Conditions
                                                  variable14.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.reference.Address, out object? tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
-                (!result!.TryGetValue(variable2.reference.Address, out object? tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
-                (!result!.TryGetValue(variable3.reference.Address, out object? tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
-                (!result!.TryGetValue(variable4.reference.Address, out object? tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
-                (!result!.TryGetValue(variable5.reference.Address, out object? tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
-                (!result!.TryGetValue(variable6.reference.Address, out object? tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
-                (!result!.TryGetValue(variable7.reference.Address, out object? tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
-                (!result!.TryGetValue(variable8.reference.Address, out object? tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))) ||
-                (!result!.TryGetValue(variable9.reference.Address, out object? tmp9) || (tmp9 is T9 t9 && !variable9.cmp.Invoke(t9))) ||
-                (!result!.TryGetValue(variable10.reference.Address, out object? tmp10) || (tmp10 is T10 t10 && !variable10.cmp.Invoke(t10))) ||
-                (!result!.TryGetValue(variable11.reference.Address, out object? tmp11) || (tmp11 is T11 t11 && !variable11.cmp.Invoke(t11))) ||
-                (!result!.TryGetValue(variable12.reference.Address, out object? tmp12) || (tmp12 is T12 t12 && !variable12.cmp.Invoke(t12))) ||
-                (!result!.TryGetValue(variable13.reference.Address, out object? tmp13) || (tmp13 is T13 t13 && !variable13.cmp.Invoke(t13))) ||
-                (!result!.TryGetValue(variable14.reference.Address, out object? tmp14) || (tmp14 is T14 t14 && !variable14.cmp.Invoke(t14))))
+                (!result!.TryGetValue(variable1.reference.Address, out var tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
+                (!result!.TryGetValue(variable2.reference.Address, out var tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
+                (!result!.TryGetValue(variable3.reference.Address, out var tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
+                (!result!.TryGetValue(variable4.reference.Address, out var tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
+                (!result!.TryGetValue(variable5.reference.Address, out var tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
+                (!result!.TryGetValue(variable6.reference.Address, out var tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
+                (!result!.TryGetValue(variable7.reference.Address, out var tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
+                (!result!.TryGetValue(variable8.reference.Address, out var tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))) ||
+                (!result!.TryGetValue(variable9.reference.Address, out var tmp9) || (tmp9 is T9 t9 && !variable9.cmp.Invoke(t9))) ||
+                (!result!.TryGetValue(variable10.reference.Address, out var tmp10) || (tmp10 is T10 t10 && !variable10.cmp.Invoke(t10))) ||
+                (!result!.TryGetValue(variable11.reference.Address, out var tmp11) || (tmp11 is T11 t11 && !variable11.cmp.Invoke(t11))) ||
+                (!result!.TryGetValue(variable12.reference.Address, out var tmp12) || (tmp12 is T12 t12 && !variable12.cmp.Invoke(t12))) ||
+                (!result!.TryGetValue(variable13.reference.Address, out var tmp13) || (tmp13 is T13 t13 && !variable13.cmp.Invoke(t13))) ||
+                (!result!.TryGetValue(variable14.reference.Address, out var tmp14) || (tmp14 is T14 t14 && !variable14.cmp.Invoke(t14))))
             {
                 if (otherwise == null)
                 {
@@ -768,7 +768,7 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(
+            var result = (await papper.ReadAsync(
                                                  variable1.reference,
                                                  variable2.reference,
                                                  variable3.reference,
@@ -786,21 +786,21 @@ namespace Papper.Extensions.Conditions
                                                  variable15.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.reference.Address, out object? tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
-                (!result!.TryGetValue(variable2.reference.Address, out object? tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
-                (!result!.TryGetValue(variable3.reference.Address, out object? tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
-                (!result!.TryGetValue(variable4.reference.Address, out object? tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
-                (!result!.TryGetValue(variable5.reference.Address, out object? tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
-                (!result!.TryGetValue(variable6.reference.Address, out object? tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
-                (!result!.TryGetValue(variable7.reference.Address, out object? tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
-                (!result!.TryGetValue(variable8.reference.Address, out object? tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))) ||
-                (!result!.TryGetValue(variable9.reference.Address, out object? tmp9) || (tmp9 is T9 t9 && !variable9.cmp.Invoke(t9))) ||
-                (!result!.TryGetValue(variable10.reference.Address, out object? tmp10) || (tmp10 is T10 t10 && !variable10.cmp.Invoke(t10))) ||
-                (!result!.TryGetValue(variable11.reference.Address, out object? tmp11) || (tmp11 is T11 t11 && !variable11.cmp.Invoke(t11))) ||
-                (!result!.TryGetValue(variable12.reference.Address, out object? tmp12) || (tmp12 is T12 t12 && !variable12.cmp.Invoke(t12))) ||
-                (!result!.TryGetValue(variable13.reference.Address, out object? tmp13) || (tmp13 is T13 t13 && !variable13.cmp.Invoke(t13))) ||
-                (!result!.TryGetValue(variable14.reference.Address, out object? tmp14) || (tmp14 is T14 t14 && !variable14.cmp.Invoke(t14))) ||
-                (!result!.TryGetValue(variable15.reference.Address, out object? tmp15) || (tmp15 is T15 t15 && !variable15.cmp.Invoke(t15))))
+                (!result!.TryGetValue(variable1.reference.Address, out var tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
+                (!result!.TryGetValue(variable2.reference.Address, out var tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
+                (!result!.TryGetValue(variable3.reference.Address, out var tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
+                (!result!.TryGetValue(variable4.reference.Address, out var tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
+                (!result!.TryGetValue(variable5.reference.Address, out var tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
+                (!result!.TryGetValue(variable6.reference.Address, out var tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
+                (!result!.TryGetValue(variable7.reference.Address, out var tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
+                (!result!.TryGetValue(variable8.reference.Address, out var tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))) ||
+                (!result!.TryGetValue(variable9.reference.Address, out var tmp9) || (tmp9 is T9 t9 && !variable9.cmp.Invoke(t9))) ||
+                (!result!.TryGetValue(variable10.reference.Address, out var tmp10) || (tmp10 is T10 t10 && !variable10.cmp.Invoke(t10))) ||
+                (!result!.TryGetValue(variable11.reference.Address, out var tmp11) || (tmp11 is T11 t11 && !variable11.cmp.Invoke(t11))) ||
+                (!result!.TryGetValue(variable12.reference.Address, out var tmp12) || (tmp12 is T12 t12 && !variable12.cmp.Invoke(t12))) ||
+                (!result!.TryGetValue(variable13.reference.Address, out var tmp13) || (tmp13 is T13 t13 && !variable13.cmp.Invoke(t13))) ||
+                (!result!.TryGetValue(variable14.reference.Address, out var tmp14) || (tmp14 is T14 t14 && !variable14.cmp.Invoke(t14))) ||
+                (!result!.TryGetValue(variable15.reference.Address, out var tmp15) || (tmp15 is T15 t15 && !variable15.cmp.Invoke(t15))))
             {
                 if (otherwise == null)
                 {
@@ -844,7 +844,7 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(
+            var result = (await papper.ReadAsync(
                                                  variable1.reference,
                                                  variable2.reference,
                                                  variable3.reference,
@@ -863,22 +863,22 @@ namespace Papper.Extensions.Conditions
                                                  variable16.reference).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.reference.Address, out object? tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
-                (!result!.TryGetValue(variable2.reference.Address, out object? tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
-                (!result!.TryGetValue(variable3.reference.Address, out object? tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
-                (!result!.TryGetValue(variable4.reference.Address, out object? tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
-                (!result!.TryGetValue(variable5.reference.Address, out object? tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
-                (!result!.TryGetValue(variable6.reference.Address, out object? tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
-                (!result!.TryGetValue(variable7.reference.Address, out object? tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
-                (!result!.TryGetValue(variable8.reference.Address, out object? tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))) ||
-                (!result!.TryGetValue(variable9.reference.Address, out object? tmp9) || (tmp9 is T9 t9 && !variable9.cmp.Invoke(t9))) ||
-                (!result!.TryGetValue(variable10.reference.Address, out object? tmp10) || (tmp10 is T10 t10 && !variable10.cmp.Invoke(t10))) ||
-                (!result!.TryGetValue(variable11.reference.Address, out object? tmp11) || (tmp11 is T11 t11 && !variable11.cmp.Invoke(t11))) ||
-                (!result!.TryGetValue(variable12.reference.Address, out object? tmp12) || (tmp12 is T12 t12 && !variable12.cmp.Invoke(t12))) ||
-                (!result!.TryGetValue(variable13.reference.Address, out object? tmp13) || (tmp13 is T13 t13 && !variable13.cmp.Invoke(t13))) ||
-                (!result!.TryGetValue(variable14.reference.Address, out object? tmp14) || (tmp14 is T14 t14 && !variable14.cmp.Invoke(t14))) ||
-                (!result!.TryGetValue(variable15.reference.Address, out object? tmp15) || (tmp15 is T15 t15 && !variable15.cmp.Invoke(t15))) ||
-                (!result!.TryGetValue(variable16.reference.Address, out object? tmp16) || (tmp16 is T16 t16 && !variable16.cmp.Invoke(t16))))
+                (!result!.TryGetValue(variable1.reference.Address, out var tmp1) || (tmp1 is T1 t1 && !variable1.cmp.Invoke(t1))) ||
+                (!result!.TryGetValue(variable2.reference.Address, out var tmp2) || (tmp2 is T2 t2 && !variable2.cmp.Invoke(t2))) ||
+                (!result!.TryGetValue(variable3.reference.Address, out var tmp3) || (tmp3 is T3 t3 && !variable3.cmp.Invoke(t3))) ||
+                (!result!.TryGetValue(variable4.reference.Address, out var tmp4) || (tmp4 is T4 t4 && !variable4.cmp.Invoke(t4))) ||
+                (!result!.TryGetValue(variable5.reference.Address, out var tmp5) || (tmp5 is T5 t5 && !variable5.cmp.Invoke(t5))) ||
+                (!result!.TryGetValue(variable6.reference.Address, out var tmp6) || (tmp6 is T6 t6 && !variable6.cmp.Invoke(t6))) ||
+                (!result!.TryGetValue(variable7.reference.Address, out var tmp7) || (tmp7 is T7 t7 && !variable7.cmp.Invoke(t7))) ||
+                (!result!.TryGetValue(variable8.reference.Address, out var tmp8) || (tmp8 is T8 t8 && !variable8.cmp.Invoke(t8))) ||
+                (!result!.TryGetValue(variable9.reference.Address, out var tmp9) || (tmp9 is T9 t9 && !variable9.cmp.Invoke(t9))) ||
+                (!result!.TryGetValue(variable10.reference.Address, out var tmp10) || (tmp10 is T10 t10 && !variable10.cmp.Invoke(t10))) ||
+                (!result!.TryGetValue(variable11.reference.Address, out var tmp11) || (tmp11 is T11 t11 && !variable11.cmp.Invoke(t11))) ||
+                (!result!.TryGetValue(variable12.reference.Address, out var tmp12) || (tmp12 is T12 t12 && !variable12.cmp.Invoke(t12))) ||
+                (!result!.TryGetValue(variable13.reference.Address, out var tmp13) || (tmp13 is T13 t13 && !variable13.cmp.Invoke(t13))) ||
+                (!result!.TryGetValue(variable14.reference.Address, out var tmp14) || (tmp14 is T14 t14 && !variable14.cmp.Invoke(t14))) ||
+                (!result!.TryGetValue(variable15.reference.Address, out var tmp15) || (tmp15 is T15 t15 && !variable15.cmp.Invoke(t15))) ||
+                (!result!.TryGetValue(variable16.reference.Address, out var tmp16) || (tmp16 is T16 t16 && !variable16.cmp.Invoke(t16))))
             {
                 if (otherwise == null)
                 {
@@ -914,17 +914,17 @@ namespace Papper.Extensions.Conditions
             {
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(papper));
             }
-            if(cmp == null)
+            if (cmp == null)
             {
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(cmp));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(variable1,
+            var result = (await papper.ReadAsync(variable1,
                                                  variable2).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.Address, out object? tmp1)) || !(tmp1 is T1 t1) ||
-                (!result!.TryGetValue(variable2.Address, out object? tmp2)) || !(tmp2 is T2 t2) ||
+                (!result!.TryGetValue(variable1.Address, out var tmp1)) || !(tmp1 is T1 t1) ||
+                (!result!.TryGetValue(variable2.Address, out var tmp2)) || !(tmp2 is T2 t2) ||
                 !cmp(t1, t2))
             {
                 if (otherwise == null)
@@ -963,14 +963,14 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(cmp));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(variable1,
+            var result = (await papper.ReadAsync(variable1,
                                                  variable2,
                                                  variable3).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.Address, out object? tmp1)) || !(tmp1 is T1 t1) ||
-                (!result!.TryGetValue(variable2.Address, out object? tmp2)) || !(tmp2 is T2 t2) ||
-                (!result!.TryGetValue(variable3.Address, out object? tmp3)) || !(tmp3 is T3 t3) ||
+                (!result!.TryGetValue(variable1.Address, out var tmp1)) || !(tmp1 is T1 t1) ||
+                (!result!.TryGetValue(variable2.Address, out var tmp2)) || !(tmp2 is T2 t2) ||
+                (!result!.TryGetValue(variable3.Address, out var tmp3)) || !(tmp3 is T3 t3) ||
                 !cmp(t1, t2, t3))
             {
                 if (otherwise == null)
@@ -1008,16 +1008,16 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(cmp));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(variable1,
+            var result = (await papper.ReadAsync(variable1,
                                                  variable2,
                                                  variable3,
                                                  variable4).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.Address, out object? tmp1)) || !(tmp1 is T1 t1) ||
-                (!result!.TryGetValue(variable2.Address, out object? tmp2)) || !(tmp2 is T2 t2) ||
-                (!result!.TryGetValue(variable3.Address, out object? tmp3)) || !(tmp3 is T3 t3) ||
-                (!result!.TryGetValue(variable4.Address, out object? tmp4)) || !(tmp4 is T4 t4) ||
+                (!result!.TryGetValue(variable1.Address, out var tmp1)) || !(tmp1 is T1 t1) ||
+                (!result!.TryGetValue(variable2.Address, out var tmp2)) || !(tmp2 is T2 t2) ||
+                (!result!.TryGetValue(variable3.Address, out var tmp3)) || !(tmp3 is T3 t3) ||
+                (!result!.TryGetValue(variable4.Address, out var tmp4)) || !(tmp4 is T4 t4) ||
                 !cmp(t1, t2, t3, t4))
             {
                 if (otherwise == null)
@@ -1057,18 +1057,18 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(cmp));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(variable1,
+            var result = (await papper.ReadAsync(variable1,
                                                  variable2,
                                                  variable3,
                                                  variable4,
                                                  variable5).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.Address, out object? tmp1)) || !(tmp1 is T1 t1) ||
-                (!result!.TryGetValue(variable2.Address, out object? tmp2)) || !(tmp2 is T2 t2) ||
-                (!result!.TryGetValue(variable3.Address, out object? tmp3)) || !(tmp3 is T3 t3) ||
-                (!result!.TryGetValue(variable4.Address, out object? tmp4)) || !(tmp4 is T4 t4) ||
-                (!result!.TryGetValue(variable5.Address, out object? tmp5)) || !(tmp5 is T5 t5) ||
+                (!result!.TryGetValue(variable1.Address, out var tmp1)) || !(tmp1 is T1 t1) ||
+                (!result!.TryGetValue(variable2.Address, out var tmp2)) || !(tmp2 is T2 t2) ||
+                (!result!.TryGetValue(variable3.Address, out var tmp3)) || !(tmp3 is T3 t3) ||
+                (!result!.TryGetValue(variable4.Address, out var tmp4)) || !(tmp4 is T4 t4) ||
+                (!result!.TryGetValue(variable5.Address, out var tmp5)) || !(tmp5 is T5 t5) ||
                 !cmp(t1, t2, t3, t4, t5))
             {
                 if (otherwise == null)
@@ -1109,7 +1109,7 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(cmp));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(variable1,
+            var result = (await papper.ReadAsync(variable1,
                                                  variable2,
                                                  variable3,
                                                  variable4,
@@ -1117,12 +1117,12 @@ namespace Papper.Extensions.Conditions
                                                  variable6).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.Address, out object? tmp1)) || !(tmp1 is T1 t1) ||
-                (!result!.TryGetValue(variable2.Address, out object? tmp2)) || !(tmp2 is T2 t2) ||
-                (!result!.TryGetValue(variable3.Address, out object? tmp3)) || !(tmp3 is T3 t3) ||
-                (!result!.TryGetValue(variable4.Address, out object? tmp4)) || !(tmp4 is T4 t4) ||
-                (!result!.TryGetValue(variable5.Address, out object? tmp5)) || !(tmp5 is T5 t5) ||
-                (!result!.TryGetValue(variable6.Address, out object? tmp6)) || !(tmp6 is T6 t6) ||
+                (!result!.TryGetValue(variable1.Address, out var tmp1)) || !(tmp1 is T1 t1) ||
+                (!result!.TryGetValue(variable2.Address, out var tmp2)) || !(tmp2 is T2 t2) ||
+                (!result!.TryGetValue(variable3.Address, out var tmp3)) || !(tmp3 is T3 t3) ||
+                (!result!.TryGetValue(variable4.Address, out var tmp4)) || !(tmp4 is T4 t4) ||
+                (!result!.TryGetValue(variable5.Address, out var tmp5)) || !(tmp5 is T5 t5) ||
+                (!result!.TryGetValue(variable6.Address, out var tmp6)) || !(tmp6 is T6 t6) ||
                 !cmp(t1, t2, t3, t4, t5, t6))
             {
                 if (otherwise == null)
@@ -1164,7 +1164,7 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(cmp));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(variable1,
+            var result = (await papper.ReadAsync(variable1,
                                                  variable2,
                                                  variable3,
                                                  variable4,
@@ -1173,13 +1173,13 @@ namespace Papper.Extensions.Conditions
                                                  variable7).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.Address, out object? tmp1)) || !(tmp1 is T1 t1) ||
-                (!result!.TryGetValue(variable2.Address, out object? tmp2)) || !(tmp2 is T2 t2) ||
-                (!result!.TryGetValue(variable3.Address, out object? tmp3)) || !(tmp3 is T3 t3) ||
-                (!result!.TryGetValue(variable4.Address, out object? tmp4)) || !(tmp4 is T4 t4) ||
-                (!result!.TryGetValue(variable5.Address, out object? tmp5)) || !(tmp5 is T5 t5) ||
-                (!result!.TryGetValue(variable6.Address, out object? tmp6)) || !(tmp6 is T6 t6) ||
-                (!result!.TryGetValue(variable7.Address, out object? tmp7)) || !(tmp7 is T7 t7) ||
+                (!result!.TryGetValue(variable1.Address, out var tmp1)) || !(tmp1 is T1 t1) ||
+                (!result!.TryGetValue(variable2.Address, out var tmp2)) || !(tmp2 is T2 t2) ||
+                (!result!.TryGetValue(variable3.Address, out var tmp3)) || !(tmp3 is T3 t3) ||
+                (!result!.TryGetValue(variable4.Address, out var tmp4)) || !(tmp4 is T4 t4) ||
+                (!result!.TryGetValue(variable5.Address, out var tmp5)) || !(tmp5 is T5 t5) ||
+                (!result!.TryGetValue(variable6.Address, out var tmp6)) || !(tmp6 is T6 t6) ||
+                (!result!.TryGetValue(variable7.Address, out var tmp7)) || !(tmp7 is T7 t7) ||
                 !cmp(t1, t2, t3, t4, t5, t6, t7))
             {
                 if (otherwise == null)
@@ -1221,7 +1221,7 @@ namespace Papper.Extensions.Conditions
                 return ExceptionThrowHelper.ThrowArgumentNullException<bool>(nameof(cmp));
             }
 
-            System.Collections.Generic.Dictionary<string, object?>? result = (await papper.ReadAsync(variable1,
+            var result = (await papper.ReadAsync(variable1,
                                                  variable2,
                                                  variable3,
                                                  variable4,
@@ -1231,14 +1231,14 @@ namespace Papper.Extensions.Conditions
                                                  variable8).ConfigureAwait(false))?.ToDictionary(x => x.Variable, x => x.Value);
 
             if (result!.IsNullOrEmpty() ||
-                (!result!.TryGetValue(variable1.Address, out object? tmp1)) || !(tmp1 is T1 t1) ||
-                (!result!.TryGetValue(variable2.Address, out object? tmp2)) || !(tmp2 is T2 t2) ||
-                (!result!.TryGetValue(variable3.Address, out object? tmp3)) || !(tmp3 is T3 t3) ||
-                (!result!.TryGetValue(variable4.Address, out object? tmp4)) || !(tmp4 is T4 t4) ||
-                (!result!.TryGetValue(variable5.Address, out object? tmp5)) || !(tmp5 is T5 t5) ||
-                (!result!.TryGetValue(variable6.Address, out object? tmp6)) || !(tmp6 is T6 t6) ||
-                (!result!.TryGetValue(variable7.Address, out object? tmp7)) || !(tmp7 is T7 t7) ||
-                (!result!.TryGetValue(variable8.Address, out object? tmp8)) || !(tmp8 is T8 t8) ||
+                (!result!.TryGetValue(variable1.Address, out var tmp1)) || !(tmp1 is T1 t1) ||
+                (!result!.TryGetValue(variable2.Address, out var tmp2)) || !(tmp2 is T2 t2) ||
+                (!result!.TryGetValue(variable3.Address, out var tmp3)) || !(tmp3 is T3 t3) ||
+                (!result!.TryGetValue(variable4.Address, out var tmp4)) || !(tmp4 is T4 t4) ||
+                (!result!.TryGetValue(variable5.Address, out var tmp5)) || !(tmp5 is T5 t5) ||
+                (!result!.TryGetValue(variable6.Address, out var tmp6)) || !(tmp6 is T6 t6) ||
+                (!result!.TryGetValue(variable7.Address, out var tmp7)) || !(tmp7 is T7 t7) ||
+                (!result!.TryGetValue(variable8.Address, out var tmp8)) || !(tmp8 is T8 t8) ||
                 !cmp(t1, t2, t3, t4, t5, t6, t7, t8))
             {
                 if (otherwise == null)

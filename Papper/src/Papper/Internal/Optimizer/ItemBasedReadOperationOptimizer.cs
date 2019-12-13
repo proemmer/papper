@@ -1,10 +1,7 @@
-﻿using Papper.Internal;
-using Papper.Types;
+﻿using Papper.Types;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Text;
 
 namespace Papper.Internal
 {
@@ -33,9 +30,13 @@ namespace Papper.Internal
                 if (item.Value.Item2 is PlcBool)
                 {
                     if (currentOffset != offsetCountedAsBoolean)
+                    {
                         offsetCountedAsBoolean = currentOffset;
+                    }
                     else
+                    {
                         count = false;
+                    }
                 }
                 if (item.Value.Item2 is PlcArray arr && arr.Size.Bits > 0)
                 {

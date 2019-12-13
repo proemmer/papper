@@ -1,7 +1,5 @@
 ﻿using Papper.Internal;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Papper.Types
 {

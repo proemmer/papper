@@ -31,9 +31,6 @@ namespace Papper.Attributes
         /// Constructor that accepts the maximum length of the string.
         /// </summary>
         /// <param name="maximumLength">The maximum length, inclusive.  It may not be negative.</param>
-        public StringLengthAttribute(int maximumLength)
-        {
-            MaximumLength = maximumLength;
-        }
+        public StringLengthAttribute(int maximumLength) => MaximumLength = maximumLength;
     }
 }
