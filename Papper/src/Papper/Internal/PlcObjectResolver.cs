@@ -62,15 +62,23 @@ namespace Papper.Internal
                     if (parts.Length >= 2)
                     {
                         if (plcObject is PlcBool)
+                        {
                             plcObject.Offset.Bits = int.Parse(parts[1], CultureInfo.InvariantCulture);
+                        }
 
                         if (plcObject is ISupportStringLengthAttribute plcs)
+                        {
                             plcs.StringLength = int.Parse(parts[1], CultureInfo.InvariantCulture);
+                        }
 
                         if (!(plcObject is PlcBool || plcObject is ISupportStringLengthAttribute) || parts.Length >= 3)
                         {
                             var length = int.Parse(parts.Last(), CultureInfo.InvariantCulture);
-                            if (length > 0) length--;
+                            if (length > 0)
+                            {
+                                length--;
+                            }
+
                             plcObject = new PlcArray(value, plcObject, 0, length);
                         }
                     }
@@ -225,6 +233,7 @@ namespace Papper.Internal
                 if (item == null)
                 {
                     ExceptionThrowHelper.ThrowInvalidVariableException($"{plcObj.Name}.{value}");
+                    return false;
                 }
 
                 var key = prefix + value;
@@ -270,7 +279,10 @@ namespace Papper.Internal
                     path = new List<string>(path.Take(path.Count - 1)) { p + obj.Name.Substring(idx) };
                 }
                 else
+                {
                     path.Add(obj.Name);
+                }
+
                 if (obj.Childs.Any())
                 {
                     if (obj is PlcArray)
@@ -282,7 +294,9 @@ namespace Papper.Internal
                                 var nunmberOfChilds = child.Childs.Count();
                                 var internalPath = new List<string>(path.Take(path.Count - 1)) { obj.Name + child.Name };
                                 foreach (var c in child.Childs)
+                                {
                                     list.AddRange(GetLeafs(c, internalPath.ToList()));
+                                }
                             }
                             else
                             {
@@ -294,7 +308,9 @@ namespace Papper.Internal
                     else
                     {
                         foreach (var child in obj.Childs)
+                        {
                             list.AddRange(GetLeafs(child, path.ToList()));
+                        }
                     }
 
                 }
@@ -311,19 +327,27 @@ namespace Papper.Internal
         /// </summary>
         internal static PlcObject? GetMapping(string? name, ITree tree, Type t, bool allowAddingWithoutMappingAttribute = false)
         {
-            if (string.IsNullOrWhiteSpace(name)) return null;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return null;
+            }
 
             var nodePathStack = new Stack<string>();
             nodePathStack.Push(RootNodeName);
             nodePathStack.Push(InstancesNodeName);
             foreach (var part in name!.Split('.'))
+            {
                 nodePathStack.Push(part);
+            }
 
             var path = PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse());
             var offset = 0;
             if (!tree.TryGet(path, ref offset, out var obj, true))
             {
-                if (t == null) ExceptionThrowHelper.ThrowArgumentNullException(nameof(t));
+                if (t == null)
+                {
+                    ExceptionThrowHelper.ThrowArgumentNullException(nameof(t));
+                }
 
                 var mapping = t.GetTypeInfo().GetCustomAttributes<MappingAttribute>().FirstOrDefault(m => m.Name == name);
                 if (mapping?.Name == name)
@@ -390,13 +414,16 @@ namespace Papper.Internal
 
                 foreach (var pi in t.GetTypeInfo().DeclaredProperties)
                 {
-                    PlcObject? plcObject = PlcObjectFactory.CreatePlcObject(pi);
+                    var plcObject = PlcObjectFactory.CreatePlcObject(pi);
 
                     if (plcObject is PlcArray plcObjectArray && (plcObjectArray.LeafElementType ?? plcObjectArray.ArrayType) is PlcStruct)
+                    {
                         plcObjectArray.ArrayType = GetMetaData(tree, plcObjectArray.ElemenType!);
+                    }
                     else if (plcObject is PlcStruct)
+                    {
                         plcObject = new PlcObjectRef(plcObject.Name, GetMetaData(tree, pi.PropertyType));
-
+                    }
 
                     if (plcObject != null)
                     {
@@ -418,7 +445,10 @@ namespace Papper.Internal
         private static void AddPlcObject(ITree tree, PlcObject? pred, PlcObject plcObject, IEnumerable<string> nodePathStack, ref int byteOffset, ref int bitOffset, bool hasCustomOffset)
         {
             if (!hasCustomOffset)
+            {
                 CalculateOffset(pred, plcObject, ref byteOffset, ref bitOffset);
+            }
+
             plcObject.Offset.Bytes = byteOffset;
             plcObject.Offset.Bits = bitOffset;
             DebugOutPut("{0}: Offset:{1,3}.{2}    Size={3}.{4}", plcObject.Name.PadRight(20), byteOffset, bitOffset, plcObject.Size == null ? 0 : plcObject.Size.Bytes, plcObject.Size == null ? 0 : plcObject.Size.Bits);

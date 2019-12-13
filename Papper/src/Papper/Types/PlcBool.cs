@@ -22,7 +22,9 @@ namespace Papper.Types
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             if (data.IsEmpty)
-                return default;
+            {
+                return false;
+            }
 
             var baseOffset = plcObjectBinding.Offset + (plcObjectBinding.MetaData.Offset.Bits) / 8;
             var bit = plcObjectBinding.Offset + plcObjectBinding.MetaData.Offset.Bits - baseOffset;

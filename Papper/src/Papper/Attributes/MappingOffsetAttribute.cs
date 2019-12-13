@@ -9,10 +9,7 @@ namespace Papper.Attributes
         /// <summary>
         /// Constructor
         /// </summary>
-        public MappingOffsetAttribute()
-        {
-            ByteOffset = 0;
-        }
+        public MappingOffsetAttribute() => ByteOffset = 0;
 
         /// <summary>
         /// Constructor
@@ -43,9 +40,6 @@ namespace Papper.Attributes
             private set;
         }
 
-        public override int GetHashCode()
-        {
-            return string.Format(CultureInfo.InvariantCulture, "{0}.{1}", ByteOffset, BitOffset).GetHashCode();
-        }
+        public override int GetHashCode() => string.Format(CultureInfo.InvariantCulture, "{0}.{1}", ByteOffset, BitOffset).GetHashCode();
     }
 }

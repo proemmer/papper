@@ -1,75 +1,68 @@
-﻿using System;
+﻿using Papper;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Papper;
 
-namespace UnitTestSuit.Util
+namespace Papper.Tests.Util
 {
+    public class PlcItem
+    {
+        public Memory<byte> Data { get; set; }
+        public string Selector { get; set; }
+
+        public int Offset { get; set; }
+        public int Length { get; set; }
+
+        public byte BitMaskBegin { get; set; }
+        public byte BitMaskEnd { get; set; }
+
+        public override string ToString() => $"{Selector}.{Offset}.{Length}#{BitMaskBegin}#{BitMaskEnd}";
+    }
+
+    public class PlcBlock
+    {
+        public Memory<byte> Data { get; private set; }
+        public int MinSize => Data.Length;
+
+        public PlcBlock(int minSize) => Data = new byte[minSize];
+
+        public void UpdateBlockSize(int size)
+        {
+            if (Data.Length < size)
+            {
+                Memory<byte> tmp = new byte[size];
+                Data.CopyTo(tmp);
+                Data = tmp;
+            }
+        }
+    }
+
+
     public static class MockPlc
     {
-        private static Dictionary<string, PlcItem> _items = new Dictionary<string, PlcItem>();
+        private static readonly Dictionary<string, PlcItem> _items = new Dictionary<string, PlcItem>();
         private static Task _watchTask;
         private static bool _stop;
 
         public static Action<IEnumerable<PlcItem>> OnItemChanged { get; set; }
 
-        public class PlcItem 
-        {
-            public Memory<byte> Data { get; set; }
-            public string Selector { get; set; }
 
-            public int Offset { get; set; }
-            public int Length { get; set; }
-
-            public byte BitMaskBegin { get; set; }
-            public byte BitMaskEnd { get; set; }
-
-            public override string ToString()
-            {
-                return $"{Selector}.{Offset}.{Length}#{BitMaskBegin}#{BitMaskEnd}";
-            }
-        }
-
-        public class PlcBlock
-        {
-            public Memory<byte> Data { get; private set; }
-            public int MinSize { get { return Data.Length; } }
-
-            public PlcBlock(int minSize)
-            {
-                Data = new byte[minSize];
-            }
-
-            public void UpdateBlockSize(int size)
-            {
-                if (Data.Length < size)
-                {
-                    Memory<byte> tmp = new byte[size];
-                    Data.CopyTo(tmp);
-                    Data = tmp;
-                }
-            }
-        }
-
-        private static Dictionary<string, PlcBlock> _plc = new Dictionary<string, PlcBlock>();
+        private static readonly Dictionary<string, PlcBlock> _plc = new Dictionary<string, PlcBlock>();
 
 
-        public static void Clear()
-        {
-            _plc.Clear();
-        }
+        public static void Clear() => _plc.Clear();
 
         public static PlcBlock GetPlcEntry(string selector, int minSize = -1)
         {
-            if (!_plc.TryGetValue(selector, out PlcBlock plcblock))
+            if (!_plc.TryGetValue(selector, out var plcblock))
             {
                 lock (_plc)
                 {
                     if (!_plc.TryGetValue(selector, out plcblock))
-                    { 
+                    {
                         plcblock = new PlcBlock(minSize > 0 ? minSize : 0);
                         _plc.Add(selector, plcblock);
                         return plcblock;
@@ -77,12 +70,20 @@ namespace UnitTestSuit.Util
                 }
             }
             if (minSize > 0)
+            {
                 plcblock.UpdateBlockSize(minSize);
+            }
+
             return plcblock;
         }
 
         public static void UpdateDataChangeItem(DataPack item, bool remove = false)
         {
+            if (item == null)
+            {
+                return;
+            }
+
             var itemKey = item.ToString();
             if (!remove)
             {
@@ -97,7 +98,7 @@ namespace UnitTestSuit.Util
                     }
                 }
 
-                if(_watchTask == null)
+                if (_watchTask == null)
                 {
                     _watchTask = Task.Run(() => Watch());
                 }
@@ -110,7 +111,7 @@ namespace UnitTestSuit.Util
                 }
                 _items.Remove(itemKey);
 
-                if(_watchTask != null && !_items.Any())
+                if (_watchTask != null && !_items.Any())
                 {
                     _stop = true;
                     _watchTask.GetAwaiter().GetResult();
@@ -133,7 +134,7 @@ namespace UnitTestSuit.Util
                         {
                             if (item.Value.Data.IsEmpty || item.Value.Data.Length < res.Length)
                             {
-                                if(!item.Value.Data.IsEmpty)
+                                if (!item.Value.Data.IsEmpty)
                                 {
                                     ArrayPool<byte>.Shared.Return(item.Value.Data.ToArray());
                                 }
@@ -150,7 +151,7 @@ namespace UnitTestSuit.Util
                         changed.Clear();
                     }
                 }
-                catch(Exception)
+                catch (Exception)
                 {
 
                 }

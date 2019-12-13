@@ -12,8 +12,8 @@
         /// CT: Counter Area
         /// DB: DataBlock Area
         /// </summary>
-        string Mapping { get;  }
-        string Variable { get;  }
+        string Mapping { get; }
+        string Variable { get; }
 
 
     }

@@ -1,28 +1,27 @@
-﻿using Insite.Customer.Data.DB_AI_Texte_BST1;
-using Insite.Customer.Data.DB_BST1_Tel_Gruppe_05;
-using Papper;
-using PapperTests.Mappings;
+﻿using Insite.Customer.Data;
+using Papper.Tests.Mappings;
+using Papper.Tests.Util;
 using PMSComponentHost.VTagStorerLoader;
 using System;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using UnitTestSuit.Mappings;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace DataTypeTests
+namespace Papper.Tests
 {
-    public class SerialisationTest
+    public sealed class SerialisationTest : IDisposable
     {
 
         private readonly ITestOutputHelper _testOutputHelper;
+        private readonly ConsoleOutputConverter _converter;
 
         public SerialisationTest(ITestOutputHelper testOutputHelper)
         {
             _testOutputHelper = testOutputHelper;
-            var converter = new ConsoleOutputConverter(testOutputHelper);
-            Console.SetOut(converter);
+            _converter = new ConsoleOutputConverter(testOutputHelper);
+            Console.SetOut(_converter);
         }
 
 
@@ -44,7 +43,7 @@ namespace DataTypeTests
             Assert.Equal(tt.TEST, deserialized.TEST);
             Assert.Equal(tt.TEXT[0], deserialized.TEXT[0]);
 
-            // Precision is not the same after conveting to the plc format
+            // Precision is not the same after converting to the plc format
             var cmpVal = Convert.ToUInt32(tt.Time[0].TotalMilliseconds);
             Assert.Equal(cmpVal, deserialized.Time[0].TotalMilliseconds);
         }
@@ -72,12 +71,12 @@ namespace DataTypeTests
         [InlineData(typeof(string), "Test", new byte[] { 0x04, 0x04, 0x54, 0x65, 0x73, 0x74 })]
         [InlineData(typeof(char), 'X', new byte[] { 0x58 })]
         [InlineData(typeof(DateTime), "Mon 16 Jun 8:30 AM 2008", new byte[] { 0x08, 0x06, 0x16, 0x08, 0x30, 0x00, 0x00, 0x01 })]
-        [InlineData(typeof(string), "Störung; Demnächst kommen          ", new byte[] { 35, 35, 83, 116, 246, 114, 117, 110, 103, 59, 32, 68, 101, 109, 110, 228, 99, 104, 115, 116, 32, 107, 111, 109, 109, 101, 110, 32, 32, 32, 32, 32, 32, 32 ,32 ,32, 32 })]
+        [InlineData(typeof(string), "Störung; Demnächst kommen          ", new byte[] { 35, 35, 83, 116, 246, 114, 117, 110, 103, 59, 32, 68, 101, 109, 110, 228, 99, 104, 115, 116, 32, 107, 111, 109, 109, 101, 110, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32 })]
 
         public void SerializePlcType(Type t, object value, byte[] expected)
         {
             var s = new PlcDataMapperSerializer();
-            if(t == typeof(DateTime) && value is string str)
+            if (t == typeof(DateTime) && value is string str)
             {
                 value = DateTime.ParseExact(str, "ddd dd MMM h:mm tt yyyy", CultureInfo.InvariantCulture);
             }
@@ -158,6 +157,8 @@ namespace DataTypeTests
         {
             var s = new PlcDataMapperSerializer();
             var data = s.Serialize(TimeTransformationRule.FromTimeZoneInfo(TimeZoneInfo.Local));
+            Assert.NotNull(data);
+            Assert.Equal(96, data.Length);
         }
 
 
@@ -232,7 +233,7 @@ namespace DataTypeTests
 
 
 
-        private static byte[] data = new byte[]
+        private static readonly byte[] data = new byte[]
         {
             0x20
             , 0x20
@@ -6770,5 +6771,7 @@ namespace DataTypeTests
             , 0x0
 
         };
+
+        public void Dispose() => _converter?.Dispose();
     }
 }

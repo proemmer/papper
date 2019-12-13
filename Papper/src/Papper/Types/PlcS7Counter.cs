@@ -20,7 +20,9 @@ namespace Papper.Types
         {
             var subset = Convert.ToInt32(value, CultureInfo.InvariantCulture).SetBcdWord();
             for (var i = 0; i < subset.Length; i++)
+            {
                 data[plcObjectBinding.Offset + i] = subset[i];
+            }
         }
     }
 }

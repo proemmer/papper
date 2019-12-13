@@ -17,7 +17,9 @@ namespace Papper.Types
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             if (data.IsEmpty)
+            {
                 return _epochTime;
+            }
 
             int bt = data[plcObjectBinding.Offset];
             //BCD conversion

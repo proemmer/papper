@@ -38,19 +38,10 @@ namespace Papper.Internal
             _lambdaHash = lambdaHash ?? ExceptionThrowHelper.ThrowArgumentNullException<Func<T, int>>(nameof(lambdaHash));
         }
 
-        public int Compare(T x, T y)
-        {
-            return _lambdaCompare(x, y);
-        }
+        public int Compare(T x, T y) => _lambdaCompare(x, y);
 
-        public bool Equals(T x, T y)
-        {
-            return _lambdaEquals(x, y);
-        }
+        public bool Equals(T x, T y) => _lambdaEquals(x, y);
 
-        public int GetHashCode(T obj)
-        {
-            return _lambdaHash(obj);
-        }
+        public int GetHashCode(T obj) => _lambdaHash(obj);
     }
 }

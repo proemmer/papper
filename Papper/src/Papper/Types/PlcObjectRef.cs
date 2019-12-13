@@ -45,7 +45,10 @@ namespace Papper.Types
         {
             offset += Offset.Bytes;
             if (path.IsPathToCurrent && getRef)
+            {
                 return this;
+            }
+
             return _referencedObject.Get(path, ref offset);
         }
 

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Benchmarks
 {
     [MemoryDiagnoser]
-    [ClrJob(baseline:true), CoreJob]
+    [ClrJob(baseline: true), CoreJob]
     [RankColumn]
     public class Benchmarks
     {
@@ -29,7 +29,7 @@ namespace Benchmarks
 
 
         private static Task Papper_OnRead(IEnumerable<DataPack> reads) => Task.CompletedTask;
-        
+
 
         private static Task Papper_OnWrite(IEnumerable<DataPack> reads) => Task.CompletedTask;
     }

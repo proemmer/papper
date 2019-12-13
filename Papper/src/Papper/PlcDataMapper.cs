@@ -134,8 +134,8 @@ namespace Papper
         /// <returns></returns>
         public IEnumerable<string> GetVariablesOf(string mapping)
         {
-            List<string> result = new List<string>();
-            if (EntriesByName.TryGetValue(mapping, out IEntry entry))
+            var result = new List<string>();
+            if (EntriesByName.TryGetValue(mapping, out var entry))
             {
                 return PlcObjectResolver.GetLeafs(entry.PlcObject, result);
             }
@@ -156,7 +156,7 @@ namespace Papper
                 ExceptionThrowHelper.ThrowArgumentNullException<Type>(nameof(type));
             }
 
-            List<MappingAttribute> mappingAttributes = type!.GetTypeInfo().GetCustomAttributes<MappingAttribute>().ToList();
+            var mappingAttributes = type!.GetTypeInfo().GetCustomAttributes<MappingAttribute>().ToList();
             if (!mappingAttributes.Any())
             {
                 ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type!);
@@ -198,7 +198,7 @@ namespace Papper
                 ExceptionThrowHelper.ThrowArgumentNullException<Type>(nameof(type));
             }
 
-            List<MappingAttribute> mappingAttributes = type.GetTypeInfo().GetCustomAttributes<MappingAttribute>().ToList();
+            var mappingAttributes = type.GetTypeInfo().GetCustomAttributes<MappingAttribute>().ToList();
             if (!mappingAttributes.Any())
             {
                 ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type!);
@@ -262,7 +262,7 @@ namespace Papper
         {
 
             // because we need the byte arrays only for converting, we can use the ArrayPool
-            Dictionary<PlcRawData, byte[]> memoryBuffer = new Dictionary<PlcRawData, byte[]>();
+            var memoryBuffer = new Dictionary<PlcRawData, byte[]>();
             try
             {
                 static KeyValuePair<string, DataPack> UpdatePack(string key, DataPack pack, int dataOffset)
@@ -273,11 +273,11 @@ namespace Papper
 
 
 
-                Dictionary<string, object> values = vars.ToDictionary(x => x.Address, x => x.Value);
+                var values = vars.ToDictionary(x => x.Address, x => x.Value);
                 // determine executions
-                List<Execution> executions = DetermineExecutions(vars);
+                var executions = DetermineExecutions(vars);
 
-                Dictionary<string, DataPack> prepared = executions.SelectMany(execution => execution.Bindings.Where(b => !b.Value.MetaData.IsReadOnly))
+                var prepared = executions.SelectMany(execution => execution.Bindings.Where(b => !b.Value.MetaData.IsReadOnly))
                                          .Select(x => UpdatePack(x.Key, Create(x.Key, x.Value, values, memoryBuffer), x.Value.Offset))
                                          .ToDictionary(x => x.Key, x => x.Value);
 
@@ -299,7 +299,7 @@ namespace Papper
         /// <param name="changed"></param>
         public void OnDataChanges(IEnumerable<DataPack> changed)
         {
-            foreach (Subscription item in _subscriptions.ToList())
+            foreach (var item in _subscriptions.ToList())
             {
                 item.OnDataChanged(changed);
             }
@@ -327,7 +327,7 @@ namespace Papper
         internal List<Execution> DetermineExecutions<T>(IEnumerable<T> vars) where T : IPlcReference
         {
             return vars.GroupBy(x => x.Mapping)
-                                .Select((execution) => GetOrAddMapping(execution.Key, out IEntry entry)
+                                .Select((execution) => GetOrAddMapping(execution.Key, out var entry)
                                                                 ? (execution, entry)
                                                                 : (null, null))
                                 .Where(x => x.execution != null)
@@ -346,7 +346,7 @@ namespace Papper
             {
                 filter = (x) => x;
             }
-            return executions.Select(exec => needUpdate.TryGetValue(exec, out DataPack pack) ? exec.ApplyDataPack(pack) : exec)
+            return executions.Select(exec => needUpdate.TryGetValue(exec, out var pack) ? exec.ApplyDataPack(pack) : exec)
                              .Where(exec => HasChangesSinceLastRun(exec, changedAfter))
                              .GroupBy(exec => exec.ExecutionResult) // Group by execution result
                              .Where(res => res.Key == ExecutionResult.Ok) // filter by OK results
@@ -393,17 +393,17 @@ namespace Papper
 
 
         internal bool IsValidReference(PlcWatchReference watchs)
-            => GetOrAddMapping(watchs.Mapping, out IEntry entry) &&
+            => GetOrAddMapping(watchs.Mapping, out var entry) &&
                 (entry is MappingEntry && entry.PlcObject.Get(new PlcMetaDataTreePath(watchs.Variable)) != null) ||
                 (entry is RawEntry);
         #endregion
 
 
-        private DataPack Create(string key, PlcObjectBinding binding, Dictionary<string, object> values, Dictionary<PlcRawData, byte[]> memoryBuffer)
+        private static DataPack Create(string key, PlcObjectBinding binding, Dictionary<string, object> values, Dictionary<PlcRawData, byte[]> memoryBuffer)
         {
             static byte[] GetOrCreateBufferAndApplyValue(PlcObjectBinding plcBinding, Dictionary<PlcRawData, byte[]> dict, object value)
             {
-                if (!dict.TryGetValue(plcBinding.RawData, out byte[] buffer))
+                if (!dict.TryGetValue(plcBinding.RawData, out var buffer))
                 {
                     buffer = ArrayPool<byte>.Shared.Rent(plcBinding.RawData.MemoryAllocationSize);
                     dict.Add(plcBinding.RawData, buffer);
@@ -422,7 +422,7 @@ namespace Papper
                 return buffer;
             }
 
-            (byte begin, byte end) = CreateBitMasks(binding);
+            (var begin, var end) = CreateBitMasks(binding);
             return new DataPack
             {
                 Selector = binding.RawData.Selector,
@@ -462,16 +462,16 @@ namespace Papper
             {
                 if (plcArray.Offset.Bits > 0 || ((plcArray.ArrayLength % 8) != 0))
                 {
-                    int take = 8 - plcArray.Offset.Bits;
-                    foreach (PlcObject item in plcArray.Childs.Take(take).OfType<PlcObject>())
+                    var take = 8 - plcArray.Offset.Bits;
+                    foreach (var item in plcArray.Childs.Take(take).OfType<PlcObject>())
                     {
                         begin = Converter.SetBit(begin, item.Offset.Bits, true);
                     }
 
-                    int lastItems = ((plcArray.Offset.Bits + plcArray.ArrayLength) % 8);
+                    var lastItems = ((plcArray.Offset.Bits + plcArray.ArrayLength) % 8);
                     if (lastItems > 0)
                     {
-                        foreach (PlcObject item in plcArray.Childs.Skip(plcArray.ArrayLength - lastItems).OfType<PlcObject>())
+                        foreach (var item in plcArray.Childs.Skip(plcArray.ArrayLength - lastItems).OfType<PlcObject>())
                         {
                             end = Converter.SetBit(end, item.Offset.Bits, true);
                         }
@@ -494,12 +494,12 @@ namespace Papper
 
         private async Task<PlcReadResult[]> InternalReadAsync(IEnumerable<PlcReadReference> vars, bool doNotConvert)
         {
-            IEnumerable<PlcReadReference> variables = vars;
+            var variables = vars;
             // determine executions
-            List<Execution> executions = DetermineExecutions(variables);
+            var executions = DetermineExecutions(variables);
 
             // determine outdated
-            Dictionary<Execution, DataPack> needUpdate = UpdateableItems(executions, true);  // true = read some items from cache!!
+            var needUpdate = UpdateableItems(executions, true);  // true = read some items from cache!!
 
             // read from plc
             await ReadFromPlcAsync(needUpdate).ConfigureAwait(false);
@@ -535,7 +535,7 @@ namespace Papper
                 case "CT":
                 case var s when Regex.IsMatch(s, "^DB\\d+$"):
                     {
-                        using (UpgradeableGuard upgradeableGuard = new UpgradeableGuard(_mappingsLock))
+                        using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
                         {
                             if (!EntriesByName.TryGetValue(mapping, out entry))
                             {
@@ -555,10 +555,10 @@ namespace Papper
 
         private bool AddMappingsInternal(Type type, IEnumerable<MappingAttribute> mappingAttributes)
         {
-            foreach (MappingAttribute mapping in mappingAttributes)
+            foreach (var mapping in mappingAttributes)
             {
-                using UpgradeableGuard upgradeableGuard = new UpgradeableGuard(_mappingsLock);
-                if (EntriesByName.TryGetValue(mapping.Name, out IEntry existingMapping) && existingMapping is MappingEntry mappingEntry)
+                using var upgradeableGuard = new UpgradeableGuard(_mappingsLock);
+                if (EntriesByName.TryGetValue(mapping.Name, out var existingMapping) && existingMapping is MappingEntry mappingEntry)
                 {
                     if (mappingEntry.Mapping == mapping && mappingEntry.Type == type)
                     {
@@ -577,11 +577,15 @@ namespace Papper
 
         private bool RemoveMappingsInternal(IEnumerable<string>? mappingNames)
         {
-            if (mappingNames == null) return false;
-            foreach (string mapping in mappingNames)
+            if (mappingNames == null)
             {
-                using UpgradeableGuard upgradeableGuard = new UpgradeableGuard(_mappingsLock);
-                if (EntriesByName.TryGetValue(mapping, out IEntry existingMapping) && existingMapping is MappingEntry mappingEntry)
+                return false;
+            }
+
+            foreach (var mapping in mappingNames)
+            {
+                using var upgradeableGuard = new UpgradeableGuard(_mappingsLock);
+                if (EntriesByName.TryGetValue(mapping, out var existingMapping) && existingMapping is MappingEntry mappingEntry)
                 {
                     if (mappingEntry.Mapping.Name == mapping)
                     {

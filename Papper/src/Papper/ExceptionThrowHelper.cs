@@ -3,19 +3,20 @@ using System.Collections.Generic;
 
 namespace Papper
 {
+#pragma warning disable CA1303 // Do not pass literals as localized parameters
     internal static class ExceptionThrowHelper
     {
         public static T ThrowArgumentNullException<T>(string argName) => throw new ArgumentNullException(argName);
 
         public static void ThrowArgumentNullException(string argName) => throw new ArgumentNullException(argName);
 
-        public static void ThrowInvalidPduSizeException(int minimumSize) => throw new ArgumentException($"PDU size have to be greater then {minimumSize}", "pduSize");
+        public static void ThrowInvalidPduSizeException(int minimumSize) => throw new ArgumentException($"PDU size have to be greater then {minimumSize}", nameof(minimumSize));
 
-        public static void ThrowInvalidMappingNameException(string name) => throw new ArgumentException($"The given mapping name {name} is not declared!", "name");
+        public static void ThrowInvalidMappingNameException(string name) => throw new ArgumentException($"The given mapping name {name} is not declared!", nameof(name));
 
         public static void ThrowMappingNotFoundException(string name) => throw new KeyNotFoundException($"The mapping {name} does not exist.");
 
-        public static void ThrowMappingAttributeNotFoundForTypeException(Type t) => throw new ArgumentException($"The given type {t}  has no MappingAttribute", "type");
+        public static void ThrowMappingAttributeNotFoundForTypeException(Type type) => throw new ArgumentException($"The given type {type}  has no MappingAttribute", nameof(type));
 
         public static void ThrowInvalidVariableException(string variable) => throw new InvalidVariableException(variable);
 
@@ -37,10 +38,11 @@ namespace Papper
 
         public static void ThrowEmptyNodePathCollectionException() => throw new Exception("Path: Cannot step down in empty path!");
 
-        public static void ThrowUnknownOptimizrException(OptimizerType type) => throw new ArgumentException($"Unknown optimizertype <{type}> given!");
+        public static void ThrowUnknownOptimizrException(OptimizerType type) => throw new ArgumentException($"Unknown optimizer type <{type}> given!");
 
         public static void ThrowObjectDisposedException(string objectName) => throw new ObjectDisposedException(objectName);
 
         public static void ThrowNotSupportedException() => throw new NotSupportedException();
     }
+#pragma warning restore CA1303 // Do not pass literals as localized parameters
 }

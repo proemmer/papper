@@ -32,13 +32,20 @@ namespace Papper.Types
         public static PlcObject? AddPlcObjectToTree(PlcObject obj, ITree tree, ITreePath path)
         {
             var node = PlcMetaDataTreePath.CreateNodePath(path, obj);
-            if (node == null) return null;
+            if (node == null)
+            {
+                return null;
+            }
+
             if (!(tree.Get(node) is PlcObject metaDataNode))
             {
                 lock (tree.Root)
                 {
                     if (tree.Get(node) is PlcObject plcObj)
+                    {
                         return plcObj;
+                    }
+
                     tree.Root.AddChild(path, obj);
                 }
                 return obj;
@@ -92,7 +99,9 @@ namespace Papper.Types
                     if (e1 && e2)
                     {
                         if (!AreDataEqual(enumerator1.Current, enumerator2.Current))
+                        {
                             return false;
+                        }
                     }
                     else
                     {
@@ -111,8 +120,9 @@ namespace Papper.Types
                 foreach (var o1 in dictionary1)
                 {
                     if (!dictionary2.TryGetValue(o1.Key, out var o2) || !AreDataEqual(o1.Value, o2))
+                    {
                         return false;
-
+                    }
                 }
             }
             return true;

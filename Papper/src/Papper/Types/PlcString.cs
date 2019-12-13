@@ -36,7 +36,9 @@ namespace Papper.Types
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             if (data.IsEmpty)
+            {
                 return string.Empty;
+            }
 
             var maxLength = data[plcObjectBinding.Offset];
             var curLength = data[plcObjectBinding.Offset + 1];
@@ -59,7 +61,9 @@ namespace Papper.Types
 
                 data[i++] = take;
                 foreach (var c in fill)
+                {
                     data[i++] = Convert.ToByte(c);
+                }
             }
             else
             {
@@ -67,14 +71,18 @@ namespace Papper.Types
             }
 
             for (var j = 0; j < (maxLength - fill.Length); j++)
+            {
                 data[i + j] = _defaultFillByte;
-
+            }
         }
 
 
         public void AssigneLengthFrom(ISupportStringLengthAttribute s)
         {
-            if (s != null) _size.Bytes = s.StringLength;
+            if (s != null)
+            {
+                _size.Bytes = s.StringLength;
+            }
         }
 
     }

@@ -1,10 +1,13 @@
-﻿namespace Papper
+﻿using System;
+using System.Collections.Generic;
+
+namespace Papper
 {
     /// <summary>
     /// This structure represents the result of a write command. It includes the written meta data and 
     /// the <see cref="ExecutionResult"/> of the write operation.
     /// </summary>
-    public struct PlcWriteResult
+    public struct PlcWriteResult : IEquatable<PlcWriteResult>
     {
         private readonly int _dot;
 
@@ -42,5 +45,21 @@
             _dot = address == null ? -1 : address.IndexOf(".", System.StringComparison.InvariantCulture);
         }
 
+        public override bool Equals(object? obj) => obj is PlcWriteResult result && Equals(result);
+        public bool Equals(PlcWriteResult other) => _dot == other._dot && Address == other.Address && ActionResult == other.ActionResult && Mapping == other.Mapping && Variable == other.Variable;
+
+        public override int GetHashCode()
+        {
+            var hashCode = 150809288;
+            hashCode = hashCode * -1521134295 + _dot.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Address);
+            hashCode = hashCode * -1521134295 + ActionResult.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Mapping);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Variable);
+            return hashCode;
+        }
+
+        public static bool operator ==(PlcWriteResult left, PlcWriteResult right) => left.Equals(right);
+        public static bool operator !=(PlcWriteResult left, PlcWriteResult right) => !(left == right);
     }
 }

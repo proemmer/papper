@@ -6,10 +6,7 @@ namespace Papper
     {
         private readonly MappingEntryProvider _mappingEntryProvider;
 
-        public PlcDataAccessor(MappingEntryProvider? mappingEntryProvider = null)
-        {
-            _mappingEntryProvider = mappingEntryProvider ?? new MappingEntryProvider();
-        }
+        public PlcDataAccessor(MappingEntryProvider? mappingEntryProvider = null) => _mappingEntryProvider = mappingEntryProvider ?? new MappingEntryProvider();
 
         /// <summary>
         /// Get a value from the structure binary data
@@ -32,9 +29,17 @@ namespace Papper
         /// <returns></returns>
         public TValue GetValue<TValue>(Type type, string variable, Span<byte> data)
         {
-            if (type == null || variable == null) return default;
+            if (type == null || variable == null)
+            {
+                return default;
+            }
+
             var mappingEntry = _mappingEntryProvider.GetMappingEntryForType(type);
-            if (mappingEntry == null) return default;
+            if (mappingEntry == null)
+            {
+                return default;
+            }
+
             MappingEntryProvider.UpdateVariables(mappingEntry, variable);
             return mappingEntry.Bindings.TryGetValue(variable, out var binding) ? (TValue)binding.ConvertFromRaw(data) : default;
         }
@@ -63,9 +68,17 @@ namespace Papper
         /// <returns></returns>
         public bool SetValue<TValue>(Type type, string variable, TValue value, Span<byte> data)
         {
-            if (type == null || value == null) return false;
+            if (type == null || value == null)
+            {
+                return false;
+            }
+
             var mappingEntry = _mappingEntryProvider.GetMappingEntryForType(type);
-            if (mappingEntry == null) return false;
+            if (mappingEntry == null)
+            {
+                return false;
+            }
+
             MappingEntryProvider.UpdateVariables(mappingEntry, variable);
             if (mappingEntry.Bindings.TryGetValue(variable, out var binding))
             {
