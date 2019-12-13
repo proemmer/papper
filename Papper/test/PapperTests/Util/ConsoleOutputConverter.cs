@@ -2,11 +2,11 @@
 using System.Text;
 using Xunit.Abstractions;
 
-namespace DataTypeTests
+namespace Papper.Tests.Util
 {
     internal class ConsoleOutputConverter : TextWriter
     {
-        ITestOutputHelper _output;
+        readonly ITestOutputHelper _output;
         public ConsoleOutputConverter(ITestOutputHelper output)
         {
             _output = output;

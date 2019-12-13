@@ -2,7 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+#pragma warning disable CA1819 // Properties should not return arrays
 namespace PapperTests.Mappings
 {
     public class UDT_IDATInterface_PLCtoIDAT
@@ -93,3 +94,5 @@ namespace PapperTests.Mappings
 
 
 }
+#pragma warning restore CA1707 // Identifiers should not contain underscores
+#pragma warning restore CA1819 // Properties should not return arrays

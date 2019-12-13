@@ -418,7 +418,7 @@ namespace Papper.Types
                 if (objResult is PlcObject plcObj)
                 {
                     plcObj.ElemenType = ElemenType;
-                    _indexCache.Add(idx, ret);
+                    _indexCache.Add(idx, plcObj);
                     return plcObj;
                 }
                 return null;

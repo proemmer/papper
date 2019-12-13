@@ -1,11 +1,10 @@
 ﻿using Papper.Attributes;
 using System;
-using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using System.Text;
 using static System.TimeZoneInfo;
 
-namespace PapperTests.Mappings
+namespace Papper.Tests.Mappings
 {
     public class TimeTransformationRule
     {
@@ -30,8 +29,8 @@ namespace PapperTests.Mappings
         {
             var result = new TimeTransformationRule();
             AdjustmentRule adjustmentRule = null;
-            var adjustmentRules = timeZoneInfo.GetAdjustmentRules();
-            if (adjustmentRules.Length > 0)
+            var adjustmentRules = timeZoneInfo?.GetAdjustmentRules();
+            if (adjustmentRules != null && adjustmentRules.Length > 0)
             {
                 // Find the single record that encompasses today's date. If none exists, sets adjustmentRule to null.
                 adjustmentRule = adjustmentRules.SingleOrDefault(ar => ar.DateStart <= DateTime.Now && DateTime.Now <= ar.DateEnd);
@@ -49,13 +48,13 @@ namespace PapperTests.Mappings
 
                 result.DaylightStartMonth = Convert.ToByte(daylightTime.Month);
                 result.DaylightStartWeek = Convert.ToByte(daylightTime.Week);
-                result.DaylightStartWeekday = Convert.ToByte(daylightTime.DayOfWeek + 1);
+                result.DaylightStartWeekday = Convert.ToByte(daylightTime.DayOfWeek + 1, CultureInfo.InvariantCulture);
                 result.DaylightStartHour = Convert.ToByte(daylightTime.TimeOfDay.Hour);
                 result.DaylightStartMinute = Convert.ToByte(daylightTime.TimeOfDay.Minute);
 
                 result.StandardStartMonth = Convert.ToByte(standardTime.Month);
                 result.StandardStartWeek = Convert.ToByte(standardTime.Week);
-                result.StandardStartWeekday = Convert.ToByte(standardTime.DayOfWeek + 1);
+                result.StandardStartWeekday = Convert.ToByte(standardTime.DayOfWeek + 1, CultureInfo.InvariantCulture);
                 result.StandardStartHour = Convert.ToByte(standardTime.TimeOfDay.Hour);
                 result.StandardStartMinute = Convert.ToByte(standardTime.TimeOfDay.Minute);
             }

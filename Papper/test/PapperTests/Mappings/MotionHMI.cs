@@ -1,7 +1,8 @@
 using Papper.Attributes;
 using System;
-
-namespace UnitTestSuit.Mappings
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+#pragma warning disable CA1819 // Properties should not return arrays
+namespace Papper.Tests.Mappings
 {
     
     
@@ -149,3 +150,5 @@ namespace UnitTestSuit.Mappings
 
 }
 
+#pragma warning restore CA1707 // Identifiers should not contain underscores
+#pragma warning restore CA1819 // Properties should not return arrays

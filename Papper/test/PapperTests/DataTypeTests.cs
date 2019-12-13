@@ -7,7 +7,7 @@ using Papper.Types;
 using Papper.Internal;
 using System.Buffers.Binary;
 
-namespace PapperTests
+namespace Papper.Tests
 {
     public class DataTypeTests
     {

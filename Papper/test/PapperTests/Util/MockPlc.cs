@@ -6,55 +6,57 @@ using System.Threading;
 using System.Threading.Tasks;
 using Papper;
 
-namespace UnitTestSuit.Util
+namespace Papper.Tests.Util
 {
+    public class PlcItem
+    {
+        public Memory<byte> Data { get; set; }
+        public string Selector { get; set; }
+
+        public int Offset { get; set; }
+        public int Length { get; set; }
+
+        public byte BitMaskBegin { get; set; }
+        public byte BitMaskEnd { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Selector}.{Offset}.{Length}#{BitMaskBegin}#{BitMaskEnd}";
+        }
+    }
+
+    public class PlcBlock
+    {
+        public Memory<byte> Data { get; private set; }
+        public int MinSize { get { return Data.Length; } }
+
+        public PlcBlock(int minSize)
+        {
+            Data = new byte[minSize];
+        }
+
+        public void UpdateBlockSize(int size)
+        {
+            if (Data.Length < size)
+            {
+                Memory<byte> tmp = new byte[size];
+                Data.CopyTo(tmp);
+                Data = tmp;
+            }
+        }
+    }
+
+
     public static class MockPlc
     {
-        private static Dictionary<string, PlcItem> _items = new Dictionary<string, PlcItem>();
+        private static readonly Dictionary<string, PlcItem> _items = new Dictionary<string, PlcItem>();
         private static Task _watchTask;
         private static bool _stop;
 
         public static Action<IEnumerable<PlcItem>> OnItemChanged { get; set; }
 
-        public class PlcItem 
-        {
-            public Memory<byte> Data { get; set; }
-            public string Selector { get; set; }
 
-            public int Offset { get; set; }
-            public int Length { get; set; }
-
-            public byte BitMaskBegin { get; set; }
-            public byte BitMaskEnd { get; set; }
-
-            public override string ToString()
-            {
-                return $"{Selector}.{Offset}.{Length}#{BitMaskBegin}#{BitMaskEnd}";
-            }
-        }
-
-        public class PlcBlock
-        {
-            public Memory<byte> Data { get; private set; }
-            public int MinSize { get { return Data.Length; } }
-
-            public PlcBlock(int minSize)
-            {
-                Data = new byte[minSize];
-            }
-
-            public void UpdateBlockSize(int size)
-            {
-                if (Data.Length < size)
-                {
-                    Memory<byte> tmp = new byte[size];
-                    Data.CopyTo(tmp);
-                    Data = tmp;
-                }
-            }
-        }
-
-        private static Dictionary<string, PlcBlock> _plc = new Dictionary<string, PlcBlock>();
+        private static readonly Dictionary<string, PlcBlock> _plc = new Dictionary<string, PlcBlock>();
 
 
         public static void Clear()
@@ -83,6 +85,7 @@ namespace UnitTestSuit.Util
 
         public static void UpdateDataChangeItem(DataPack item, bool remove = false)
         {
+            if (item == null) return;
             var itemKey = item.ToString();
             if (!remove)
             {

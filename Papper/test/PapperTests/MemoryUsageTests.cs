@@ -5,16 +5,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using UnitTestSuit.Mappings;
-using UnitTestSuit.Util;
+using Papper.Tests.Mappings;
+using Papper.Tests.Util;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace PapperTests
+namespace Papper.Tests
 {
     // This project can output the Class library as a NuGet Package.
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
-    public class MemoryUsageTests
+    public sealed class MemoryUsageTests : IDisposable
     {
         private PlcDataMapper _papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
         private readonly ITestOutputHelper _output;
@@ -109,6 +109,9 @@ namespace PapperTests
             return Task.CompletedTask;
         }
 
-
+        public void Dispose()
+        {
+            _papper?.Dispose();
+        }
     }
 }

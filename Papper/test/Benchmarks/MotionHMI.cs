@@ -1,10 +1,11 @@
 using Papper.Attributes;
 using System;
+#pragma warning disable IDE1006 // Naming Styles
+#pragma warning disable CA1819 // Properties should not return arrays
 
 namespace Benchmarks.Mappings
 {
-    
-    
+
 
     public class UDT_MotionLine_Handshake
     {
@@ -59,7 +60,9 @@ namespace Benchmarks.Mappings
     
     public class UDT_Jog_Axis
     {
-        public bool aktiv { get; set; }	//Jog Betrieb ist aktiv
+
+        public bool aktiv { get; set; } //Jog Betrieb ist aktiv
+
         public bool Preset { get; set; }	//Preset
         public bool Inkremente_vorhanden { get; set; }	//InkrementBetrieb vorhanden
         public bool Inkremente_aktiv { get; set; }	//Verfahren von eingestellten Inkrementen - aktiv
@@ -149,3 +152,5 @@ namespace Benchmarks.Mappings
 
 }
 
+#pragma warning restore IDE1006 // Naming Styles
+#pragma warning restore CA1819 // Properties should not return arrays

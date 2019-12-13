@@ -9,7 +9,7 @@ namespace Papper.Internal
     {
         // TODO:  Do not provide a null value
         public RawEntry(PlcDataMapper mapper, string from, int validationTimeInMs)
-            : base(mapper, new PlcObjectRef(from, null) { Selector = @from }, validationTimeInMs)
+            : base(mapper, new DummyPlcObject(from) { Selector = @from }, validationTimeInMs)
         {
         }
 

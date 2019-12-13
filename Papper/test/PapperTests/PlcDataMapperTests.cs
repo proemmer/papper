@@ -14,18 +14,18 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using UnitTestSuit.Mappings;
-using UnitTestSuit.Util;
+using Papper.Tests.Mappings;
+using Papper.Tests.Util;
 using Xunit;
 using Xunit.Abstractions;
 
 //run in sequence because of db sharing
 [assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
-namespace DataTypeTests
+namespace Papper.Tests
 {
     // This project can output the Class library as a NuGet Package.
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
-    public class PlcDataMapperTests
+    public sealed class PlcDataMapperTests : IDisposable
     {
         private PlcDataMapper _papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
         private readonly ITestOutputHelper _output;
@@ -314,8 +314,8 @@ namespace DataTypeTests
             var result1 = _papper.ReadAsync(PlcReadReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots"), 
                                            PlcReadReference.FromAddress($"{mapping}.SafeMotion.Header.States.ChecksumInvalid"));
 
-            var result2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress($"{mapping}.SafeMotion") });
-            await result1;
+            var result2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress($"{mapping}.SafeMotion") }).ConfigureAwait(false);
+            await result1.ConfigureAwait(false);
             t.Stop();
         }
 
@@ -327,18 +327,18 @@ namespace DataTypeTests
             var t = new Stopwatch();
             t.Start();
             short value = -1;
-            await _papper.WriteAsync(PlcWriteReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", (short)0));
+            await _papper.WriteAsync(PlcWriteReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", (short)0)).ConfigureAwait(false);
 
             var sub = _papper.SubscribeDataChanges((s, e) => 
             {
                value = (short)e[$"{mapping}.SafeMotion.Header.NumberOfActiveSlots"];
             }, PlcWatchReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", 10),
                                                                   PlcWatchReference.FromAddress($"{mapping}.SafeMotion.Header.States.ChecksumInvalid", 10));
-            var result2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress($"{mapping}.SafeMotion") });
+            var result2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress($"{mapping}.SafeMotion") }).ConfigureAwait(false);
 
-            await _papper.WriteAsync(PlcWriteReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", (short)1));
+            await _papper.WriteAsync(PlcWriteReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", (short)1)).ConfigureAwait(false);
 
-            await Task.Delay(2000);
+            await Task.Delay(2000).ConfigureAwait(false);
 
             Assert.Equal((short)1, value);
 
@@ -354,9 +354,9 @@ namespace DataTypeTests
             var t = new Stopwatch();
             t.Start();
             short value = -1;
-            await _papper.WriteAsync(PlcWriteReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", (short)0));
+            await _papper.WriteAsync(PlcWriteReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", (short)0)).ConfigureAwait(false);
 
-            var result2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress($"{mapping}.SafeMotion") });
+            var result2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress($"{mapping}.SafeMotion") }).ConfigureAwait(false);
             var sub = _papper.SubscribeDataChanges((s, e) =>
             {
                 value = (short)e[$"{mapping}.SafeMotion.Header.NumberOfActiveSlots"];
@@ -364,9 +364,9 @@ namespace DataTypeTests
                                                                   PlcWatchReference.FromAddress($"{mapping}.SafeMotion.Header.States.ChecksumInvalid", 10));
             
 
-            await _papper.WriteAsync(PlcWriteReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", (short)1));
+            await _papper.WriteAsync(PlcWriteReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", (short)1)).ConfigureAwait(false);
 
-            await Task.Delay(2000);
+            await Task.Delay(2000).ConfigureAwait(false);
 
             Assert.Equal((short)1, value);
 
@@ -381,7 +381,7 @@ namespace DataTypeTests
         {
             var t = new Stopwatch();
             t.Start();
-            await _papper.WriteAsync(PlcWriteReference.FromAddress($"DB_IDAT_MSpindleData1.IDATInterface.IDATtoPLC.Toggle", false));
+            await _papper.WriteAsync(PlcWriteReference.FromAddress($"DB_IDAT_MSpindleData1.IDATInterface.IDATtoPLC.Toggle", false)).ConfigureAwait(false);
 
             var sub = _papper.SubscribeDataChanges((s, e) =>
             {
@@ -390,12 +390,12 @@ namespace DataTypeTests
                PlcWatchReference.FromAddress($"DB_IDAT_MSpindleData.IDATInterface.IDATtoPLC.Toggle", 10),
                PlcWatchReference.FromAddress($"DB_IDAT_MSpindleData.IDATInterface.PLCtoIDAT.WriteEnable", 10));
 
-            await Task.Delay(100);
-            await _papper.WriteAsync(PlcWriteReference.FromAddress($"DB_IDAT_MSpindleData.IDATInterface.PLCtoIDAT.UpdateRequired", true));
+            await Task.Delay(100).ConfigureAwait(false);
+            await _papper.WriteAsync(PlcWriteReference.FromAddress($"DB_IDAT_MSpindleData.IDATInterface.PLCtoIDAT.UpdateRequired", true)).ConfigureAwait(false);
             //await Task.Delay(100);
             //await _papper.WriteAsync(PlcWriteReference.FromAddress($"DB_IDAT_MSpindleData.IDATInterface.IDATtoPLC.Toggle", false));
 
-            await Task.Delay(30000);
+            await Task.Delay(30000).ConfigureAwait(false);
 
             sub.Dispose();
             t.Stop();
@@ -431,146 +431,9 @@ namespace DataTypeTests
             await _papper.WriteAsync(PlcWriteReference.FromAddress($"DB301.S108,5", CultureInfo.CurrentCulture.Name),
                                     PlcWriteReference.FromAddress($"DB301.B10,{value.Length}", value),
                                     PlcWriteReference.FromAddress($"DB301.DT2", DateTime.Now),
-                                    PlcWriteReference.FromAddress($"DB301.X106.0", true));
+                                    PlcWriteReference.FromAddress($"DB301.X106.0", true)).ConfigureAwait(false);
         }
 
-
-
-        [Fact]
-        public void TestDataChange()
-        {
-            var sleepTime = 10000;
-            var mapping = "DB_SafetyDataChange1";
-            var intiState = true;
-            var originData = new Dictionary<string, object> {
-                    { "SafeMotion.Slots[15].SlotId", (byte)0},
-                    { "SafeMotion.Slots[15].HmiId", (UInt32)0},
-                    { "SafeMotion.Slots[15].Commands.TakeoverPermitted", false },
-                };
-            var writeData = new Dictionary<string, object> {
-                    { "SafeMotion.Slots[15].SlotId", (byte)3},
-                    { "SafeMotion.Slots[15].HmiId", (UInt32)4},
-                    { "SafeMotion.Slots[15].Commands.TakeoverPermitted", false },
-                };
-            var are = new AutoResetEvent(false);
-
-
-            using (var subscription = _papper.CreateSubscription())
-            {
-                subscription.AddItems(originData.Keys.Select(variable => PlcWatchReference.FromAddress($"{mapping}.{variable}", 100)));
-                var t = Task.Run(async () =>
-               {
-                   try
-                   {
-                       while (!subscription.Watching.IsCompleted)
-                       {
-                           var res = await subscription.DetectChangesAsync();
-
-                           if (!res.IsCompleted && !res.IsCanceled)
-                           {
-                               if (!intiState)
-                               {
-                                   Assert.Equal(2, res.Results.Count());
-                               }
-                               else
-                               {
-                                   Assert.Equal(3, res.Results.Count());
-                               }
-
-                               foreach (var item in res.Results)
-                               {
-                                   try
-                                   {
-                                       if (!intiState)
-                                           Assert.Equal(writeData[item.Variable], item.Value);
-                                       else
-                                           Assert.Equal(originData[item.Variable], item.Value);
-                                   }
-                                   catch (Exception)
-                                   {
-
-                                   }
-                               }
-
-                               are.Set();
-                           } 
-                       }
-                   }
-                   catch(Exception)
-                   {
-
-                   }
-               });
-
-                //waiting for initialize
-                Assert.True(are.WaitOne(sleepTime));
-                intiState = false;
-                var writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, writeData.ToArray()).ToArray()).GetAwaiter().GetResult();
-                foreach (var item in writeResults)
-                {
-                    Assert.Equal(ExecutionResult.Ok, item.ActionResult);
-                }
-                //waiting for write update
-                Assert.True(are.WaitOne(sleepTime));
-
-                //test if data change only occurred if data changed
-                Assert.False(are.WaitOne(sleepTime));
-
-            }
-        }
-
-        [Fact]
-        public void TestBitDataChange()
-        {
-            var sleepTime = 10000;
-            var address = "DB_SafetyDataChange.SafeMotion.Slots[15].Commands.TakeoverPermitted";
-            var are = new AutoResetEvent(false);
-            int changes = 0;
-
-            using (var subscription = _papper.CreateSubscription())
-            {
-                subscription.AddItems( PlcWatchReference.FromAddress(address, 100));
-                var t = Task.Run(async () =>
-                {
-                    try
-                    {
-                        while (!subscription.Watching.IsCompleted)
-                        {
-                            var res = await subscription.DetectChangesAsync();
-
-                            if (!res.IsCompleted && !res.IsCanceled)
-                            {
-                                are.Set();
-                                changes++;
-                            }
-                        }
-                    }
-                    catch (Exception)
-                    {
-
-                    }
-                });
-
-                //waiting for initialize
-                Assert.True(are.WaitOne(sleepTime));
-
-                for (int i = 0; i < 5; i++)
-                {
-                    var writeResults = _papper.WriteAsync(PlcWriteReference.FromAddress(address, i % 2 == 0)).GetAwaiter().GetResult();
-                    foreach (var item in writeResults)
-                    {
-                        Assert.Equal(ExecutionResult.Ok, item.ActionResult);
-                    }
-                    //waiting for write update
-                    Assert.True(are.WaitOne(sleepTime));
-                }
-
-
-                Assert.Equal(6, changes);
-
-                are.Dispose();
-            }
-        }
 
 
 
@@ -587,12 +450,14 @@ namespace DataTypeTests
         [InlineData("DB2008.X0.4,16", new bool[] { false, false, true, true, false, false, true, true, false, false, true, true, false, false, true, true })]
         public void PerformReadWriteRaw(string address, object value)
         {
-            var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
-            var readResults = papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult();
-            var writeResults = papper.WriteAsync(PlcWriteReference.FromAddress(address, value)).GetAwaiter().GetResult();
-            var afterWriteReadResults = papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult();
+            using (var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite))
+            {
+                var readResults = papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult();
+                var writeResults = papper.WriteAsync(PlcWriteReference.FromAddress(address, value)).GetAwaiter().GetResult();
+                var afterWriteReadResults = papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult();
 
-            Assert.Equal(value, afterWriteReadResults[0].Value);
+                Assert.Equal(value, afterWriteReadResults[0].Value);
+            }
         }
 
 
@@ -604,54 +469,6 @@ namespace DataTypeTests
             var readResults = _papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult();
         }
 
-
-
-        [Fact]
-        public void PerformRawDataChange()
-        {
-            var intiState = true;
-            var originData = new Dictionary<string, object> {
-                    { "W88", (UInt16)0},
-                    { "X99_0", false  },
-                    { "DW100", (UInt32)0},
-                };
-            var writeData = new Dictionary<string, object> {
-                    { "W88", (UInt16)3},
-                    { "X99_0", true  },
-                    { "DW100", (UInt32)5},
-                };
-            var are = new AutoResetEvent(false);
-            void callback(object s, PlcNotificationEventArgs e)
-            {
-                foreach (var item in e)
-                {
-                    if (!intiState)
-                        Assert.Equal(writeData[item.Variable], item.Value);
-                    else
-                        Assert.Equal(originData[item.Variable], item.Value);
-                }
-                are.Set();
-            }
-            var subscription = _papper.SubscribeDataChanges(callback, writeData.Keys.Select(variable => PlcWatchReference.FromAddress($"DB15.{variable}", 100)).ToArray());
-
-
-            //waiting for initialize
-            Assert.True(are.WaitOne(5000));
-            intiState = false;
-            var writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot("DB15", writeData.ToArray()).ToArray()).GetAwaiter().GetResult();
-            foreach (var item in writeResults)
-            {
-                Assert.Equal(ExecutionResult.Ok, item.ActionResult);
-            }
-
-            //waiting for write update
-            Assert.True(are.WaitOne(5000));
-
-            //test if data change only occurred if data changed
-            Assert.False(are.WaitOne(5000));
-
-            subscription.Dispose();
-        }
 
         [Fact]
         public void ArrayIndexAccessTest()
@@ -735,117 +552,14 @@ namespace DataTypeTests
             var x4 = Converter.ReadSingleBigEndian(data4);
         }
 
-        [Fact]
-        public void TestExternalDataChange()
-        {
-            
-            var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite, UpdateHandler, ReadMetaData, OptimizerType.Items);
-            papper.AddMapping(typeof(DB_Safety));
-            MockPlc.OnItemChanged = (items) => 
-            {
-                papper.OnDataChanges(items.Select(i => new DataPack
-                {
-                    Selector = i.Selector,
-                    Offset = i.Offset,
-                    Length = i.Length,
-                    BitMaskBegin = i.BitMaskBegin,
-                    BitMaskEnd = i.BitMaskEnd,
-                    ExecutionResult = ExecutionResult.Ok
-                }.ApplyData(i.Data)));
-            };
-            var sleepTime = 10000;
-            var mapping = "DB_Safety";
-            var intiState = true;
-            var originData = new Dictionary<string, object> {
-                    { "SafeMotion.Slots[16].SlotId", (byte)0},
-                    { "SafeMotion.Slots[16].HmiId", (UInt32)0},
-                    { "SafeMotion.Slots[16].Commands.TakeoverPermitted", false },
-                };
-            var writeData = new Dictionary<string, object> {
-                    { "SafeMotion.Slots[16].SlotId", (byte)3},
-                    { "SafeMotion.Slots[16].HmiId", (UInt32)4},
-                    { "SafeMotion.Slots[16].Commands.TakeoverPermitted", false },
-                };
-            var are = new AutoResetEvent(false);
-
-            // write initial state
-            papper.WriteAsync(PlcWriteReference.FromRoot(mapping, originData.ToArray()).ToArray()).GetAwaiter().GetResult();
-
-            using (var subscription = papper.CreateSubscription(ChangeDetectionStrategy.Event))
-            {
-                subscription.AddItems(originData.Keys.Select(variable => PlcWatchReference.FromAddress($"{mapping}.{variable}", 100)));
-                var t = Task.Run(async () =>
-                {
-                    try
-                    {
-                        while (!subscription.Watching.IsCompleted)
-                        {
-                            var res = await subscription.DetectChangesAsync();
-
-                            if (!res.IsCompleted && !res.IsCanceled)
-                            {
-                                _output.WriteLine($"Changed: initial state is {intiState}");
-                                if (!intiState)
-                                {
-                                    Assert.Equal(2, res.Results.Count());
-                                }
-                                else
-                                {
-                                    Assert.Equal(3, res.Results.Count());
-                                }
-
-                                foreach (var item in res.Results)
-                                {
-                                    try
-                                    {
-                                        _output.WriteLine($"Changed: {item.Variable} = {item.Value}");
-
-                                        if (!intiState)
-                                            Assert.Equal(writeData[item.Variable], item.Value);
-                                        else
-                                            Assert.Equal(originData[item.Variable], item.Value);
-                                    }
-                                    catch (Exception )
-                                    {
-
-                                    }
-                                }
-
-                                are.Set();
-                            }
-                        }
-                    }
-                    catch (Exception )
-                    {
-
-                    }
-                });
-
-                //waiting for initialize
-                Assert.True(are.WaitOne(sleepTime), "waiting for initialize");
-                intiState = false;
-                var writeResults = papper.WriteAsync(PlcWriteReference.FromRoot(mapping, writeData.ToArray()).ToArray()).GetAwaiter().GetResult();
-                foreach (var item in writeResults)
-                {
-                    Assert.Equal(ExecutionResult.Ok, item.ActionResult);
-                }
-                //waiting for write update
-                Assert.True(are.WaitOne(sleepTime), "waiting for write update");
-
-                //test if data change only occurred if data changed
-                Assert.False(are.WaitOne(sleepTime), $"test if data change only occurred if data changed");
-
-            }
-        }
-
-
+ 
 
 
         [Fact]
         public void TestInvalidMappings()
         {
 
-            var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite, UpdateHandler, ReadMetaData, OptimizerType.Items);
+            using var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite, UpdateHandler, ReadMetaData, OptimizerType.Items);
             papper.AddMapping(typeof(DB_Safety));
 
             using (var subscription = papper.CreateSubscription(ChangeDetectionStrategy.Event))
@@ -937,7 +651,7 @@ namespace DataTypeTests
         [Fact]
         public async Task ReadBitsAsyncTest()
         {
-            var x = await _papper.ReadAsync(PlcReadReference.FromAddress("DB_IDAT_MSpindleData.IDATInterface.PLCtoIDAT.WriteEnable"));
+            var x = await _papper.ReadAsync(PlcReadReference.FromAddress("DB_IDAT_MSpindleData.IDATInterface.PLCtoIDAT.WriteEnable")).ConfigureAwait(false);
         }
 
 
@@ -1072,7 +786,7 @@ namespace DataTypeTests
             var obj = new ExpandoObject();
             foreach (var item in instance.GetType().GetTypeInfo().DeclaredProperties)
             {
-                if(!item.PropertyType.Namespace.StartsWith("System"))
+                if(!item.PropertyType.Namespace.StartsWith("System", false, CultureInfo.InvariantCulture))
                 {
                     AddProperty(obj, item.Name, ToExpando(item.GetValue(instance)));
                 }
@@ -1104,7 +818,7 @@ namespace DataTypeTests
             var t2 = obj2.GetType();
 
             if (t1 == t2) { return t1 != typeof(ExpandoObject) ? ElementEqual(obj1, obj2) : DynamicObjectCompare(obj1, obj2); }
-            try { return ElementEqual(obj1, Convert.ChangeType(obj2, t1)); } catch { }
+            try { return ElementEqual(obj1, Convert.ChangeType(obj2, t1, CultureInfo.InvariantCulture)); } catch { }
             return false;
         }
 
@@ -1144,6 +858,11 @@ namespace DataTypeTests
                 }
             }
             return true;
+        }
+
+        public void Dispose()
+        {
+            _papper?.Dispose();
         }
 
         #endregion

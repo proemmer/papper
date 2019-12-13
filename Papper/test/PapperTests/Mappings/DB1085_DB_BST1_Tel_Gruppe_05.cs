@@ -2,8 +2,9 @@
 
 using Papper.Attributes;
 using System;
-
-namespace Insite.Customer.Data.DB_BST1_Tel_Gruppe_05
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+#pragma warning disable CA1819 // Properties should not return arrays
+namespace Insite.Customer.Data
 {
     
 
@@ -45,3 +46,5 @@ namespace Insite.Customer.Data.DB_BST1_Tel_Gruppe_05
 
 }
 
+#pragma warning restore CA1707 // Identifiers should not contain underscores
+#pragma warning restore CA1819 // Properties should not return arrays

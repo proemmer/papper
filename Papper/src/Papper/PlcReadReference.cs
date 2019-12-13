@@ -58,7 +58,11 @@ namespace Papper
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="PlcReadReference"/></returns>
         public static IEnumerable<PlcReadReference> FromRoot(string root, IEnumerable<string> variables)
         {
-            if (variables == null) yield break;
+            if (variables == null)
+            {
+                yield break;
+            }
+
             foreach (var variable in variables)
             {
                 yield return FromAddress($"{root}.{variable}");
@@ -76,15 +80,9 @@ namespace Papper
             return hashCode;
         }
 
-        public static bool operator ==(PlcReadReference left, PlcReadReference right)
-        {
-            return left.Equals(right);
-        }
+        public static bool operator ==(PlcReadReference left, PlcReadReference right) => left.Equals(right);
 
-        public static bool operator !=(PlcReadReference left, PlcReadReference right)
-        {
-            return !(left == right);
-        }
+        public static bool operator !=(PlcReadReference left, PlcReadReference right) => !(left == right);
 
         public bool Equals(PlcReadReference other) => other != null && Mapping == other.Mapping && Variable == other.Variable && Address == other.Address;
     }

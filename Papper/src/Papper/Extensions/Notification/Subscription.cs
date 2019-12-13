@@ -257,7 +257,7 @@ namespace Papper.Extensions.Notification
                     {
                         await Task.Delay(interval, _cts.Token).ConfigureAwait(false);
                     }
-                    catch(TaskCanceledException){}
+                    catch (TaskCanceledException) { }
 
                     if (_cts.IsCancellationRequested)
                     {
@@ -322,7 +322,7 @@ namespace Papper.Extensions.Notification
                     // if one is not valid non of them will be added, this is because of consistence
                     foreach (var variable in variables.Values)
                     {
-                        if (_variables.TryGetValue(variable.Address, out var current))
+                        if (_variables.ContainsKey(variable.Address))
                         {
                             _variables[variable.Address] = variable;
                         }

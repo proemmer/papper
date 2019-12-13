@@ -99,7 +99,7 @@ namespace PapperCmd
 
     #endregion
 
-    public class Program
+    public static class Program
     {
         private static bool _toggle;
         private class PlcBlock

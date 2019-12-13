@@ -7,7 +7,7 @@ namespace Papper.Attributes
     /// Validation attribute to assert a string property, field or parameter does not exceed a maximum length
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter, AllowMultiple = false)]
-    public class StringLengthAttribute : Attribute
+    public sealed class StringLengthAttribute : Attribute
     {
         /// <summary>
         /// Gets the maximum acceptable length of the string.

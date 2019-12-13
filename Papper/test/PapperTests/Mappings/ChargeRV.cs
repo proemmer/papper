@@ -1,12 +1,13 @@
 ﻿using Papper.Attributes;
 using System;
-
-namespace UnitTestSuit.Mappings
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+#pragma warning disable CA1819 // Properties should not return arrays
+namespace Papper.Tests.Mappings
 {
 
 
-
     public class UDT_DatenAusw_Univ_Ausw
+
     {
 
         [StringLength(6)]
@@ -210,5 +211,7 @@ namespace UnitTestSuit.Mappings
 
 }
 
+#pragma warning restore CA1707 // Identifiers should not contain underscores
+#pragma warning restore CA1819 // Properties should not return arrays
 
 

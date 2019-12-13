@@ -1,7 +1,8 @@
 ﻿using Papper.Attributes;
 using System;
 
-namespace UnitTestSuit.Mappings
+#pragma warning disable CA1819 // Properties should not return arrays
+namespace Papper.Tests.Mappings
 {
     [Mapping("ARRAY_TEST_MAPPING_1", "DB21", 0)]
     [Mapping("ARRAY_TEST_MAPPING_2", "DB22", 0)]
@@ -29,3 +30,4 @@ namespace UnitTestSuit.Mappings
         public Int32[] IntElements { get; set; }
     }
 }
+#pragma warning restore CA1819 // Properties should not return arrays

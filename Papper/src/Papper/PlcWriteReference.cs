@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Papper
 {
     /// <summary>
     /// This class is used to define write operations.
     /// </summary>
-    public struct PlcWriteReference : IPlcReference
+    public struct PlcWriteReference : IPlcReference, IEquatable<PlcWriteReference>
     {
         private readonly int _dot;
 
@@ -98,6 +99,21 @@ namespace Papper
             }
         }
 
+        public override bool Equals(object? obj) => obj is PlcWriteReference reference && Equals(reference);
+        public bool Equals(PlcWriteReference other) => _dot == other._dot && Mapping == other.Mapping && Variable == other.Variable && Address == other.Address && EqualityComparer<object>.Default.Equals(Value, other.Value);
 
+        public override int GetHashCode()
+        {
+            var hashCode = 794000764;
+            hashCode = hashCode * -1521134295 + _dot.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Mapping);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Variable);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Address);
+            hashCode = hashCode * -1521134295 + EqualityComparer<object>.Default.GetHashCode(Value);
+            return hashCode;
+        }
+
+        public static bool operator ==(PlcWriteReference left, PlcWriteReference right) => left.Equals(right);
+        public static bool operator !=(PlcWriteReference left, PlcWriteReference right) => !(left == right);
     }
 }

@@ -1,7 +1,8 @@
 ﻿using Papper.Attributes;
 using System;
-
-namespace UnitTestSuit.Mappings
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+#pragma warning disable CA1819 // Properties should not return arrays
+namespace Papper.Tests.Mappings
 {
     #region Safety
     public class UDT_SafeMotionHeader_States
@@ -73,6 +74,9 @@ namespace UnitTestSuit.Mappings
     }
 
     [Mapping("DB_Safety", "DB15", 0)]
+    [Mapping("DB_SafetyXX", "DB115", 0)]
+    [Mapping("DB_SafetyYY", "DB115", 0)]
+    [Mapping("DB_SafetyZZ", "DB117", 0)]
     [Mapping("DB_SafetyDataChange", "DB6", 0)]
     [Mapping("DB_Safety2", "DB16", 0)]
     [Mapping("DB_Safety_NotExisting", "DB999", 0)]
@@ -86,3 +90,5 @@ namespace UnitTestSuit.Mappings
     #endregion
 
 }
+#pragma warning restore CA1707 // Identifiers should not contain underscores
+#pragma warning restore CA1819 // Properties should not return arrays

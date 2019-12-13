@@ -2,8 +2,9 @@
 
 using Papper.Attributes;
 using System;
-
-namespace Insite.Customer.Data.DB_AI_Texte_BST1
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+#pragma warning disable CA1819 // Properties should not return arrays
+namespace Insite.Customer.Data
 {
     
     
@@ -14,7 +15,9 @@ namespace Insite.Customer.Data.DB_AI_Texte_BST1
         public Char[] Bez { get; set; }	//MOMO -> Bezeichnung (wird am Datenträger gesucht)
 
         [ArrayBounds(1,4,0)]
-        public Char[] Daten { get; set; }	//MOMO -> Daten wird mit Datenträger verglichen
+
+        public Char[] Daten { get; set; }   //MOMO -> Daten wird mit Datenträger verglichen
+
     }
 
     
@@ -68,4 +71,5 @@ namespace Insite.Customer.Data.DB_AI_Texte_BST1
     }
 
 }
-
+#pragma warning restore CA1707 // Identifiers should not contain underscores
+#pragma warning restore CA1819 // Properties should not return arrays
