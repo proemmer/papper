@@ -225,6 +225,7 @@ namespace Papper.Internal
                 if (item == null)
                 {
                     ExceptionThrowHelper.ThrowInvalidVariableException($"{plcObj.Name}.{value}");
+                    return false;
                 }
 
                 var key = prefix + value;
@@ -393,9 +394,13 @@ namespace Papper.Internal
                     PlcObject? plcObject = PlcObjectFactory.CreatePlcObject(pi);
 
                     if (plcObject is PlcArray plcObjectArray && (plcObjectArray.LeafElementType ?? plcObjectArray.ArrayType) is PlcStruct)
+                    {
                         plcObjectArray.ArrayType = GetMetaData(tree, plcObjectArray.ElemenType!);
+                    }
                     else if (plcObject is PlcStruct)
+                    {
                         plcObject = new PlcObjectRef(plcObject.Name, GetMetaData(tree, pi.PropertyType));
+                    }
 
 
                     if (plcObject != null)
@@ -403,10 +408,15 @@ namespace Papper.Internal
                         var hasCustomOffset = PlcObjectFactory.GetOffsetFromAttribute(pi, ref byteOffset, ref bitOffset);
                         AddPlcObject(tree, pred, plcObject, nodePathStack, ref byteOffset, ref bitOffset, hasCustomOffset);
                         pred = plcObject;
+                        if(!parent.HasReadOnlyChilds && (plcObject.IsReadOnly || plcObject.HasReadOnlyChilds))
+                        {
+                            parent.HasReadOnlyChilds = true;
+                        }
                     }
                 }
                 DebugOutPut("}} = {0}", parent.Size.Bytes);
                 nodePathStack.Pop();
+                
                 obj = parent;
             }
             return (obj as PlcObject)!;

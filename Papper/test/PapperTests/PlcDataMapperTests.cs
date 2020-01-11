@@ -33,6 +33,7 @@ namespace DataTypeTests
         public PlcDataMapperTests(ITestOutputHelper output)
         {
             _output = output;
+            _papper.AddMapping(typeof(SampleData));
             _papper.AddMapping(typeof(DB_Safety));
             _papper.AddMapping(typeof(ArrayTestMapping));
             _papper.AddMapping(typeof(StringArrayTestMapping));
@@ -40,7 +41,6 @@ namespace DataTypeTests
             _papper.AddMapping(typeof(DB_MotionHMI));
             _papper.AddMapping(typeof(DB_BST1_ChargenRV));
             _papper.AddMapping(typeof(MSpindleInterface));
-
 
         }
 
@@ -211,6 +211,49 @@ namespace DataTypeTests
                 };
             
             Test(mapping, accessDict, Enumerable.Repeat(0, 5000).ToArray());
+        }
+
+
+
+        [Fact]
+        public void TestStructuralAccessWithReadonlyttributes()
+        {
+            var mapping = "SampleData";
+            var header = new SampleData
+            { 
+                UInt16 = 0,
+                Int16 = 0,
+                UInt32= 0,
+                Int32 = 0,
+                Single = 0,
+                Char = 'c',
+                Bit1 = false,
+                Bit2 = false,
+                Bit3 = false,
+                Bit4 = false,
+                Bit5 = false,
+                Bit6 = false,
+                Bit7 = false,
+                Bit8 = false
+            };
+
+            var accessDict = new Dictionary<string, object> {
+                    { "This", header},
+                };
+
+            var result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
+            Assert.Equal(accessDict.Count, result.Length);
+            var writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, accessDict.ToArray()).ToArray()).GetAwaiter().GetResult();
+            foreach (var item in writeResults)
+            {
+                Assert.Equal(ExecutionResult.Ok, item.ActionResult);
+            }
+            var result2 = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
+            Assert.Equal(accessDict.Count, result2.Length);
+            Assert.False(AreDataEqual(result, result2));
+
+
+            // Assert.True(AreDataEqual(ToExpando(header), result2.Values.FirstOrDefault()));
         }
 
 

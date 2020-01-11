@@ -23,18 +23,36 @@ namespace Papper.Internal
                                         .ThenBy(i => i.Value.Item2.Offset.Bits)
                                         .ThenBy(i => i.Key.Length))
             {
-                var count = true;
-                var currentOffset = item.Value.Item1 + item.Value.Item2.Offset.Bytes;
-                var sizeInBytes = item.Value.Item2.Size == null ? 0 : item.Value.Item2.Size.Bytes;
+                CalculateRawBlocks(selector, readDataBlockSize, rawBlocks, ref pred, ref offsetCountedAsBoolean, ref offset, item.Value.Item1, item.Value.Item2);
+                pred?.AddReference(item.Key, offset, item.Value.Item2);
+            }
 
-                if (item.Value.Item2 is PlcBool)
+            return rawBlocks;
+        }
+
+        private static void CalculateRawBlocks(string selector, int readDataBlockSize, List<PlcRawData> rawBlocks, ref PlcRawData? pred, ref int offsetCountedAsBoolean, ref int offset, int baseOffset, PlcObject item)
+        {
+            var currentOffset = baseOffset + item.Offset.Bytes;
+            if (item.HasReadOnlyChilds)
+            {
+                foreach (var child in item.ChildVars.OfType<PlcObject>())
+                {
+                    CalculateRawBlocks(selector, readDataBlockSize, rawBlocks, ref pred, ref offsetCountedAsBoolean, ref offset, currentOffset, child);
+                }
+            }
+            else
+            {
+                var count = true;
+                var sizeInBytes = item.Size == null ? 0 : item.Size.Bytes;
+
+                if (item is PlcBool)
                 {
                     if (currentOffset != offsetCountedAsBoolean)
                         offsetCountedAsBoolean = currentOffset;
                     else
                         count = false;
                 }
-                if(item.Value.Item2 is PlcArray arr && arr.Size.Bits > 0)
+                if (item is PlcArray arr && arr.Size.Bits > 0)
                 {
                     sizeInBytes += 1;
                 }
@@ -43,11 +61,12 @@ namespace Papper.Internal
                 {
                     Offset = currentOffset,
                     Size = sizeInBytes == 0 && count ? 1 : sizeInBytes,
-                    Selector = selector
+                    Selector = selector,
+                    IsReadOnly = item.IsReadOnly
                 };
 
 
-                if (pred == null)
+                if (pred == null || pred.IsReadOnly != current.IsReadOnly)
                 {
                     rawBlocks.Add(current);
                     pred = current;
@@ -94,18 +113,7 @@ namespace Papper.Internal
                         }
                     }
                 }
-
-
-                pred.AddReference(item.Key, offset, item.Value.Item2);
-
-
-                //if (item.Value.Item2 is PlcArray array)
-                //{
-                //    HandleArray(offset, array, item, pred);
-                //}
             }
-
-            return rawBlocks;
         }
 
         /// <summary>

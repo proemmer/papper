@@ -29,7 +29,7 @@ namespace Papper.Internal
             }
         }
 
-        
+        public bool IsReadOnly { get; internal set; }
 
         public int MemoryAllocationSize { get; private set; }
 
