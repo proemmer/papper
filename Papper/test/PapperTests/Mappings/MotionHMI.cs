@@ -1,10 +1,10 @@
 using Papper.Attributes;
-using System;
-
-namespace UnitTestSuit.Mappings
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+#pragma warning disable CA1819 // Properties should not return arrays
+namespace Papper.Tests.Mappings
 {
-    
-    
+
+
 
     public class UDT_MotionLine_Handshake
     {
@@ -14,7 +14,7 @@ namespace UnitTestSuit.Mappings
         public bool Button2Pressed { get; set; }
     }
 
-    
+
 
     public class UDT_MotionLine_Commands
     {
@@ -29,34 +29,34 @@ namespace UnitTestSuit.Mappings
         public bool TakeoverRequest { get; set; }	//Request to TakeOver a Slot from another HMI
         public bool TakeoverPermit { get; set; }	//andere Hmi darf die Bewegung übernehmen
         public bool TakeoverRefuse { get; set; }	//andere Hmi darf die Bewegung nicht übernehmen
-        public Int16 TakeoverTime { get; set; }	//Timeout for Takeover Process -> Time to permit / refuse
+        public short TakeoverTime { get; set; }	//Timeout for Takeover Process -> Time to permit / refuse
     }
 
-    
+
 
     public class UDT_MotionLine_Txt
     {
-[PlcType("WString")]        
+        [PlcType("WString")]
         [StringLength(70)]
-        public string Caption { get; set; }	//Name der Bewegung
+        public string Caption { get; set; } //Name der Bewegung
 
-[PlcType("WString")]        
+        [PlcType("WString")]
         [StringLength(25)]
-        public string DirectionLeft { get; set; }	//Name für die VerfahrRichtung links
+        public string DirectionLeft { get; set; }   //Name für die VerfahrRichtung links
 
-[PlcType("WString")]        
+        [PlcType("WString")]
         [StringLength(25)]
-        public string DirectionRight { get; set; }	//Name für die VerfahrRichtung rechts
+        public string DirectionRight { get; set; }  //Name für die VerfahrRichtung rechts
 
-[PlcType("WString")]
-        [ArrayBounds(0,15,0)]
-                
+        [PlcType("WString")]
+        [ArrayBounds(0, 15, 0)]
+
         [StringLength(25)]
         public string[] Position { get; set; }
     }
 
 
-    
+
     public class UDT_Jog_Axis
     {
         public bool aktiv { get; set; }	//Jog Betrieb ist aktiv
@@ -71,16 +71,16 @@ namespace UnitTestSuit.Mappings
         public bool Override_vorhanden { get; set; }	//Override betrieb vorhanden
         public bool Preset_vorhanden { get; set; }	//Preset Taste vorhanden
         public bool Jog_aktivieren { get; set; }	//Jog Betrieb aktivieren
-        public Int16 Override { get; set; }
-        public Int16 Inkremente { get; set; }
-        public Int32 Position { get; set; }	//Anzeige Ist-Position
-        public Int32 gespeicherte_Pos { get; set; }	//Anzeige gespeicherte Position
-        public Int32 Preset_Pos { get; set; }	//Sollwert Preset Position
-        public Int16 SpeicherPosition { get; set; }	//Position
+        public short Override { get; set; }
+        public short Inkremente { get; set; }
+        public int Position { get; set; }	//Anzeige Ist-Position
+        public int gespeicherte_Pos { get; set; }	//Anzeige gespeicherte Position
+        public int Preset_Pos { get; set; }	//Sollwert Preset Position
+        public short SpeicherPosition { get; set; }	//Position
 
     }
 
-    
+
     public class UDT_MotionStates
     {
         public bool Moving_Status1 { get; set; }
@@ -90,27 +90,27 @@ namespace UnitTestSuit.Mappings
         public bool Group_Error { get; set; }
         public byte Number_of_Final_Position { get; set; }
 
-        [ArrayBounds(0,15,0)]
+        [ArrayBounds(0, 15, 0)]
         public bool[] Final_Position { get; set; }
 
-        [ArrayBounds(0,15,0)]
+        [ArrayBounds(0, 15, 0)]
         public bool[] Display_Order { get; set; }
 
     }
 
-    
+
     public class UDT_MotionLine
     {
         public UDT_MotionLine_Handshake Handshake { get; set; }	//0 from plc  and   1 from Inax
         public UDT_MotionLine_Commands Commands { get; set; }
         public UDT_MotionStates MotionState { get; set; }
-        public Int16 HmiId { get; set; }	//HMI Id with the rigth to uses this Slot
-        public Int16 AccessRightReqFromHmiId { get; set; }	//HMI Id who wants the rigth
+        public short HmiId { get; set; }	//HMI Id with the rigth to uses this Slot
+        public short AccessRightReqFromHmiId { get; set; }	//HMI Id who wants the rigth
         public UDT_MotionLine_Txt Txt { get; set; }	//Handbild Texte
 
     }
 
-    
+
     public class UDT_MotionPicture
     {
         public bool TogglePLC { get; set; }	//PLC Toggelt BIT
@@ -124,18 +124,18 @@ namespace UnitTestSuit.Mappings
         public bool NavigationLocked { get; set; }	//The safety FC locks Navigation -> no SlotChange or SiteChange
         public bool Reset { get; set; }	//Reset Motions
         public bool ResetDone { get; set; }	//Reset fertig
-        public Int16 SelectedLine { get; set; }	//aktuell selektierte Zeile
-        public Int16 TimeOut { get; set; }	//Connection Timeout
-        public Int16 Language { get; set; }	//Sprache 0 = Default deDE / 1 enGB / 2 zhCN
+        public short SelectedLine { get; set; }	//aktuell selektierte Zeile
+        public short TimeOut { get; set; }	//Connection Timeout
+        public short Language { get; set; }	//Sprache 0 = Default deDE / 1 enGB / 2 zhCN
         public UDT_Jog_Axis JogDisplay { get; set; }
 
-        [ArrayBounds(0,8,0)]
-        public Int16[] ActMotion_Adr { get; set; }	//Active BEW-Adressen
+        [ArrayBounds(0, 8, 0)]
+        public short[] ActMotion_Adr { get; set; }	//Active BEW-Adressen
 
-        [ArrayBounds(0,8,0)]
-        public Int16[] Motion_Adr { get; set; }	//Zeilen Adresse = nachfolgendem "BEW_Adr" Array Index Nr.
+        [ArrayBounds(0, 8, 0)]
+        public short[] Motion_Adr { get; set; }	//Zeilen Adresse = nachfolgendem "BEW_Adr" Array Index Nr.
 
-        [ArrayBounds(0,8,0)]
+        [ArrayBounds(0, 8, 0)]
         public UDT_MotionLine[] MotionLine { get; set; }
 
     }
@@ -149,3 +149,5 @@ namespace UnitTestSuit.Mappings
 
 }
 
+#pragma warning restore CA1707 // Identifiers should not contain underscores
+#pragma warning restore CA1819 // Properties should not return arrays

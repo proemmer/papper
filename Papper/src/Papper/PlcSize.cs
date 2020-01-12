@@ -13,7 +13,7 @@
         /// <summary>
         /// Get the bit offset (0-7)
         /// </summary>
-        public int Bits{ get; internal set; }
+        public int Bits { get; internal set; }
 
         /// <summary>
         /// operator to add plc sizes
@@ -32,7 +32,7 @@
                 bits = left.Bits + right.Bits;
                 bytes = left.Bytes + right.Bytes;
             }
-            else if(left == null && right != null)
+            else if (left == null && right != null)
             {
                 bits = right.Bits;
                 bytes = right.Bytes;

@@ -27,7 +27,10 @@ namespace Papper.Internal
         public void Dispose()
         {
             if (IsDisposed)
+            {
                 ExceptionThrowHelper.ThrowObjectDisposedException(ToString());
+            }
+
             _readerWriterLock?.ExitWriteLock();
             _readerWriterLock = null;
         }

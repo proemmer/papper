@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Papper
 {
     /// <summary>
     /// This class is used to define write operations.
     /// </summary>
-    public struct PlcWriteReference : IPlcReference
+    public struct PlcWriteReference : IPlcReference, IEquatable<PlcWriteReference>
     {
         private readonly int _dot;
 
@@ -36,14 +37,14 @@ namespace Papper
         /// <param name="address"> [Mapping].[Variable]</param>
         /// <param name="value">Value to write</param>
         /// <returns>An instance of a <see cref="PlcWriteReference"/></returns>
-        public static PlcWriteReference FromAddress(string address, object? value) =>  new PlcWriteReference(address, value);
+        public static PlcWriteReference FromAddress(string address, object? value) => new PlcWriteReference(address, value);
 
         public PlcWriteReference(string address, object? value)
         {
             Address = address;
             Value = value ?? ExceptionThrowHelper.ThrowArgumentNullException<object>(nameof(value));
             _dot = address == null ? -1 : address.IndexOf(".", System.StringComparison.InvariantCulture);
-            
+
         }
 
         /// <summary>
@@ -53,7 +54,7 @@ namespace Papper
         /// <param name="root">Rootpart of a variable</param>
         /// <param name="variables"><see cref="KeyValuePair{TKey, TValue}"/> of variable and value</param>
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="PlcWriteReference"/></returns>
-        public static IEnumerable<PlcWriteReference> FromRoot(string root, params KeyValuePair<string, object>[] variables) 
+        public static IEnumerable<PlcWriteReference> FromRoot(string root, params KeyValuePair<string, object>[] variables)
             => FromRoot(root, variables as IEnumerable<KeyValuePair<string, object>>);
 
         /// <summary>
@@ -63,9 +64,13 @@ namespace Papper
         /// <param name="root">Rootpart of a variable</param>
         /// <param name="variables"><see cref="IEnumerable{KeyValuePair{TKey, TValue}}"/> of variable and value</param>
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="PlcWriteReference"/></returns>
-        public static IEnumerable<PlcWriteReference> FromRoot(string root, IEnumerable<KeyValuePair<string,object>> variables)
+        public static IEnumerable<PlcWriteReference> FromRoot(string root, IEnumerable<KeyValuePair<string, object>> variables)
         {
-            if (variables == null) yield break;
+            if (variables == null)
+            {
+                yield break;
+            }
+
             foreach (var variable in variables)
             {
                 yield return FromAddress($"{root}.{variable.Key}", variable.Value);
@@ -91,13 +96,32 @@ namespace Papper
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="PlcWriteReference"/></returns>
         public static IEnumerable<PlcWriteReference> FromRoot(string root, IEnumerable<(string variable, object value)> variables)
         {
-            if (variables == null) yield break;
+            if (variables == null)
+            {
+                yield break;
+            }
+
             foreach (var variable in variables)
             {
                 yield return FromAddress($"{root}.{variable.variable}", variable.value);
             }
         }
 
+        public override bool Equals(object? obj) => obj is PlcWriteReference reference && Equals(reference);
+        public bool Equals(PlcWriteReference other) => _dot == other._dot && Mapping == other.Mapping && Variable == other.Variable && Address == other.Address && EqualityComparer<object>.Default.Equals(Value, other.Value);
 
+        public override int GetHashCode()
+        {
+            var hashCode = 794000764;
+            hashCode = hashCode * -1521134295 + _dot.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Mapping);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Variable);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Address);
+            hashCode = hashCode * -1521134295 + EqualityComparer<object>.Default.GetHashCode(Value);
+            return hashCode;
+        }
+
+        public static bool operator ==(PlcWriteReference left, PlcWriteReference right) => left.Equals(right);
+        public static bool operator !=(PlcWriteReference left, PlcWriteReference right) => !(left == right);
     }
 }

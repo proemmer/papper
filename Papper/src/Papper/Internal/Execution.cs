@@ -30,15 +30,19 @@ namespace Papper.Internal
         {
             if (pack.ExecutionResult == ExecutionResult.Ok)
             {
-                if(PlcRawData.ReadDataCache.IsEmpty || !PlcRawData.ReadDataCache.Span.SequenceEqual(pack.Data.Span))
+                if (PlcRawData.ReadDataCache.IsEmpty || !PlcRawData.ReadDataCache.Span.SequenceEqual(pack.Data.Span))
                 {
-                    if(pack.Timestamp > LastChange)
+                    if (pack.Timestamp > LastChange)
+                    {
                         LastChange = pack.Timestamp; // We detected a change in this data area 
+                    }
                 }
                 PlcRawData.ReadDataCache = pack.Data;
 
                 if (pack.Timestamp > LastChange)
+                {
                     PlcRawData.LastUpdate = pack.Timestamp;
+                }
             }
             ExecutionResult = pack.ExecutionResult;
             return this;
@@ -47,10 +51,7 @@ namespace Papper.Internal
         /// <summary>
         /// After a write we can invalidate the data area, so the subscriber reads before the validation time is over
         /// </summary>
-        public void Invalidate()
-        {
-            PlcRawData.LastUpdate = LastChange = DateTime.MinValue;
-        }
+        public void Invalidate() => PlcRawData.LastUpdate = LastChange = DateTime.MinValue;
 
     }
 }

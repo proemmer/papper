@@ -21,7 +21,8 @@ namespace Papper.Internal
             var offset = 0;
             foreach (var item in objects.OrderBy(i => i.Value.Item1 + i.Value.Item2.Offset.Bytes)
                                         .ThenBy(i => i.Value.Item2.Offset.Bits)
-                                        .ThenBy(i => i.Key.Length))
+                                        .ThenBy(i => i.Key.Length)
+                                        .ToList())
             {
                 CalculateRawBlocks(selector, item.Key, readDataBlockSize, rawBlocks, ref pred, ref offsetCountedAsBoolean, ref offset, item.Value.Item1, item.Value.Item2);
             }
@@ -47,9 +48,13 @@ namespace Papper.Internal
                 if (item is PlcBool)
                 {
                     if (currentOffset != offsetCountedAsBoolean)
+                    {
                         offsetCountedAsBoolean = currentOffset;
+                    }
                     else
+                    {
                         count = false;
+                    }
                 }
                 if (item is PlcArray arr && arr.Size.Bits > 0)
                 {
@@ -116,36 +121,5 @@ namespace Papper.Internal
                 pred?.AddReference(itemName, offset, item);
             }
         }
-
-        /// <summary>
-        /// Create Raw Read operations for Array Elements
-        /// </summary>
-        private void HandleArray(int offset, PlcArray array, KeyValuePair<string, Tuple<int, PlcObject>> item, PlcRawData pred, string dimension = "")
-        {
-            var arrayOffset = offset;
-            for (var i = array.From; i <= array.To; i++)
-            {
-                var index = $"[{i}]";
-                var element = array.ArrayType is PlcStruct
-                    ? new PlcObjectRef(index, array.ArrayType)
-                    : PlcObjectFactory.CreatePlcObjectForArrayIndex(array.ArrayType, i, array.From);
-
-                var name = $"{item.Key}{index}";
-                var elemName = string.IsNullOrWhiteSpace(dimension) ? name :  $"{dimension}{index}";
-                if (element is PlcArray plcArray)
-                {
-                    
-                    pred.AddReference(elemName, arrayOffset, element);
-                    HandleArray(arrayOffset, plcArray, item, pred, name);
-                    arrayOffset += array.ArrayType.Size == null ? 0 : array.ArrayType.Size.Bytes;
-                }
-                else if(element != null)
-                {
-                    pred.AddReference(elemName, arrayOffset, element);
-                    arrayOffset += array.ArrayType.Size == null ? 0 : array.ArrayType.Size.Bytes;
-                }
-            }
-        }
-
     }
 }

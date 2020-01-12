@@ -1,10 +1,7 @@
 ﻿using Papper.Attributes;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace UnitTestSuit.Mappings
+#pragma warning disable CA1819 // Properties should not return arrays
+namespace Papper.Tests.Mappings
 {
     [Mapping("STRING_ARRAY_TEST_MAPPING", "DB30", 0)]
     [Mapping("STRING_ARRAY_TEST_MAPPING_1", "DB31", 0)]
@@ -22,3 +19,4 @@ namespace UnitTestSuit.Mappings
         public TimeSpan[] Time { get; set; }
     }
 }
+#pragma warning restore CA1819 // Properties should not return arrays

@@ -76,7 +76,7 @@ namespace Papper.Extensions.Notification
             {
                 var levels = asterix ? items.Address.Split('.') : items.Variable.Split('.');
                 var levelCount = levels.Length;
-                ExpandoObject? parent = item;
+                var parent = item;
                 foreach (var level in levels)
                 {
                     var name = level;
@@ -179,7 +179,9 @@ namespace Papper.Extensions.Notification
             else
             {
                 if (parent is IDictionary<string, object?> dictionary)
+                {
                     dictionary[name] = value;
+                }
             }
         }
 
@@ -192,7 +194,10 @@ namespace Papper.Extensions.Notification
         private static dynamic? GetPropertyValue(dynamic? parent, string name)
         {
             if (parent is IDictionary<string, object?> dictionary && dictionary.TryGetValue(name, out var ret))
+            {
                 return ret;
+            }
+
             return null;
         }
     }

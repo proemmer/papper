@@ -11,7 +11,7 @@ namespace Papper
 
         public byte BitMask => BitMaskBegin;
 
-        public byte BitMaskBegin { get; set; } 
+        public byte BitMaskBegin { get; set; }
         public byte BitMaskEnd { get; set; }
 
         public bool HasBitMask => BitMaskBegin != 0 || BitMaskEnd != 0;
@@ -21,7 +21,7 @@ namespace Papper
         public DateTime Timestamp { get; private set; }
 
         public ExecutionResult ExecutionResult { get; set; }
-       
+
 
         public DataPack ApplyData(Memory<byte> data)
         {

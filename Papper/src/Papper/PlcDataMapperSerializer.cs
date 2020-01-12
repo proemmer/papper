@@ -26,13 +26,25 @@ namespace Papper
         /// <returns></returns>
         public byte[] Serialize(Type type, object? data)
         {
-            if (type == null) ExceptionThrowHelper.ThrowArgumentNullException<byte[]>(nameof(type));
-            if (data == null) ExceptionThrowHelper.ThrowArgumentNullException<byte[]>(nameof(data));
-            var entry = _mappingEntryProvider.GetMappingEntryForType(type!, data);
-            if (entry == null) ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type!);
+            if (type == null)
+            {
+                return ExceptionThrowHelper.ThrowArgumentNullException<byte[]>(nameof(type));
+            }
+
+            if (data == null)
+            {
+                return ExceptionThrowHelper.ThrowArgumentNullException<byte[]>(nameof(data));
+            }
+
+            var entry = _mappingEntryProvider.GetMappingEntryForType(type, data);
+            if (entry == null)
+            {
+                ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type);
+            }
+
             var binding = entry!.BaseBinding;
             var buffer = new byte[binding.RawData.MemoryAllocationSize];  // TODO handle a reusable buffer
-            binding.ConvertToRaw(data!, buffer);
+            binding.ConvertToRaw(data, buffer);
             return buffer;
         }
 
@@ -47,12 +59,28 @@ namespace Papper
 
         public object Deserialize(Type type, byte[] data)
         {
-            if (type == null) ExceptionThrowHelper.ThrowArgumentNullException<object>(nameof(type));
-            if (data == null) ExceptionThrowHelper.ThrowArgumentNullException<object>(nameof(data));
-            var entry = _mappingEntryProvider.GetMappingEntryForType(type!);
-            if (entry == null) ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type!);
+            if (type == null)
+            {
+                return ExceptionThrowHelper.ThrowArgumentNullException<object>(nameof(type));
+            }
+
+            if (data == null)
+            {
+                return ExceptionThrowHelper.ThrowArgumentNullException<object>(nameof(data));
+            }
+
+            var entry = _mappingEntryProvider.GetMappingEntryForType(type);
+            if (entry == null)
+            {
+                ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type!);
+            }
+
             var binding = entry!.BaseBinding;
-            if (type != typeof(string) && data!.Length < binding.Size) ExceptionThrowHelper.ThrowArgumentOutOfRangeException(nameof(data));
+            if (type != typeof(string) && data.Length < binding.Size)
+            {
+                ExceptionThrowHelper.ThrowArgumentOutOfRangeException(nameof(data));
+            }
+
             return binding.ConvertFromRaw(data);
         }
 
@@ -64,10 +92,18 @@ namespace Papper
         /// <returns></returns>
         public int SerializedByteSize<T>()
         {
-            if (_mappingEntryProvider == null) return 0;
+            if (_mappingEntryProvider == null)
+            {
+                return 0;
+            }
+
             var type = typeof(T);
             var entry = _mappingEntryProvider.GetMappingEntryForType(typeof(T));
-            if (entry == null) ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type!);
+            if (entry == null)
+            {
+                ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type!);
+            }
+
             return entry!.PlcObject.ByteSize;
         }
 
@@ -81,10 +117,22 @@ namespace Papper
         /// <returns></returns>
         public int SerializedByteSize(Type type)
         {
-            if (_mappingEntryProvider == null) return 0;
-            if (type == null) ExceptionThrowHelper.ThrowArgumentNullException<object>(nameof(type));
+            if (_mappingEntryProvider == null)
+            {
+                return 0;
+            }
+
+            if (type == null)
+            {
+                return ExceptionThrowHelper.ThrowArgumentNullException<int>(nameof(type));
+            }
+
             var entry = _mappingEntryProvider.GetMappingEntryForType(type!);
-            if (entry == null) ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type!);
+            if (entry == null)
+            {
+                ExceptionThrowHelper.ThrowMappingAttributeNotFoundForTypeException(type!);
+            }
+
             return entry!.PlcObject.ByteSize;
         }
 

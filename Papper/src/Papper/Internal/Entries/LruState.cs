@@ -8,7 +8,7 @@ namespace Papper.Internal
         public int ValidationTime { get; private set; }
         public DateTime LastUsage { get; private set; }
         public Memory<byte> Data { get; private set; }
-        
+
 
         public LruState(Memory<byte> data, DateTime detected, int validationTime)
         {
@@ -25,15 +25,9 @@ namespace Papper.Internal
             LastUsage = detected;
         }
 
-        public bool IsOutdated(DateTime currentCheckTime)
-        {
-            return LastUsage.AddMilliseconds(ValidationTime) < currentCheckTime;
-        }
+        public bool IsOutdated(DateTime currentCheckTime) => LastUsage.AddMilliseconds(ValidationTime) < currentCheckTime;
 
-        public void Dispose()
-        {
-            ArrayPool<byte>.Shared.Return(Data.ToArray());
-        }
+        public void Dispose() => ArrayPool<byte>.Shared.Return(Data.ToArray());
 
     }
 }

@@ -4,7 +4,7 @@
     {
         public static IReadOperationOptimizer CreateOptimizer(OptimizerType type)
         {
-            switch(type)
+            switch (type)
             {
                 case OptimizerType.Block:
                     return new BlockBasedReadOperationOptimizer();
@@ -12,9 +12,9 @@
                     return new ItemBasedReadOperationOptimizer();
                 default:
                     ExceptionThrowHelper.ThrowUnknownOptimizrException(type);
-                    return null;
+                    return new ItemBasedReadOperationOptimizer(); // will not be called because of exception throwing
             }
-            
+
         }
     }
 }

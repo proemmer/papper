@@ -18,7 +18,7 @@ namespace Papper
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float ReadSingleBigEndian(ReadOnlySpan<byte> buffer)
         {
-            Span<byte> result = new Span<byte>(buffer.ToArray());
+            var result = new Span<byte>(buffer.ToArray());
 
             if (BitConverter.IsLittleEndian)
             {
@@ -36,7 +36,7 @@ namespace Papper
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteSingleBigEndian(Span<byte> buffer, float value)
         {
-            Span<byte> bytes = BitConverter.GetBytes(value).AsSpan();
+            var bytes = BitConverter.GetBytes(value).AsSpan();
             if (BitConverter.IsLittleEndian)
             {
                 if (BitConverter.IsLittleEndian)
@@ -95,18 +95,20 @@ namespace Papper
             if (first == null)
             {
                 ExceptionThrowHelper.ThrowArgumentNullException(nameof(first));
+                return false;
             }
 
             if (second == null)
             {
                 ExceptionThrowHelper.ThrowArgumentNullException(nameof(second));
+                return false;
             }
 
-            using (IEnumerator<TSource> e1 = first!.GetEnumerator())
-            using (IEnumerator<TSource> e2 = second!.GetEnumerator())
+            using (var e1 = first!.GetEnumerator())
+            using (var e2 = second!.GetEnumerator())
             {
-                int skip = Math.Max(firstStartIndex, secondStartIndex);
-                for (int i = 0; i < skip; i++)
+                var skip = Math.Max(firstStartIndex, secondStartIndex);
+                for (var i = 0; i < skip; i++)
                 {
                     if (i < firstStartIndex)
                     {
@@ -118,7 +120,7 @@ namespace Papper
                         e2.MoveNext();
                     }
                 }
-                int index = 0;
+                var index = 0;
                 while (e1.MoveNext())
                 {
                     if (!(e2.MoveNext() && comparer.Equals(e1.Current, e2.Current)))
@@ -156,7 +158,7 @@ namespace Papper
                 return Array.Empty<T>();
             }
 
-            int dataLength = data.Length;
+            var dataLength = data.Length;
             if (length == -1)
             {
                 length = dataLength - skip;
@@ -167,7 +169,7 @@ namespace Papper
                 return data;
             }
 
-            T[] result = new T[length];
+            var result = new T[length];
             Array.Copy(data, skip, result, 0, length);
             return result;
         }
@@ -186,8 +188,8 @@ namespace Papper
                 return Encoding.UTF7.GetBytes(str).SubArray(0, maxLength);
             }
 
-            byte[] rawdata = new byte[Marshal.SizeOf(value)];
-            GCHandle handle = GCHandle.Alloc(rawdata, GCHandleType.Pinned);
+            var rawdata = new byte[Marshal.SizeOf(value)];
+            var handle = GCHandle.Alloc(rawdata, GCHandleType.Pinned);
             Marshal.StructureToPtr(value, handle.AddrOfPinnedObject(), false);
             handle.Free();
             if (maxLength >= rawdata.Length)
@@ -195,7 +197,7 @@ namespace Papper
                 return rawdata;
             }
 
-            byte[] temp = new byte[maxLength];
+            var temp = new byte[maxLength];
             Array.Copy(rawdata, temp, maxLength);
             return temp;
         }
@@ -208,8 +210,8 @@ namespace Papper
         /// <returns></returns>
         public static T FromByteArray<T>(this byte[] rawValue)
         {
-            GCHandle handle = GCHandle.Alloc(rawValue, GCHandleType.Pinned);
-            T structure = Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject());
+            var handle = GCHandle.Alloc(rawValue, GCHandleType.Pinned);
+            var structure = Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject());
             handle.Free();
             return structure;
         }
@@ -223,7 +225,7 @@ namespace Papper
         {
             //Accepted Values 00 to 99
             int bt1 = b;
-            bool neg = (bt1 & 0xf0) == 0xf0;
+            var neg = (bt1 & 0xf0) == 0xf0;
             if (neg)
             {
                 bt1 = -1 * (bt1 & 0x0f);
@@ -266,7 +268,7 @@ namespace Papper
         {
             int bt1 = b[offset];
             int bt2 = b[offset + 1];
-            bool neg = (bt1 & 0xf0) == 0xf0;
+            var neg = (bt1 & 0xf0) == 0xf0;
 
             bt1 &= 0x0f;
             bt2 = (bt2 / 0x10) * 10 + (bt2 & 0x0f % 0x10);
@@ -283,7 +285,7 @@ namespace Papper
         public static byte[] SetBcdWord(this int value, int offset = 0)
         {
             //Acepted Values -999 to +999
-            byte[] b = new byte[2];
+            var b = new byte[2];
             int b3;
 
             if (value < 0)
@@ -296,9 +298,9 @@ namespace Papper
                 b3 = 0x00;
             }
 
-            int b2 = (value % 1000 / 100);
-            int b1 = (value % 100 / 10);
-            int b0 = (value % 10);
+            var b2 = (value % 1000 / 100);
+            var b1 = (value % 100 / 10);
+            var b0 = (value % 10);
 
             b[offset] = (byte)((b3 << 4) + b2);
             b[offset + 1] = (byte)((b1 << 4) + b0);
@@ -311,7 +313,7 @@ namespace Papper
             int bt2 = b[offset + 1];
             int bt3 = b[offset + 2];
             int bt4 = b[offset + 3];
-            bool neg = (bt1 & 0xf0) == 0xf0;
+            var neg = (bt1 & 0xf0) == 0xf0;
 
             bt1 &= 0x0f;
             bt2 = (bt2 / 0x10) * 10 + (bt2 % 0x10);
@@ -323,7 +325,7 @@ namespace Papper
         public static byte[] SetBcdDWord(this int value, int offset = 0)
         {
             //Acepted Values -9999999 to +9999999
-            byte[] b = new byte[4];
+            var b = new byte[4];
             int b7;
 
             if (value < 0)
@@ -336,13 +338,13 @@ namespace Papper
                 b7 = 0x00;
             }
 
-            int b6 = (value % 10000000 / 1000000);
-            int b5 = (value % 1000000 / 100000);
-            int b4 = (value % 100000 / 10000);
-            int b3 = (value % 10000 / 1000);
-            int b2 = (value % 1000 / 100);
-            int b1 = (value % 100 / 10);
-            int b0 = (value % 10);
+            var b6 = (value % 10000000 / 1000000);
+            var b5 = (value % 1000000 / 100000);
+            var b4 = (value % 100000 / 10000);
+            var b3 = (value % 10000 / 1000);
+            var b2 = (value % 1000 / 100);
+            var b1 = (value % 100 / 10);
+            var b0 = (value % 10);
 
             b[offset] = (byte)((b7 << 4) + b6);
             b[offset + 1] = (byte)((b5 << 4) + b4);
@@ -353,8 +355,8 @@ namespace Papper
 
         public static string ToBinString(this byte b)
         {
-            StringBuilder binString = new StringBuilder(8);
-            for (int bitno = 1; bitno < 0x0100; bitno <<= 2)
+            var binString = new StringBuilder(8);
+            for (var bitno = 1; bitno < 0x0100; bitno <<= 2)
             {
                 binString.Append((b & bitno) != 0 ? "1" : "0");
             }
@@ -364,17 +366,17 @@ namespace Papper
 
         public static string ToBinString(this IEnumerable<byte> bytes, string separator = "", int offset = 0, int length = int.MaxValue)
         {
-            byte[] arr = bytes.Skip(offset).Take(length).ToArray();
-            StringBuilder binString = new StringBuilder(arr.Length * 8);
+            var arr = bytes.Skip(offset).Take(length).ToArray();
+            var binString = new StringBuilder(arr.Length * 8);
 
-            foreach (byte b in arr.Reverse())
+            foreach (var b in arr.Reverse())
             {
                 if (binString.Length > 0)
                 {
                     binString.Append(separator);
                 }
 
-                for (int bitno = 7; bitno >= 0; bitno--)
+                for (var bitno = 7; bitno >= 0; bitno--)
                 {
                     binString.Append(((b >> bitno) & 1) != 0 ? "1" : "0");
                 }
@@ -384,15 +386,15 @@ namespace Papper
 
         public static string ToHexString(this IEnumerable<byte> bytes, string separator = "", int offset = 0, int length = int.MaxValue)
         {
-            byte[] arr = bytes.Skip(offset).Take(length).ToArray();
+            var arr = bytes.Skip(offset).Take(length).ToArray();
             if (arr == null || !arr.Any())
             {
                 return string.Empty;
             }
 
             separator ??= string.Empty;
-            StringBuilder sb = new StringBuilder(arr.Length * (2 + separator.Length));
-            foreach (byte b in arr.Reverse())
+            var sb = new StringBuilder(arr.Length * (2 + separator.Length));
+            foreach (var b in arr.Reverse())
             {
                 sb.AppendFormat(CultureInfo.InvariantCulture, "{0:X2}{1}", b, separator);
             }
@@ -402,7 +404,7 @@ namespace Papper
 
         public static byte[] HexGetBytes(this string hexString) => (HexGetBytes(hexString, out _));
 
-        public static T HexGet<T>(this string hexString)
+        public static T HexGet<T>(this string hexString) where T : struct
         {
             object value = default(T);
 
@@ -411,7 +413,7 @@ namespace Papper
                 if (!string.IsNullOrWhiteSpace(hexString))
                 {
                     long val = 0;
-                    foreach (char b in hexString.Replace("0x", ""))
+                    foreach (var b in hexString.Replace("0x", ""))
                     {
                         val *= 16;
                         switch (b)
@@ -457,28 +459,31 @@ namespace Papper
 
         public static byte[] BinGetBytes(this string binString) => (BinGetBytes(binString, out _));
 
-        public static T BinGet<T>(this string binString)
+        public static T BinGet<T>(this string binString) where T : struct
         {
             object? value = default(T);
 
             try
             {
-                long val = 0;
-                foreach (char b in binString)
+                if (!string.IsNullOrWhiteSpace(binString))
                 {
-                    switch (b)
+                    long val = 0;
+                    foreach (var b in binString)
                     {
-                        case '1':
-                            val *= 2;
-                            val += 1;
-                            break;
-                        case '0':
-                            val *= 2;
-                            break;
+                        switch (b)
+                        {
+                            case '1':
+                                val *= 2;
+                                val += 1;
+                                break;
+                            case '0':
+                                val *= 2;
+                                break;
+                        }
                     }
-                }
 
-                value = Convert.ChangeType(val, typeof(T), CultureInfo.InvariantCulture);
+                    value = Convert.ChangeType(val, typeof(T), CultureInfo.InvariantCulture);
+                }
             }
             catch { }
             return (T)value;
@@ -492,7 +497,7 @@ namespace Papper
         /// <returns>DateTime</returns>
         public static DateTime ToDateTime(this byte[] data, int offset = 0)
         {
-            string str = string.Format("{2}/{1}/{0} {3}:{4}:{5}.{6}{7}",
+            var str = string.Format(CultureInfo.InvariantCulture, "{2}/{1}/{0} {3}:{4}:{5}.{6}{7}",
                 data.ToHexString("", offset, 1),
                 data.ToHexString("", offset + 1, 1),
                 data.ToHexString("", offset + 2, 1),
@@ -501,7 +506,7 @@ namespace Papper
                 data.ToHexString("", offset + 5, 1),
                 data.ToHexString("", offset + 6, 1),
                 data.ToHexString("", offset + 7, 1));
-            if (DateTime.TryParseExact(str, "dd/MM/yy HH:mm:ss.ffff", null, DateTimeStyles.None, out DateTime parsedDate))
+            if (DateTime.TryParseExact(str, "dd/MM/yy HH:mm:ss.ffff", null, DateTimeStyles.None, out var parsedDate))
             {
                 return parsedDate;
             }
@@ -526,12 +531,17 @@ namespace Papper
         /// <param name="hexString">string to convert to byte array</param>
         /// <param name="discarded">number of characters in string ignored</param>
         /// <returns>byte array, in the same left-to-right order as the hexString</returns>
-        private static byte[] HexGetBytes(string hexString, out int discarded)
+        private static byte[] HexGetBytes(string? hexString, out int discarded)
         {
             discarded = 0;
-            StringBuilder newString = new StringBuilder();
+            if (string.IsNullOrEmpty(hexString))
+            {
+                return Array.Empty<byte>();
+            }
+
+            var newString = new StringBuilder();
             // remove all none A-F, 0-9, characters
-            foreach (char c in hexString)
+            foreach (var c in hexString!)
             {
                 if (IsHexDigit(c))
                 {
@@ -549,13 +559,13 @@ namespace Papper
                 newString = new StringBuilder(newString.ToString(0, newString.Length - 1));
             }
 
-            int byteLength = newString.Length / 2;
-            byte[] bytes = new byte[byteLength];
-            int j = 0;
-            for (int i = 0; i < bytes.Length; i++)
+            var byteLength = newString.Length / 2;
+            var bytes = new byte[byteLength];
+            var j = 0;
+            for (var i = 0; i < bytes.Length; i++)
             {
-                int b1 = newString[j] - 48;
-                int b2 = newString[j + 1] - 48;
+                var b1 = newString[j] - 48;
+                var b2 = newString[j + 1] - 48;
                 if (b1 > 9)
                 {
                     b1 -= 7;
@@ -583,10 +593,15 @@ namespace Papper
         private static byte[] BinGetBytes(string binString, out int discarded)
         {
             discarded = 0;
-            StringBuilder newString = new StringBuilder();
+            if (string.IsNullOrEmpty(binString))
+            {
+                return Array.Empty<byte>();
+            }
+
+            var newString = new StringBuilder();
 
             // remove all none 0-1,characters
-            foreach (char c in binString)
+            foreach (var c in binString)
             {
                 if (c == '0' || c == '1')
                 {
@@ -604,9 +619,9 @@ namespace Papper
                 newString = new StringBuilder(newString.ToString(0, newString.Length - 1));
             }
 
-            int byteLength = newString.Length / 8;
-            byte[] bytes = new byte[byteLength];
-            for (int i = 0; i < byteLength; ++i)
+            var byteLength = newString.Length / 8;
+            var bytes = new byte[byteLength];
+            for (var i = 0; i < byteLength; ++i)
             {
                 bytes[i] = Convert.ToByte(newString.ToString(8 * i, 8), 2);
             }

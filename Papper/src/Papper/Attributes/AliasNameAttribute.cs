@@ -9,10 +9,7 @@ namespace Papper.Attributes
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
     public sealed class AliasNameAttribute : Attribute
     {
-        public AliasNameAttribute(string name)
-        {
-            Name = name;
-        }
+        public AliasNameAttribute(string name) => Name = name;
 
         /// <summary>
         /// The name to use.

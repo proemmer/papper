@@ -26,9 +26,9 @@ namespace Papper
             IsCompleted = isCompleted;
         }
 
-        public override bool Equals(object? obj) => obj is ChangeResult result && 
-                                                    IsCanceled == result.IsCanceled && 
-                                                    IsCompleted == result.IsCompleted && 
+        public override bool Equals(object? obj) => obj is ChangeResult result &&
+                                                    IsCanceled == result.IsCanceled &&
+                                                    IsCompleted == result.IsCompleted &&
                                                     EqualityComparer<IEnumerable<PlcReadResult>?>.Default.Equals(Results, result.Results);
 
         public override int GetHashCode()
@@ -40,16 +40,13 @@ namespace Papper
             return hashCode;
         }
 
-        public static bool operator ==(ChangeResult left, ChangeResult right)
-        {
-            return left.Equals(right);
-        }
+        public static bool operator ==(ChangeResult left, ChangeResult right) => left.Equals(right);
 
-        public static bool operator !=(ChangeResult left, ChangeResult right)
-        {
-            return !(left == right);
-        }
+        public static bool operator !=(ChangeResult left, ChangeResult right) => !(left == right);
 
-        public bool Equals(ChangeResult other) => Equals(other);
+        public bool Equals(ChangeResult other) => other != null &&
+                                                    IsCanceled == other.IsCanceled &&
+                                                    IsCompleted == other.IsCompleted &&
+                                                    EqualityComparer<IEnumerable<PlcReadResult>?>.Default.Equals(Results, other.Results);
     }
 }

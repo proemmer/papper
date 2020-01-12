@@ -5,7 +5,7 @@ namespace Papper
     /// <summary>
     /// This class is used to define read operations.
     /// </summary>
-    public struct PlcReadReference : IPlcReference
+    public struct PlcReadReference : IPlcReference, System.IEquatable<PlcReadReference>
     {
         private readonly int _dot;
 
@@ -58,11 +58,32 @@ namespace Papper
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="PlcReadReference"/></returns>
         public static IEnumerable<PlcReadReference> FromRoot(string root, IEnumerable<string> variables)
         {
-            if (variables == null) yield break;
+            if (variables == null)
+            {
+                yield break;
+            }
+
             foreach (var variable in variables)
             {
                 yield return FromAddress($"{root}.{variable}");
             }
         }
+
+        public override bool Equals(object? obj) => obj is PlcReadReference reference && Mapping == reference.Mapping && Variable == reference.Variable && Address == reference.Address;
+
+        public override int GetHashCode()
+        {
+            var hashCode = 1304634581;
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Mapping);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Variable);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Address);
+            return hashCode;
+        }
+
+        public static bool operator ==(PlcReadReference left, PlcReadReference right) => left.Equals(right);
+
+        public static bool operator !=(PlcReadReference left, PlcReadReference right) => !(left == right);
+
+        public bool Equals(PlcReadReference other) => other != null && Mapping == other.Mapping && Variable == other.Variable && Address == other.Address;
     }
 }

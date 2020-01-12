@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Papper.Internal;
+using System;
 using System.Buffers.Binary;
-using Papper.Internal;
 
 namespace Papper.Types
 {
@@ -15,7 +15,7 @@ namespace Papper.Types
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
          => data.IsEmpty ? default : BinaryPrimitives.ReadUInt64BigEndian(data.Slice(plcObjectBinding.Offset));
-        
+
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
          => BinaryPrimitives.WriteUInt64BigEndian(data.Slice(plcObjectBinding.Offset), Convert.ToUInt64(value));

@@ -1,7 +1,8 @@
 ﻿using Papper.Attributes;
 using System;
-
-namespace UnitTestSuit.Mappings
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+#pragma warning disable CA1819 // Properties should not return arrays
+namespace Papper.Tests.Mappings
 {
     #region Safety
     public class UDT_SafeMotionHeader_States
@@ -27,7 +28,7 @@ namespace UnitTestSuit.Mappings
         public bool MotionSelected { get; set; }
         public bool Button1Pressed { get; set; }
         public bool Button2Pressed { get; set; }
-        public Int16 HandshakeTime { get; set; }
+        public short HandshakeTime { get; set; }
     }
 
     public class UDT_SafeMotionSlot_Motion
@@ -41,7 +42,7 @@ namespace UnitTestSuit.Mappings
     public class UDT_SafeMotionHeader
     {
         public DateTime Generated { get; set; }
-        public Int16 NumberOfActiveSlots { get; set; }
+        public short NumberOfActiveSlots { get; set; }
         public UDT_SafeMotionHeader_States States { get; set; }
         public UDT_SafeMotionHeader_Commands Commands { get; set; }
 
@@ -49,14 +50,14 @@ namespace UnitTestSuit.Mappings
 
     public class UDT_SafeMotionSlot
     {
-        public Int16 SafeSlotVersion { get; set; }
+        public short SafeSlotVersion { get; set; }
         public byte SlotId { get; set; }
         public DateTime UnitTimestamp { get; set; }
-        public UInt16 UnitChecksum { get; set; }
-        public Int16 AggregateDBNummer { get; set; }
-        public Int16 AggregateOffset { get; set; }
-        public UInt32 HmiId { get; set; }
-        public UInt32 AccessRightReqFromHmiId { get; set; }
+        public ushort UnitChecksum { get; set; }
+        public short AggregateDBNummer { get; set; }
+        public short AggregateOffset { get; set; }
+        public uint HmiId { get; set; }
+        public uint AccessRightReqFromHmiId { get; set; }
         public UDT_SafeMotionSlot_Commands Commands { get; set; }
         public UDT_SafeMotionSlot_Handshake Handshake { get; set; }
         public UDT_SafeMotionSlot_Motion Motion { get; set; }
@@ -73,6 +74,9 @@ namespace UnitTestSuit.Mappings
     }
 
     [Mapping("DB_Safety", "DB15", 0)]
+    [Mapping("DB_SafetyXX", "DB115", 0)]
+    [Mapping("DB_SafetyYY", "DB115", 0)]
+    [Mapping("DB_SafetyZZ", "DB117", 0)]
     [Mapping("DB_SafetyDataChange", "DB6", 0)]
     [Mapping("DB_Safety2", "DB16", 0)]
     [Mapping("DB_Safety_NotExisting", "DB999", 0)]
@@ -86,3 +90,5 @@ namespace UnitTestSuit.Mappings
     #endregion
 
 }
+#pragma warning restore CA1707 // Identifiers should not contain underscores
+#pragma warning restore CA1819 // Properties should not return arrays
