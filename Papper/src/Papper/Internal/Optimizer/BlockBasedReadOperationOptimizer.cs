@@ -23,21 +23,20 @@ namespace Papper.Internal
                                         .ThenBy(i => i.Value.Item2.Offset.Bits)
                                         .ThenBy(i => i.Key.Length))
             {
-                CalculateRawBlocks(selector, readDataBlockSize, rawBlocks, ref pred, ref offsetCountedAsBoolean, ref offset, item.Value.Item1, item.Value.Item2);
-                pred?.AddReference(item.Key, offset, item.Value.Item2);
+                CalculateRawBlocks(selector, item.Key, readDataBlockSize, rawBlocks, ref pred, ref offsetCountedAsBoolean, ref offset, item.Value.Item1, item.Value.Item2);
             }
 
             return rawBlocks;
         }
 
-        private static void CalculateRawBlocks(string selector, int readDataBlockSize, List<PlcRawData> rawBlocks, ref PlcRawData? pred, ref int offsetCountedAsBoolean, ref int offset, int baseOffset, PlcObject item)
+        private static void CalculateRawBlocks(string selector, string itemName, int readDataBlockSize, List<PlcRawData> rawBlocks, ref PlcRawData? pred, ref int offsetCountedAsBoolean, ref int offset, int baseOffset, PlcObject item)
         {
             var currentOffset = baseOffset + item.Offset.Bytes;
             if (item.HasReadOnlyChilds)
             {
                 foreach (var child in item.ChildVars.OfType<PlcObject>())
                 {
-                    CalculateRawBlocks(selector, readDataBlockSize, rawBlocks, ref pred, ref offsetCountedAsBoolean, ref offset, currentOffset, child);
+                    CalculateRawBlocks(selector, itemName, readDataBlockSize, rawBlocks, ref pred, ref offsetCountedAsBoolean, ref offset, currentOffset, child);
                 }
             }
             else
@@ -113,6 +112,8 @@ namespace Papper.Internal
                         }
                     }
                 }
+
+                pred?.AddReference(itemName, offset, item);
             }
         }
 

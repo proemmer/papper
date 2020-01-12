@@ -221,13 +221,13 @@ namespace DataTypeTests
             var mapping = "SampleData";
             var header = new SampleData
             { 
-                UInt16 = 0,
+                UInt16 = 1,
                 Int16 = 0,
                 UInt32= 0,
                 Int32 = 0,
                 Single = 0,
                 Char = 'c',
-                Bit1 = false,
+                Bit1 = true,
                 Bit2 = false,
                 Bit3 = false,
                 Bit4 = false,
@@ -252,8 +252,8 @@ namespace DataTypeTests
             Assert.Equal(accessDict.Count, result2.Length);
             Assert.False(AreDataEqual(result, result2));
 
-
-            // Assert.True(AreDataEqual(ToExpando(header), result2.Values.FirstOrDefault()));
+            Assert.NotEqual(header.UInt16, (result2.FirstOrDefault().Value as SampleData).UInt16);
+            Assert.False((result2.FirstOrDefault().Value as SampleData).Bit1);
         }
 
 

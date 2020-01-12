@@ -18,6 +18,7 @@ namespace Papper.Internal
         public IDictionary<string, Tuple<int, PlcObject>> References { get; private set; }
         
         public string? Selector { get; set; }
+        public byte BitFilter { get; set; } = 0xFF;
         public int Offset { get; set; }
         public int Size
         {
