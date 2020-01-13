@@ -5,20 +5,28 @@ using System.Linq;
 
 namespace Papper.Internal
 {
+
+
+    internal class WriteSlot
+    {
+        public int Offset { get; set; }
+        public int Size { get; set; }
+        public byte Mask { get; set; } = 0xFF;
+
+
+        public override string ToString() => $"{Offset},{Size}#{Mask}";
+    }
+
+
     internal class PlcRawData
     {
-        private readonly object _lock = new object();
         private int _size;
-        private Memory<byte> _data = Memory<byte>.Empty;
-        private readonly int _partitionSize;
-        private readonly int _readDataBlockSize;
-        private DateTime _lastUpdate;
-        private Dictionary<int, Partiton>? _partitons = null;
 
-        public IDictionary<string, Tuple<int, PlcObject>> References { get; private set; }
+        public IDictionary<string, Tuple<int, PlcObject>> References { get; private set; } = new Dictionary<string, Tuple<int, PlcObject>>();
+
+        public List<WriteSlot> WriteSlots { get; private set; } = new List<WriteSlot>();
 
         public string? Selector { get; set; }
-        public byte BitFilter { get; set; } = 0xFF;
         public int Offset { get; set; }
         public int Size
         {
@@ -30,9 +38,10 @@ namespace Papper.Internal
             }
         }
 
-        public bool IsReadOnly { get; internal set; }
-
+        public bool ContainsReadOnlyParts { get; internal set; }
         public int MemoryAllocationSize { get; private set; }
+        public Memory<byte> ReadDataCache { get; set; } = Memory<byte>.Empty;
+        public DateTime LastUpdate { get; set; }
 
         private static int CalcRawDataSize(int size)
         {
@@ -47,47 +56,10 @@ namespace Papper.Internal
 
         public PlcRawData(int readDataBlockSize)
         {
-            _readDataBlockSize = MemoryAllocationSize = readDataBlockSize;
-            _partitionSize = _readDataBlockSize;
-            References = new Dictionary<string, Tuple<int, PlcObject>>();
+            MemoryAllocationSize = readDataBlockSize;
         }
 
-        public Memory<byte> ReadDataCache
-        {
-            get => _data;
-            set
-            {
-                _data = value;
-                if (_partitons == null || !_partitons.Any())
-                {
-                    lock (_lock)
-                    {
-                        if (_partitons == null || !_partitons.Any())
-                        {
-                            CreatePartitions();
-                        }
-                    }
-                }
-            }
-        }
 
-        public DateTime LastUpdate
-        {
-            get => _lastUpdate;
-            set
-            {
-                _lastUpdate = value;
-                if (_partitons == null)
-                {
-                    return;
-                }
-
-                foreach (var p in _partitons)
-                {
-                    p.Value.LastUpdate = value;
-                }
-            }
-        }
 
         public void AddReference(string name, int offset, PlcObject plcObject)
         {
@@ -98,90 +70,17 @@ namespace Papper.Internal
             }
         }
 
-        public IList<Partiton> GetPartitonsByOffset(IEnumerable<Tuple<int, int>> offsets)
+        public void AddWriteSlot(int offset, int size, byte mask = 0xFF)
         {
-            var partitions = new List<Partiton>();
-            foreach (var item in offsets)
+            var lastSlot = WriteSlots.LastOrDefault();
+            if (lastSlot == null || offset >= (lastSlot.Offset + lastSlot.Size))
             {
-                var part = GetPartitonsByOffset(item.Item1, item.Item2);
-                foreach (var p in part)
+                WriteSlots.Add(new WriteSlot
                 {
-                    if (!partitions.Contains(p))
-                    {
-                        partitions.Add(p);
-                    }
-                }
-            }
-            return partitions;
-        }
-
-
-        public IList<Partiton> GetPartitonsByOffset(int offset, int size)
-        {
-            if (_partitons == null)
-            {
-                return new List<Partiton>();
-            }
-
-            if (!ReadDataCache.IsEmpty && ReadDataCache.Length > _partitionSize && size != ReadDataCache.Length)
-            {
-                var partitions = new List<Partiton>();
-                var index = offset;
-                do
-                {
-                    var partitionId = index / _partitionSize;
-                    if (_partitons.TryGetValue(partitionId, out var partiton) && !partitions.Contains(partiton))
-                    {
-                        partitions.Add(partiton);
-                        var off = offset > 0 ? ((partiton.Offset + partiton.Size) - offset) : partiton.Size;
-                        if (off > 0)
-                        {
-                            size -= off;
-                            index += off;
-                            offset = 0;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        break;
-                    }
-                } while (size > 0);
-                return partitions;
-            }
-
-            return _partitons.Values.ToList();
-        }
-
-        private void CreatePartitions()
-        {
-            if (_partitons == null)
-            {
-                _partitons = new Dictionary<int, Partiton>();
-            }
-
-            var length = ReadDataCache.Length;
-            var numberOfPartitons = ReadDataCache.Length / _partitionSize;
-            if ((length % _partitionSize) > 0)
-            {
-                numberOfPartitons++;
-            }
-
-            var offset = 0;
-            for (var i = 0; i < numberOfPartitons; i++)
-            {
-                var size = length >= _partitionSize ? _partitionSize : length;
-                _partitons.Add(i, new Partiton
-                {
-                    LastUpdate = DateTime.MinValue,
                     Offset = offset,
-                    Size = size
+                    Size = size,
+                    Mask = mask
                 });
-                offset += size;
-                length -= size;
             }
         }
     }

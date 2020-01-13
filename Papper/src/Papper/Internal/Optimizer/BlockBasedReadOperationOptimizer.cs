@@ -24,28 +24,11 @@ namespace Papper.Internal
                                         .ThenBy(i => i.Key.Length)
                                         .ToList())
             {
-                CalculateRawBlocks(selector, item.Key, readDataBlockSize, rawBlocks, ref pred, ref offsetCountedAsBoolean, ref offset, item.Value.Item1, item.Value.Item2);
-            }
-
-            return rawBlocks;
-        }
-
-        private static void CalculateRawBlocks(string selector, string itemName, int readDataBlockSize, List<PlcRawData> rawBlocks, ref PlcRawData? pred, ref int offsetCountedAsBoolean, ref int offset, int baseOffset, PlcObject item)
-        {
-            var currentOffset = baseOffset + item.Offset.Bytes;
-            if (item.HasReadOnlyChilds)
-            {
-                foreach (var child in item.ChildVars.OfType<PlcObject>())
-                {
-                    CalculateRawBlocks(selector, itemName, readDataBlockSize, rawBlocks, ref pred, ref offsetCountedAsBoolean, ref offset, currentOffset, child);
-                }
-            }
-            else
-            {
                 var count = true;
-                var sizeInBytes = item.Size == null ? 0 : item.Size.Bytes;
+                var currentOffset = item.Value.Item1 + item.Value.Item2.Offset.Bytes;
+                var sizeInBytes = item.Value.Item2.Size == null ? 0 : item.Value.Item2.Size.Bytes;
 
-                if (item is PlcBool)
+                if (item.Value.Item2 is PlcBool)
                 {
                     if (currentOffset != offsetCountedAsBoolean)
                     {
@@ -56,7 +39,7 @@ namespace Papper.Internal
                         count = false;
                     }
                 }
-                if (item is PlcArray arr && arr.Size.Bits > 0)
+                if (item.Value.Item2 is PlcArray arr && arr.Size.Bits > 0)
                 {
                     sizeInBytes += 1;
                 }
@@ -66,11 +49,11 @@ namespace Papper.Internal
                     Offset = currentOffset,
                     Size = sizeInBytes == 0 && count ? 1 : sizeInBytes,
                     Selector = selector,
-                    IsReadOnly = item.IsReadOnly
+                    ContainsReadOnlyParts = item.Value.Item2.IsReadOnly || item.Value.Item2.HasReadOnlyChilds
                 };
 
 
-                if (pred == null || pred.IsReadOnly != current.IsReadOnly)
+                if (pred == null)
                 {
                     rawBlocks.Add(current);
                     pred = current;
@@ -84,6 +67,10 @@ namespace Papper.Internal
                         //follows direct
                         offset = current.Offset - pred.Offset;
                         pred.Size += current.Size;
+                        if (current.ContainsReadOnlyParts)
+                        {
+                            pred.ContainsReadOnlyParts = true;
+                        }
                     }
                     else if (directOffset > current.Offset)
                     {
@@ -94,6 +81,10 @@ namespace Papper.Internal
                         {
                             //Update size if we have an overlapping item
                             pred.Size += (current.Size - freeBytesInParent);
+                        }
+                        if (current.ContainsReadOnlyParts)
+                        {
+                            pred.ContainsReadOnlyParts = true;
                         }
                     }
                     else
@@ -108,6 +99,10 @@ namespace Papper.Internal
                                 offset = pred.Size + unusedBytes;
                                 pred.Size = modifiedSize;
                             }
+                            if (current.ContainsReadOnlyParts)
+                            {
+                                pred.ContainsReadOnlyParts = true;
+                            }
                         }
                         else
                         {
@@ -118,8 +113,13 @@ namespace Papper.Internal
                     }
                 }
 
-                pred?.AddReference(itemName, offset, item);
+                pred.AddReference(item.Key, offset, item.Value.Item2);
             }
+
+            OptimizerFactory.CreateWriteAreas(rawBlocks);
+            return rawBlocks;
         }
+
+        
     }
 }

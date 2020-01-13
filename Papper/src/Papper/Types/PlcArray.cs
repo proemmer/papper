@@ -21,6 +21,8 @@ namespace Papper.Types
         private int _to;
         public int Dimension { get; set; }
 
+        public override bool HasReadOnlyChilds => ArrayType.HasReadOnlyChilds;
+
         public int From
         {
             get => _from;

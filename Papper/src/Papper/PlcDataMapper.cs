@@ -2,7 +2,6 @@
 using Papper.Extensions.Metadata;
 using Papper.Extensions.Notification;
 using Papper.Internal;
-using Papper.Types;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -265,33 +264,26 @@ namespace Papper
             var memoryBuffer = new Dictionary<PlcRawData, byte[]>();
             try
             {
-                static KeyValuePair<string, DataPack> UpdatePack(string key, DataPack pack, int dataOffset)
-                {
-                    pack.Data = pack.Data.Slice(dataOffset, pack.Length);
-                    return new KeyValuePair<string, DataPack>(key, pack);
-                }
-
-
-
                 var values = vars.ToDictionary(x => x.Address, x => x.Value);
                 // determine executions
                 var executions = DetermineExecutions(vars);
 
-                var prepared = executions.SelectMany(execution => execution.Bindings.Where(b => !b.Value.MetaData.IsReadOnly))
-                                         .Select(x => UpdatePack(x.Key, Create(x.Key, x.Value, values, memoryBuffer), x.Value.Offset))
+                var prepared = executions.Select(execution => execution.CreateWriteDataPack(values, memoryBuffer))
                                          .ToDictionary(x => x.Key, x => x.Value);
 
-                await WriteToPlcAsync(prepared.Values).ConfigureAwait(false);
+                await WriteToPlcAsync(prepared.Values.SelectMany(x => x)).ConfigureAwait(false);
 
                 executions.ForEach(exec => exec.Invalidate());
 
-                return prepared.Select(x => new PlcWriteResult(x.Key, x.Value.ExecutionResult)).ToArray();
+                return CreatePlcWriteResults(values, prepared);
             }
             finally
             {
                 memoryBuffer.Values.ToList().ForEach(x => ArrayPool<byte>.Shared.Return(x));
             }
         }
+
+
 
         /// <summary>
         /// If a client supports data changes it has to call this method on any changes
@@ -357,6 +349,29 @@ namespace Papper
                                                        )).ToArray();
         }
 
+        private static PlcWriteResult[] CreatePlcWriteResults(Dictionary<string, object> values, Dictionary<Execution, IEnumerable<DataPack>> prepared)
+        {
+            var results = new PlcWriteResult[values.Count];
+            var index = 0;
+            foreach (var value in values)
+            {
+                var writePackages = prepared.Where(p => p.Key.Bindings.ContainsKey(value.Key)).SelectMany(x => x.Value);
+                var execResult = writePackages.Any() ? ExecutionResult.Ok : ExecutionResult.Unknown;
+                foreach (var package in writePackages)
+                {
+                    if (package.ExecutionResult != ExecutionResult.Ok)
+                    {
+                        execResult = package.ExecutionResult;
+                        break;
+                    }
+                }
+
+                results[index++] = new PlcWriteResult(value.Key, execResult);
+            }
+
+            return results;
+        }
+
         private static bool HasChangesSinceLastRun(Execution exec, DateTime? changedAfter)
             => changedAfter == null || exec.LastChange > changedAfter;
 
@@ -381,14 +396,8 @@ namespace Papper
                                             exec.ValidationTimeMs <= 0 ||
                                             exec.PlcRawData.LastUpdate.AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now ||
                                             (forceUpdate != null && forceUpdate(exec.PlcRawData.References.Keys, exec.PlcRawData.LastUpdate)))
-                           .Select(x => new KeyValuePair<Execution, DataPack>(x,
-                                                                            new DataPack
-                                                                            {
-                                                                                Selector = x.PlcRawData.Selector,
-                                                                                Offset = x.PlcRawData.Offset,
-                                                                                Length = x.PlcRawData.Size > 0 ? x.PlcRawData.Size : 1
-                                                                            }))
-                           .ToDictionary(x => x.Key, x => x.Value);
+                             .Select(x => x.CreateReadDataPack())
+                             .ToDictionary(x => x.Key, x => x.Value);
         }
 
 
@@ -399,98 +408,7 @@ namespace Papper
         #endregion
 
 
-        private static DataPack Create(string key, PlcObjectBinding binding, Dictionary<string, object> values, Dictionary<PlcRawData, byte[]> memoryBuffer)
-        {
-            static byte[] GetOrCreateBufferAndApplyValue(PlcObjectBinding plcBinding, Dictionary<PlcRawData, byte[]> dict, object value)
-            {
-                if (!dict.TryGetValue(plcBinding.RawData, out var buffer))
-                {
-                    buffer = ArrayPool<byte>.Shared.Rent(plcBinding.RawData.MemoryAllocationSize);
-                    dict.Add(plcBinding.RawData, buffer);
-                }
-
-
-                if (value is byte[] b && plcBinding.Size == b.Length)
-                {
-                    // we got raw data for the type, so we need not to convert them
-                    b.CopyTo(buffer, plcBinding.Offset);
-                }
-                else
-                {
-                    plcBinding.ConvertToRaw(value, buffer);
-                }
-                return buffer;
-            }
-
-            (var begin, var end) = CreateBitMasks(binding);
-            return new DataPack
-            {
-                Selector = binding.RawData.Selector,
-                Offset = binding.Offset + binding.RawData.Offset,
-                Length = GetSize(binding),
-                BitMaskBegin = begin,
-                BitMaskEnd = end,
-                Data = GetOrCreateBufferAndApplyValue(binding,
-                                                        memoryBuffer,
-                                                        values[key])
-            };
-        }
-
-
-        private static int GetSize(PlcObjectBinding binding)
-        {
-            if (binding.MetaData is PlcBool)
-            {
-                return 1;
-            }
-            else if (binding.MetaData is PlcArray plcArray && plcArray.ArrayType is PlcBool)
-            {
-                return plcArray.Size.Bytes + (plcArray.Size.Bits > 0 ? 1 : 0);
-            }
-            return binding.Size;
-        }
-
-        private static (byte begin, byte end) CreateBitMasks(PlcObjectBinding binding)
-        {
-            byte begin = 0;
-            byte end = 0;
-            if (binding.MetaData is PlcBool plcBool)
-            {
-                begin = Converter.SetBit(0, plcBool.Offset.Bits, true);
-            }
-            else if (binding.MetaData is PlcArray plcArray && plcArray.ArrayType is PlcBool)
-            {
-                if (plcArray.Offset.Bits > 0 || ((plcArray.ArrayLength % 8) != 0))
-                {
-                    var take = 8 - plcArray.Offset.Bits;
-                    foreach (var item in plcArray.Childs.Take(take).OfType<PlcObject>())
-                    {
-                        begin = Converter.SetBit(begin, item.Offset.Bits, true);
-                    }
-
-                    var lastItems = ((plcArray.Offset.Bits + plcArray.ArrayLength) % 8);
-                    if (lastItems > 0)
-                    {
-                        foreach (var item in plcArray.Childs.Skip(plcArray.ArrayLength - lastItems).OfType<PlcObject>())
-                        {
-                            end = Converter.SetBit(end, item.Offset.Bits, true);
-                        }
-
-                        if (begin == 0)
-                        {
-                            begin = 0xFF;
-                        }
-                    }
-                    else if (begin > 0)
-                    {
-                        end = 0xFF;
-                    }
-                }
-
-            }
-            return (begin, end);
-        }
-
+        
 
         private async Task<PlcReadResult[]> InternalReadAsync(IEnumerable<PlcReadReference> vars, bool doNotConvert)
         {
@@ -505,7 +423,7 @@ namespace Papper
             await ReadFromPlcAsync(needUpdate).ConfigureAwait(false);
 
             // transform to result
-            return PlcDataMapper.CreatePlcReadResults(executions, needUpdate, null, null, doNotConvert);
+            return CreatePlcReadResults(executions, needUpdate, null, null, doNotConvert);
         }
 
         private static object? ConvertToResult(PlcObjectBinding binding, bool doNotConvert = false)
