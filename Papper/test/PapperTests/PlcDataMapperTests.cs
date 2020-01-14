@@ -219,10 +219,10 @@ namespace Papper.Tests
         {
             var mapping = "SampleData";
             var header = new SampleData
-            { 
+            {
                 UInt16 = 1,
                 Int16 = 2,
-                UInt32= 3,
+                UInt32 = 3,
                 Int32 = 4,
                 Single = 5,
                 Char = 'c',
@@ -505,18 +505,18 @@ namespace Papper.Tests
 
 
         [Theory]
-        [InlineData("DB_BST1_ChargenRV.This", "", false, "Boxen.vorhanden", true)]
+        [InlineData("DB_BST1_ChargenRV.This", "Dat.Data.Element[5].MaxCntPiecesInTray", (short)5, "Dat.Data.Element[5].ActCntPieces", (short)2)]
         [InlineData("DB_BST4_Boxen_1_Konfig.This", "Boxen.vorhanden", true, "Boxen.fertig", true)]
 
         public async Task PerformReadStruct(string address, string propertyWritable, object valueWritable, string propertyReadonly, object valueReadonly)
         {
             var readResults = await _papper.ReadAsync(PlcReadReference.FromAddress(address)).ConfigureAwait(false);
 
-            var res1 = GetPropertyInExpandoObject(readResults[0].Value, propertyWritable.Split('.'));
-            var res2 = GetPropertyInExpandoObject(readResults[0].Value, propertyReadonly.Split('.'));
+            var res1 = GetPropertyInExpandoObject(readResults[0].Value, propertyWritable);
+            var res2 = GetPropertyInExpandoObject(readResults[0].Value, propertyReadonly);
 
-            SetPropertyInExpandoObject(readResults[0].Value, propertyWritable.Split('.'), valueWritable);
-            SetPropertyInExpandoObject(readResults[0].Value, propertyReadonly.Split('.'), valueReadonly);
+            SetPropertyInExpandoObject(readResults[0].Value, propertyWritable, valueWritable);
+            SetPropertyInExpandoObject(readResults[0].Value, propertyReadonly, valueReadonly);
 
             var r = await _papper.WriteAsync(PlcWriteReference.FromAddress(address, readResults[0].Value)).ConfigureAwait(false);
 
@@ -524,8 +524,8 @@ namespace Papper.Tests
             readResults = await _papper.ReadAsync(PlcReadReference.FromAddress(address)).ConfigureAwait(false);
 
 
-            var res3 = GetPropertyInExpandoObject(readResults[0].Value, propertyWritable.Split('.'));
-            var res4 = GetPropertyInExpandoObject(readResults[0].Value, propertyReadonly.Split('.'));
+            var res3 = GetPropertyInExpandoObject(readResults[0].Value, propertyWritable);
+            var res4 = GetPropertyInExpandoObject(readResults[0].Value, propertyReadonly);
 
             Assert.NotEqual(res1, res3);
             Assert.Equal(res2, res4);
@@ -845,14 +845,23 @@ namespace Papper.Tests
         }
 
 
+        private static void SetPropertyInExpandoObject(dynamic parent, string address, object value) => SetPropertyInExpandoObject(parent, address.Replace("[", ".[", StringComparison.InvariantCultureIgnoreCase).Split('.'), value);
+
         private static void SetPropertyInExpandoObject(dynamic parent, IEnumerable<string> parts, object value)
         {
             var key = parts.First();
             parts = parts.Skip(1);
-            var list = (parent as List<object>);
-            if (list != null)
+            if (parent is IList<object> list)
             {
-                SetPropertyInExpandoObject(list.ElementAt<object>(1), parts, value); // TODO
+                var index = int.Parse(key.TrimStart('[').TrimEnd(']'), CultureInfo.InvariantCulture);
+                if (parts.Any())
+                {
+                    SetPropertyInExpandoObject(list.ElementAt(index), parts, value); 
+                }
+                else
+                {
+                    list[index] = value;
+                }
             }
             else
             {
@@ -870,16 +879,22 @@ namespace Papper.Tests
             }
         }
 
+        private static object GetPropertyInExpandoObject(dynamic parent, string address) => GetPropertyInExpandoObject(parent, address.Replace("[", ".[", StringComparison.InvariantCultureIgnoreCase).Split('.'));
+
         private static object GetPropertyInExpandoObject(dynamic parent, IEnumerable<string> parts)
         {
             var key = parts.First();
             parts = parts.Skip(1);
-            var list = (parent as List<object>);
-            if (list != null)
+            if (parent is IList<object> list)
             {
+                var index = int.Parse(key.TrimStart('[').TrimEnd(']'), CultureInfo.InvariantCulture);
                 if (parts.Any())
                 {
-                    return GetPropertyInExpandoObject(list.ElementAt<object>(1), parts); // TODO
+                    return GetPropertyInExpandoObject(list.ElementAt(index), parts); // TODO
+                }
+                else
+                {
+                    return list.ElementAt(index);
                 }
             }
             else
