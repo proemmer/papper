@@ -430,10 +430,15 @@ namespace Papper.Internal
                         var hasCustomOffset = PlcObjectFactory.GetOffsetFromAttribute(pi, ref byteOffset, ref bitOffset);
                         AddPlcObject(tree, pred, plcObject, nodePathStack, ref byteOffset, ref bitOffset, hasCustomOffset);
                         pred = plcObject;
+                        if(!parent.HasReadOnlyChilds && (plcObject.IsReadOnly || plcObject.HasReadOnlyChilds))
+                        {
+                            parent.HasReadOnlyChilds = true;
+                        }
                     }
                 }
                 DebugOutPut("}} = {0}", parent.Size.Bytes);
                 nodePathStack.Pop();
+                
                 obj = parent;
             }
             return (obj as PlcObject)!;

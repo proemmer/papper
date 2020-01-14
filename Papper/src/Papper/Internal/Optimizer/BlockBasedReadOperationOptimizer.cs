@@ -48,7 +48,8 @@ namespace Papper.Internal
                 {
                     Offset = currentOffset,
                     Size = sizeInBytes == 0 && count ? 1 : sizeInBytes,
-                    Selector = selector
+                    Selector = selector,
+                    ContainsReadOnlyParts = item.Value.Item2.IsReadOnly || item.Value.Item2.HasReadOnlyChilds
                 };
 
 
@@ -66,6 +67,10 @@ namespace Papper.Internal
                         //follows direct
                         offset = current.Offset - pred.Offset;
                         pred.Size += current.Size;
+                        if (current.ContainsReadOnlyParts)
+                        {
+                            pred.ContainsReadOnlyParts = true;
+                        }
                     }
                     else if (directOffset > current.Offset)
                     {
@@ -76,6 +81,10 @@ namespace Papper.Internal
                         {
                             //Update size if we have an overlapping item
                             pred.Size += (current.Size - freeBytesInParent);
+                        }
+                        if (current.ContainsReadOnlyParts)
+                        {
+                            pred.ContainsReadOnlyParts = true;
                         }
                     }
                     else
@@ -90,6 +99,10 @@ namespace Papper.Internal
                                 offset = pred.Size + unusedBytes;
                                 pred.Size = modifiedSize;
                             }
+                            if (current.ContainsReadOnlyParts)
+                            {
+                                pred.ContainsReadOnlyParts = true;
+                            }
                         }
                         else
                         {
@@ -100,11 +113,13 @@ namespace Papper.Internal
                     }
                 }
 
-
                 pred.AddReference(item.Key, offset, item.Value.Item2);
             }
 
+            OptimizerFactory.CreateWriteAreas(rawBlocks);
             return rawBlocks;
         }
+
+        
     }
 }
