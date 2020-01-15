@@ -1,4 +1,5 @@
-﻿using Papper;
+﻿using Insite.Customer.Data.DB_BST1_Regal_1_Konfig;
+using Papper;
 using Papper.Extensions.Metadata;
 using Papper.Extensions.Notification;
 using Papper.Tests.Mappings;
@@ -32,6 +33,7 @@ namespace Papper.Tests
         {
             _output = output;
             _papper.AddMapping(typeof(DB_BST4_Boxen_1_Konfig));
+            _papper.AddMapping(typeof(DB_BST1_Regal_1_Konfig));
             _papper.AddMapping(typeof(DB_BST1_ChargenRV));
             _papper.AddMapping(typeof(SampleData));
             _papper.AddMapping(typeof(DB_Safety));
@@ -507,6 +509,7 @@ namespace Papper.Tests
         [Theory]
         [InlineData("DB_BST1_ChargenRV.This", "Dat.Data.Element[5].MaxCntPiecesInTray", (short)5, "Dat.Data.Element[5].ActCntPieces", (short)2)]
         [InlineData("DB_BST4_Boxen_1_Konfig.This", "Boxen.vorhanden", true, "Boxen.fertig", true)]
+        [InlineData("DB_BST1_Regal_1_Konfig.This", "Regal.Fach[1].aktiv", true, "Regal.Fach[1].fertig", true)]
 
         public async Task PerformReadStruct(string address, string propertyWritable, object valueWritable, string propertyReadonly, object valueReadonly)
         {

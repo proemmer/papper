@@ -36,12 +36,13 @@ namespace Papper.Internal
         {
             if (item.HasReadOnlyChilds)
             {
-                static void HandleChilds(PlcObject plcObj, PlcRawData rd, int baseOffset, bool inReadOnlyArea = false)
+                static void HandleChilds(PlcObject plcObj, PlcRawData rd, int baseOffset)
                 {
                     var offset = 0;
                     var itemsToAdd = false;
                     byte bitMask = 0xff;
                     var bitMaskOffset = -1;
+                    var inReadOnlyArea = false;
                     PlcObject? pred = null;
                     WorkOnChild(rd, baseOffset, ref inReadOnlyArea, ref offset, ref itemsToAdd, ref bitMask, ref bitMaskOffset, ref pred, plcObj);
 
@@ -61,37 +62,48 @@ namespace Papper.Internal
             {
                 rawData.AddWriteSlot(rawData.Offset, rawData.Size);
             }
+            // other wise we have no write slot
         }
 
         private static void WorkOnChild(PlcRawData rd, int baseOffset, ref bool inReadOnlyArea, ref int offset, ref bool itemsToAdd, ref byte bitMask, ref int bitMaskOffset, ref PlcObject? pred, PlcObject plcObj)
         {
-            if (bitMaskOffset != -1 && bitMaskOffset != plcObj.ByteOffset)
+            var currentOffset = baseOffset + plcObj.ByteOffset;
+            // if we had a bit mask and we change the byte, add the mask to the slot.
+            if (bitMaskOffset != -1 && bitMaskOffset != currentOffset)
             {
-                rd.AddWriteSlot(bitMaskOffset, 1, bitMask);
+                if (bitMask != 0x00)
+                {
+                    rd.AddWriteSlot(bitMaskOffset, 1, bitMask);  // we need no mask because the whole byte will be skipped
+                }
                 bitMaskOffset = -1;
                 bitMask = 0xFF;
-                inReadOnlyArea = true;
+                inReadOnlyArea = true; // avoid a second write in the readonly area
             }
 
             if (plcObj.IsReadOnly)
             {
+                // readonly bit found so update bit mask.
                 if (plcObj is PlcBool)
                 {
                     bitMask = bitMask.SetBit(plcObj.BitOffset, false);
-                    bitMaskOffset = plcObj.ByteOffset;
-                }
-
+                    bitMaskOffset = currentOffset;
+                } 
+                
                 if (!inReadOnlyArea)
                 {
+                    // if we were in a write area before this value, we can add a write slot for the items
                     if (pred != null)
                     {
-                        rd.AddWriteSlot(offset, baseOffset + plcObj.ByteOffset - offset);
+                        var size = baseOffset + plcObj.ByteOffset - offset;
+                        if (size > 0)
+                        {
+                            rd.AddWriteSlot(offset, size);
+                        }
                     }
                 }
             }
             else if (plcObj.HasReadOnlyChilds)
             {
-                var currentOffset = baseOffset + plcObj.ByteOffset;
                 foreach (var child in plcObj.ChildVars.OfType<PlcObject>())
                 {
                     WorkOnChild(rd, currentOffset, ref inReadOnlyArea, ref offset, ref itemsToAdd, ref bitMask, ref bitMaskOffset, ref pred, child);
@@ -104,7 +116,7 @@ namespace Papper.Internal
             }
             else if (inReadOnlyArea)
             {
-                offset = baseOffset + plcObj.ByteOffset;
+                offset = currentOffset;
                 itemsToAdd = true;
             }
 
