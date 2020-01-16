@@ -42,6 +42,10 @@ namespace Insite.Customer.Data.DB_BST1_Regal_1_Konfig
         [ReadOnly(true)]
         public bool ABGW { get; set; }	//M-ID: Montageschritt abgewählt
         public bool nur_Anzeige { get; set; }	//Fach wird nur zur Anzeige verwendet -> keine Eingriffskontrolle
+        public bool Test1 { get; set; }
+        [ReadOnly(true)]
+        public bool Test2 { get; set; }
+        public bool Test3 { get; set; }
         public Int16 M_ID { get; set; }	//Montageschritt-ID
     }
 
@@ -95,6 +99,10 @@ namespace Insite.Customer.Data.DB_BST1_Regal_1_Konfig
         public bool aktiv { get; set; }	//Regal aktiv
         [ReadOnly(true)]
         public bool Hand_IO { get; set; }	//Regal Hand IO
+        [ReadOnly(true)]
+        public byte TestByte { get; set; }
+
+        public byte TestByte2 { get; set; }
 
         [ArrayBounds(1, 8, 0)]
         public UDT_Regal_Fach[] Fach { get; set; }
@@ -110,11 +118,23 @@ namespace Insite.Customer.Data.DB_BST1_Regal_1_Konfig
         public UDT_Regal_UNIV_Fach_Ergeb[] UNIV_Fach_Ergeb { get; set; }	//ergebnisse der Universal Auswertung
 
     }
+    public class UDT_Regal2
+    {
+        public bool vorhanden { get; set; }	//Regal ist vorhanden (PLC)
+        [ReadOnly(true)]
+        public bool fertig { get; set; }	//Fertigmeldung Gesamt Regal
+        public bool aktiv { get; set; }	//Regal aktiv
+        [ReadOnly(true)]
+        public bool Hand_IO { get; set; }	//Regal Hand IO
+
+        public short TestByte { get; set; }
+    }
 
     [Mapping("DB_BST1_Regal_1_Konfig", "DB1035", 0)]
     public class DB_BST1_Regal_1_Konfig
     {
         public UDT_Regal Regal { get; set; }
+        public UDT_Regal2 Regal2 { get; set; }
 
     }
 

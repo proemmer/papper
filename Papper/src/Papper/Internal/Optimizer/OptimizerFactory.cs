@@ -32,7 +32,9 @@ namespace Papper.Internal
             }
         }
 
-        internal static void AddWritableAreas(PlcObject item, PlcRawData rawData)
+
+
+        private static void AddWritableAreas(PlcObject item, PlcRawData rawData)
         {
             if (item.HasReadOnlyChilds)
             {
@@ -52,7 +54,11 @@ namespace Papper.Internal
                     }
                     else if (itemsToAdd)
                     {
-                        rd.AddWriteSlot(offset, plcObj.ByteSize - offset);
+                        var size = plcObj.ByteSize - offset;
+                        if (size > 0)
+                        {
+                            rd.AddWriteSlot(offset, size);
+                        }
                     }
                 }
 
@@ -74,6 +80,7 @@ namespace Papper.Internal
                 if (bitMask != 0x00)
                 {
                     rd.AddWriteSlot(bitMaskOffset, 1, bitMask);  // we need no mask because the whole byte will be skipped
+                    itemsToAdd = false;
                 }
                 bitMaskOffset = -1;
                 bitMask = 0xFF;
@@ -94,10 +101,11 @@ namespace Papper.Internal
                     // if we were in a write area before this value, we can add a write slot for the items
                     if (pred != null)
                     {
-                        var size = baseOffset + plcObj.ByteOffset - offset;
+                        var size = currentOffset - offset;
                         if (size > 0)
                         {
                             rd.AddWriteSlot(offset, size);
+                            itemsToAdd = false;
                         }
                     }
                 }
