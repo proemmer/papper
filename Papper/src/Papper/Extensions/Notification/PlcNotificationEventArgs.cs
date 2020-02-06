@@ -76,7 +76,7 @@ namespace Papper.Extensions.Notification
             {
                 var levels = asterix ? items.Address.Split('.') : items.Variable.Split('.');
                 var levelCount = levels.Length;
-                var parent = item;
+                ExpandoObject? parent = item;
                 foreach (var level in levels)
                 {
                     var name = level;

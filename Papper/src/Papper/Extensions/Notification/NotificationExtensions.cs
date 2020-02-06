@@ -95,7 +95,10 @@ namespace Papper.Extensions.Notification
 
 
 
-        private static void RunWatchTask(Subscription subscription, OnChangeEventHandler callback) => _ = Task.Factory.StartNew(async () => await WatchLoop(subscription, callback).ConfigureAwait(false), System.Threading.CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Current);
+        private static void RunWatchTask(Subscription subscription, OnChangeEventHandler callback) 
+            => _ = Task.Factory.StartNew(async () => await WatchLoop(subscription, callback)
+                               .ConfigureAwait(false), 
+                                System.Threading.CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Current);
 
         private static async Task WatchLoop(Subscription subscription, OnChangeEventHandler callback)
         {
@@ -110,7 +113,7 @@ namespace Papper.Extensions.Notification
                     }
                     else
                     {
-                        // is cancelled or completed, so set watching is compled now!
+                        // is canceled or completed, so set watching is completed now!
                         callback(subscription, new PlcNotificationEventArgs());
                         return;
                     }

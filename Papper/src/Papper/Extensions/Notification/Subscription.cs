@@ -129,7 +129,7 @@ namespace Papper.Extensions.Notification
         public bool RemoveItems(params PlcWatchReference[] vars) => RemoveItems(vars as IEnumerable<PlcWatchReference>);
 
         /// <summary>
-        /// Remove items from the watch list. This items will be removed before the next what cycle.
+        /// Remove items from the watch list. This items will be removed before the next watch cycle.
         /// The internal 
         /// </summary>
         /// <param name="vars"></param>
@@ -137,7 +137,7 @@ namespace Papper.Extensions.Notification
         {
             using (new WriterGuard(_lock))
             {
-                var result = vars.Any(item => _variables.Remove(item.Address)) | _modified;
+                var result = vars.Where(item => !string.IsNullOrEmpty(item.Address)).Any(item => _variables.Remove(item.Address)) | _modified;
                 if (result)
                 {
                     UpdateWatchCycle(_variables.Values);
