@@ -149,6 +149,21 @@ namespace Papper.Extensions.Notification
         }
 
         /// <summary>
+        /// Check if the given reference is already in this subscription..
+        /// </summary>
+        /// <param name="plcWatchReference"><see cref="PlcWatchReference"/></param>
+        /// <returns> returns true if the same item (address and watchCycle) exist in the subscription.</returns>
+        public bool HasItem(PlcWatchReference plcWatchReference)
+        {
+            if (_variables.TryGetValue(plcWatchReference.Address, out var reference))
+            {
+                return plcWatchReference.WatchCycle == reference.WatchCycle;
+            }
+            return false;
+        }
+
+
+        /// <summary>
         /// Returns the plc read result form the subscriptions cache
         /// </summary>
         /// <param name="vars"></param>
