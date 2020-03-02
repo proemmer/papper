@@ -74,6 +74,7 @@ namespace Papper.Internal
         private static void WorkOnChild(PlcRawData rd, int baseOffset, ref bool inReadOnlyArea, ref int offset, ref bool itemsToAdd, ref byte bitMask, ref int bitMaskOffset, ref PlcObject? pred, PlcObject plcObj)
         {
             var currentOffset = baseOffset + plcObj.ByteOffset;
+            var lastSubItemWasReadonly = false;
             // if we had a bit mask and we change the byte, add the mask to the slot.
             if (bitMaskOffset != -1 && bitMaskOffset != currentOffset)
             {
@@ -120,6 +121,7 @@ namespace Papper.Internal
                         currentOffset += array.ArrayType.ByteSize;
                         if (currentOffset % 2 != 0) currentOffset++;
                     }
+                    lastSubItemWasReadonly = inReadOnlyArea;
                 }
             }
             else if (inReadOnlyArea)
@@ -128,7 +130,7 @@ namespace Papper.Internal
                 itemsToAdd = true;
             }
 
-            inReadOnlyArea = plcObj.IsReadOnly;
+            inReadOnlyArea = plcObj.IsReadOnly || lastSubItemWasReadonly;
             pred = plcObj;
         }
     }

@@ -1,4 +1,5 @@
 ﻿using Insite.Customer.Data.DB_BST1_Regal_1_Konfig;
+using Insite.Customer.Data.DB_IPSC_Konfig;
 using Papper;
 using Papper.Extensions.Metadata;
 using Papper.Extensions.Notification;
@@ -32,6 +33,7 @@ namespace Papper.Tests
         public PlcDataMapperTests(ITestOutputHelper output)
         {
             _output = output;
+            _papper.AddMapping(typeof(DB_IPSC_Konfig));
             _papper.AddMapping(typeof(DB_BST4_Boxen_1_Konfig));
             _papper.AddMapping(typeof(DB_BST1_Regal_1_Konfig));
             _papper.AddMapping(typeof(DB_BST1_ChargenRV));
@@ -510,6 +512,7 @@ namespace Papper.Tests
         [InlineData("DB_BST1_ChargenRV.This", "Dat.Data.Element[5].MaxCntPiecesInTray", (short)5, "Dat.Data.Element[5].ActCntPieces", (short)2)]
         [InlineData("DB_BST4_Boxen_1_Konfig.This", "Boxen.vorhanden", true, "Boxen.fertig", true)]
         [InlineData("DB_BST1_Regal_1_Konfig.This", "Regal.Fach[1].aktiv", true, "Regal.Fach[1].fertig", true)]
+        [InlineData("DB_IPSC_Konfig.This", "ZP[2].UNIV_aktiv", true, "ZP[2].Ausw.UNIV_Ergebnis.IO_Nr", 1)]
 
         public async Task PerformReadStruct(string address, string propertyWritable, object valueWritable, string propertyReadonly, object valueReadonly)
         {
