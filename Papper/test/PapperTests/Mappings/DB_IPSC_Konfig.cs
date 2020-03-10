@@ -119,10 +119,10 @@ namespace Insite.Customer.Data.DB_IPSC_Konfig
         public string ZP_Name { get; set; }	//Zählpunktname z:b: T03_1LM9
         public bool UNIV_aktiv { get; set; }	//Universal Auswertung aktiv
         public bool nochmal_versenden { get; set; }	//Zählpunkt nochmal versenden
-        //public DB_IPSC_Konfig_ZP_Daten Daten { get; set; }
-        //public DB_IPSC_Konfig_ZP_ZielAusw ZielAusw { get; set; }	//Zielauswertung von - bis Jis wird auch bei nicht Wt_mit_Bearb gesendet
+        public DB_IPSC_Konfig_ZP_Daten Daten { get; set; }
+        public DB_IPSC_Konfig_ZP_ZielAusw ZielAusw { get; set; }	//Zielauswertung von - bis Jis wird auch bei nicht Wt_mit_Bearb gesendet
         public DB_IPSC_Konfig_ZP_Ausw Ausw { get; set; }
-        //public DB_IPSC_Konfig_ZP_RFDaten RFDaten { get; set; }	//Daten die in den BtInternen Bereich geschrieben werden sollen
+        public DB_IPSC_Konfig_ZP_RFDaten RFDaten { get; set; }	//Daten die in den BtInternen Bereich geschrieben werden sollen
     }
 
 
@@ -231,23 +231,23 @@ namespace Insite.Customer.Data.DB_IPSC_Konfig
     [Mapping("DB_IPSC_Konfig", "DB463", 0)]
     public class DB_IPSC_Konfig
     {
-        //public DB_IPSC_Konfig_Daten Daten { get; set; }
+        public DB_IPSC_Konfig_Daten Daten { get; set; }
 
-        //[StringLength(14)]
-        //public string Reserve { get; set; }
+        [StringLength(14)]
+        public string Reserve { get; set; }
 
         [ArrayBounds(1, 10, 0)]
         public DB_IPSC_Konfig_ZP[] ZP { get; set; }
 
-        //[StringLength(48)]
-        //public string Reserve1 { get; set; }
+        [StringLength(48)]
+        public string Reserve1 { get; set; }
 
-        //[ArrayBounds(1, 10, 0)]
-        //public DB_IPSC_Konfig_StatusAnzeige_ZP[] StatusAnzeige_ZP { get; set; }
+        [ArrayBounds(1, 10, 0)]
+        public DB_IPSC_Konfig_StatusAnzeige_ZP[] StatusAnzeige_ZP { get; set; }
 
-        //[StringLength(88)]
-        //public string Reserve2 { get; set; }
-        //public DB_IPSC_Konfig_ZP_HMI_manuell ZP_HMI_manuell { get; set; }
+        [StringLength(88)]
+        public string Reserve2 { get; set; }
+        public DB_IPSC_Konfig_ZP_HMI_manuell ZP_HMI_manuell { get; set; }
 
     }
 

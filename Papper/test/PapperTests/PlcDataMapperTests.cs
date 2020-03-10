@@ -1,5 +1,7 @@
 ﻿using Insite.Customer.Data.DB_BST1_Regal_1_Konfig;
 using Insite.Customer.Data.DB_IPSC_Konfig;
+using Insite.Customer.Data.DB_Setup_AGV_BST1;
+using Insite.Customer.Data.DB_SpindlePos_BST1;
 using Papper;
 using Papper.Extensions.Metadata;
 using Papper.Extensions.Notification;
@@ -27,12 +29,14 @@ namespace Papper.Tests
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
     public sealed class PlcDataMapperTests : IDisposable
     {
-        private readonly PlcDataMapper _papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
+        private readonly PlcDataMapper _papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite, OptimizerType.Items);
         private readonly ITestOutputHelper _output;
 
         public PlcDataMapperTests(ITestOutputHelper output)
         {
             _output = output;
+            _papper.AddMapping(typeof(DB_Setup_AGV_BST1));
+            _papper.AddMapping(typeof(DB_SpindlePos_BST1));
             _papper.AddMapping(typeof(DB_IPSC_Konfig));
             _papper.AddMapping(typeof(DB_BST4_Boxen_1_Konfig));
             _papper.AddMapping(typeof(DB_BST1_Regal_1_Konfig));
@@ -513,7 +517,7 @@ namespace Papper.Tests
         [InlineData("DB_BST4_Boxen_1_Konfig.This", "Boxen.vorhanden", true, "Boxen.fertig", true)]
         [InlineData("DB_BST1_Regal_1_Konfig.This", "Regal.Fach[1].aktiv", true, "Regal.Fach[1].fertig", true)]
         [InlineData("DB_IPSC_Konfig.This", "ZP[2].UNIV_aktiv", true, "ZP[2].Ausw.UNIV_Ergebnis.IO_Nr", 1)]
-
+        [InlineData("DB_SpindlePos_BST1.This", "N57_Pos[2].PosX", 2, "ActPosX", 1)]
         public async Task PerformReadStruct(string address, string propertyWritable, object valueWritable, string propertyReadonly, object valueReadonly)
         {
             var readResults = await _papper.ReadAsync(PlcReadReference.FromAddress(address)).ConfigureAwait(false);
@@ -536,6 +540,26 @@ namespace Papper.Tests
             Assert.NotEqual(res1, res3);
             Assert.Equal(res2, res4);
         }
+
+
+        [Theory]
+        [InlineData("DB_BST1_ChargenRV.This")]
+        [InlineData("DB_BST4_Boxen_1_Konfig.This")]
+        [InlineData("DB_BST1_Regal_1_Konfig.This")]
+        [InlineData("DB_IPSC_Konfig.This")]
+        [InlineData("DB_SpindlePos_BST1.This")]
+        [InlineData("DB_Setup_AGV_BST1.This")]
+        public async Task TestWritingAlwaysTheSame(string address)
+        {
+            var readResultsBefore = await _papper.ReadAsync(PlcReadReference.FromAddress(address)).ConfigureAwait(false);
+            for (int i = 0; i < 100; i++)
+            {
+                var r = await _papper.WriteAsync(PlcWriteReference.FromAddress(address, readResultsBefore[0].Value)).ConfigureAwait(false);
+                var readResultsAfter = await _papper.ReadAsync(PlcReadReference.FromAddress(address)).ConfigureAwait(false);
+                Assert.True(AreDataEqual(readResultsBefore[0].Value, readResultsAfter[0].Value));
+            }
+        }
+
 
 
         [Fact]
