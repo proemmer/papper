@@ -64,7 +64,7 @@ namespace Papper.Attributes
         }
 
         // overload operator + 
-        public static bool operator ==(MappingAttribute a, MappingAttribute b)
+        public static bool operator ==(MappingAttribute? a, MappingAttribute? b)
         {
             bool rc;
 
@@ -89,7 +89,7 @@ namespace Papper.Attributes
 
 
 
-        public static bool operator !=(MappingAttribute p1, MappingAttribute p2) => !(p1 == p2);
+        public static bool operator !=(MappingAttribute? p1, MappingAttribute? p2) => !(p1 == p2);
 
         public override bool Equals(object obj)
         {

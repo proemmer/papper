@@ -325,7 +325,7 @@ namespace Papper.Internal
         /// <summary>
         /// Try to get the mapping from MetaTree. If the data are not in the tree, try to create and add it. 
         /// </summary>
-        internal static PlcObject? GetMapping(string? name, ITree tree, Type t, bool allowAddingWithoutMappingAttribute = false)
+        internal static PlcObject? GetMapping(string? name, ITree tree, Type t, bool allowAddingWithoutMappingAttribute = false, MappingAttribute? fallbackMapping = null)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -357,6 +357,17 @@ namespace Papper.Internal
                     {
                         Offset = { Bytes = mapping.Offset },
                         Selector = mapping.Selector
+                    };
+                    PlcObject.AddPlcObjectToTree(plcObj, tree, PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse()));
+                    obj = plcObj;
+                }
+                else if (fallbackMapping != null)
+                {
+                    nodePathStack.Pop();
+                    var plcObj = new PlcObjectRef(name, GetMetaData(tree, t!))
+                    {
+                        Offset = { Bytes = fallbackMapping.Offset },
+                        Selector = fallbackMapping.Selector
                     };
                     PlcObject.AddPlcObjectToTree(plcObj, tree, PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse()));
                     obj = plcObj;

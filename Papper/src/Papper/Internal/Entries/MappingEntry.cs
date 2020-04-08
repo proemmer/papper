@@ -12,7 +12,7 @@ namespace Papper.Internal
         public Type Type { get; private set; }
 
         public MappingEntry(PlcDataMapper mapper, MappingAttribute mapping, Type type, PlcMetaDataTree tree, int validationTimeInMs)
-            : base(mapper, PlcObjectResolver.GetMapping(mapping?.Name, tree, type), validationTimeInMs)
+            : base(mapper, PlcObjectResolver.GetMapping(mapping?.Name, tree, type, false, mapping), validationTimeInMs)
         {
             Mapping = mapping ?? ExceptionThrowHelper.ThrowArgumentNullException<MappingAttribute>(nameof(mapping));
             Type = type ?? ExceptionThrowHelper.ThrowArgumentNullException<Type>(nameof(type));
