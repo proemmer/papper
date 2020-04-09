@@ -25,11 +25,28 @@ namespace Papper.Types
 
                     if (first != last)
                     {
-                        byteOffset = (last.Offset.Bytes + (last.Size == null || last.Size.Bytes == 0 ? 1 : last.Size.Bytes)) - first.Offset.Bytes;
+                        var fixe1 = last.Size == null || last.Size.Bytes == 0;
+                        byteOffset = (last.Offset.Bytes + (fixe1 ? 1 : last.Size!.Bytes)) - first.Offset.Bytes;
+
+                        if(!fixe1 && last.BitSize > 0)
+                        {
+                            byteOffset += 1;
+                        }
                     }
                     else
                     {
-                        byteOffset = (first.Size == null || first.Size.Bytes == 0 ? 1 : first.Size.Bytes);
+                        var fixe1 = first.Size == null || first.Size.Bytes == 0;
+                        byteOffset = fixe1 ? 1 : first.Size!.Bytes;
+
+                        if (!fixe1 && first.BitSize > 0)
+                        {
+                            byteOffset += 1;
+                        }
+                    }
+
+                    if (byteOffset % 2 == 1)
+                    {
+                        byteOffset += 1;
                     }
                 }
 
