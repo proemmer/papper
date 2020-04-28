@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Papper.Internal
@@ -7,7 +8,7 @@ namespace Papper.Internal
     {
         private static readonly List<ITreeNode> _empty = new List<ITreeNode>();
         private List<ITreeNode>? _childs;
-        private Dictionary<string, ITreeNode>? _childByNameCache;
+        private ConcurrentDictionary<string, ITreeNode>? _childByNameCache;
 
 
         public PlcMetaDataTreeNode(string name)
@@ -59,7 +60,7 @@ namespace Papper.Internal
             ITreeNode? tn;
             if (_childByNameCache == null)
             {
-                _childByNameCache = new Dictionary<string, ITreeNode>();
+                _childByNameCache = new ConcurrentDictionary<string, ITreeNode>();
             }
             else if (_childByNameCache.TryGetValue(name, out tn))
             {

@@ -747,6 +747,23 @@ namespace Papper.Tests
         }
 
 
+        [Fact]
+        public async Task AddAndRemoveMapping()
+        {
+            var result1 = _papper.AddMapping(typeof(UdtMotion), new Attributes.MappingAttribute
+            (
+                "DI_VK_BST1.Index.bew",
+                "DB1111",
+                100
+            ));
+
+
+            await _papper.ReadAsync(PlcReadReference.FromAddress("DI_VK_BST1.Index.bew.MovingState1")).ConfigureAwait(false);
+
+
+        }
+
+
         #region Helper
 
 
