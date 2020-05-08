@@ -83,10 +83,13 @@ namespace Papper.Extensions.Notification
         /// </summary>
         public void Dispose()
         {
-            _watchingTcs.SetResult(null);
-            _mapper.RemoveSubscription(this);
-            _variables.Clear();
-            _lruCache.Dispose();
+            using (new ReaderGuard(_lock))
+            { 
+                _watchingTcs.TrySetResult(null);
+                _mapper.RemoveSubscription(this);
+                _variables.Clear();
+                _lruCache.Dispose();
+            }
             _lock.Dispose();
         }
 
