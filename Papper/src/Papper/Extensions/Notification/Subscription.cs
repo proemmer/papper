@@ -17,7 +17,7 @@ namespace Papper.Extensions.Notification
         private readonly PlcDataMapper _mapper;
         private readonly LruCache _lruCache = new LruCache();
         private readonly Dictionary<string, PlcWatchReference> _variables = new Dictionary<string, PlcWatchReference>();
-        private readonly ReaderWriterLockSlim _lock;
+        private readonly SemaphoreSlim _lock;
         private readonly ChangeDetectionStrategy _changeDetectionStrategy;
         private readonly int _defaultInterval;
         private readonly AsyncAutoResetEvent<IEnumerable<DataPack>>? _changeEvent;
@@ -65,7 +65,7 @@ namespace Papper.Extensions.Notification
             _mapper = mapper ?? ExceptionThrowHelper.ThrowArgumentNullException<PlcDataMapper>(nameof(mapper));
             _changeDetectionStrategy = changeDetectionStrategy;
             _defaultInterval = defaultInterval;
-            _lock = new ReaderWriterLockSlim();
+            _lock = new SemaphoreSlim(1);
             UpdateWatchCycle(vars);
 
             if (changeDetectionStrategy == ChangeDetectionStrategy.Event)
@@ -83,7 +83,7 @@ namespace Papper.Extensions.Notification
         /// </summary>
         public void Dispose()
         {
-            using (new ReaderGuard(_lock))
+            using (new SemaphoreGuard(_lock))
             { 
                 _watchingTcs.TrySetResult(null);
                 _mapper.RemoveSubscription(this);
@@ -138,14 +138,14 @@ namespace Papper.Extensions.Notification
         /// <param name="vars"></param>
         public bool RemoveItems(IEnumerable<PlcWatchReference> vars)
         {
-            using (new WriterGuard(_lock))
+            var filteredVars = vars.Where(item => !string.IsNullOrEmpty(item.Address)).ToList();
+            using (new SemaphoreGuard(_lock))
             {
-                var result = vars.Where(item => !string.IsNullOrEmpty(item.Address)).Any(item => _variables.Remove(item.Address)) | _modified;
+                var result = filteredVars.Any(item => _variables.Remove(item.Address)) | _modified;
                 if (result)
                 {
                     UpdateWatchCycle(_variables.Values);
                 }
-
                 _modified = result;
                 return result;
             }
@@ -171,7 +171,7 @@ namespace Papper.Extensions.Notification
         /// </summary>
         /// <param name="vars"></param>
         /// <returns></returns>
-        public PlcReadResult[]? ReadResultsFromCache(IEnumerable<PlcWatchReference> vars)
+        public async ValueTask<PlcReadResult[]?> ReadResultsFromCache(IEnumerable<PlcWatchReference> vars)
         {
             if (_executions!.IsNullOrEmpty() || !vars.Any())
             {
@@ -179,21 +179,23 @@ namespace Papper.Extensions.Notification
             }
 
             var variables = vars.Select(x => x.Address).ToList();
-            using (new ReaderGuard(_lock))
+            List<Execution>? executions = null;
+            using (await SemaphoreGuard.Async(_lock))
             {
-                if (_executions!.IsNullOrEmpty())
+                executions = _executions!.ToList();
+                if (executions!.IsNullOrEmpty())
                 {
                     return null;
                 }
-
-                return _executions.GroupBy(exec => exec.ExecutionResult) // Group by execution result
-                                                     .SelectMany(group => group.SelectMany(g => g.Bindings)
-                                                                               .Where(b => variables.Contains(b.Key))
-                                                                               .Select(b => new PlcReadResult(b.Key,
-                                                                                                              b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache.Span),
-                                                                                                              group.Key)
-                                                                               )).ToArray();
             }
+
+            return executions.GroupBy(exec => exec.ExecutionResult) // Group by execution result
+                                                  .SelectMany(group => group.SelectMany(g => g.Bindings)
+                                                                            .Where(b => variables.Contains(b.Key))
+                                                                            .Select(b => new PlcReadResult(b.Key,
+                                                                                                            b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache.Span),
+                                                                                                            group.Key)
+                                                                            )).ToArray();
         }
 
         /// <summary>
@@ -223,19 +225,27 @@ namespace Papper.Extensions.Notification
 
                     if (_modified)
                     {
-                        using (new WriterGuard(_lock))
+                        // test if sema is free, if not test it the next cycle
+                        if (_lock.Wait(0))
                         {
-                            if (_modified)
+                            try
                             {
-                                cycles = _variables.Values.ToDictionary(x => x.Address, x => x.WatchCycle);
-                                interval = Interval;
-                                _executions = _mapper.DetermineExecutions(_variables.Values);
-                                if (_changeDetectionStrategy == ChangeDetectionStrategy.Event)
+                                if (_modified)
                                 {
-                                    var needUpdate = PlcDataMapper.UpdateableItems(_executions, false);
-                                    await _mapper.UpdateMonitoringItemsAsync(needUpdate.Values).ConfigureAwait(false);
+                                    cycles = _variables.Values.ToDictionary(x => x.Address, x => x.WatchCycle);
+                                    interval = Interval;
+                                    _executions = _mapper.DetermineExecutions(_variables.Values);
+                                    if (_changeDetectionStrategy == ChangeDetectionStrategy.Event)
+                                    {
+                                        var needUpdate = PlcDataMapper.UpdateableItems(_executions, false);
+                                        await _mapper.UpdateMonitoringItemsAsync(needUpdate.Values).ConfigureAwait(false);
+                                    }
+                                    _modified = false;
                                 }
-                                _modified = false;
+                            }
+                            finally
+                            {
+                                _lock.Release();
                             }
                         }
                     }
@@ -333,23 +343,24 @@ namespace Papper.Extensions.Notification
                 return false;
             }
 
-            using (new WriterGuard(_lock))
-            {
-                var variables = new Dictionary<string, PlcWatchReference>();
-                foreach (var variable in vars)
-                {
-                    if (!_mapper.IsValidReference(variable))
-                    {
-                        if (throwExceptions)
-                        {
-                            ExceptionThrowHelper.ThrowInvalidVariableException(variable.Address);
-                        }
-                        return false;
-                    }
-                    variables.Add(variable.Address, variable);
-                }
 
-                if (variables.Any())
+            var variables = new Dictionary<string, PlcWatchReference>();
+            foreach (var variable in vars)
+            {
+                if (!_mapper.IsValidReference(variable))
+                {
+                    if (throwExceptions)
+                    {
+                        ExceptionThrowHelper.ThrowInvalidVariableException(variable.Address);
+                    }
+                    return false;
+                }
+                variables.Add(variable.Address, variable);
+            }
+
+            if (variables.Any())
+            {
+                using (new SemaphoreGuard(_lock))
                 {
                     // After we validate all items, we add all
                     // if one is not valid non of them will be added, this is because of consistence
@@ -369,8 +380,8 @@ namespace Papper.Extensions.Notification
                     UpdateWatchCycle(_variables.Values);
                     return _modified = true;
                 }
-                return false;
             }
+            return false;
         }
 
 
