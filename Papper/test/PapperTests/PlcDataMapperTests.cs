@@ -381,7 +381,10 @@ namespace Papper.Tests
 
             var sub = _papper.SubscribeDataChanges((s, e) =>
             {
-                value = (short)e[$"{mapping}.SafeMotion.Header.NumberOfActiveSlots"];
+                if (e.FieldCount > 0)
+                {
+                    value = (short)e[$"{mapping}.SafeMotion.Header.NumberOfActiveSlots"];
+                }
             }, PlcWatchReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", 10),
                                                                   PlcWatchReference.FromAddress($"{mapping}.SafeMotion.Header.States.ChecksumInvalid", 10));
             var result2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress($"{mapping}.SafeMotion") }).ConfigureAwait(false);
@@ -409,7 +412,10 @@ namespace Papper.Tests
             var result2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress($"{mapping}.SafeMotion") }).ConfigureAwait(false);
             var sub = _papper.SubscribeDataChanges((s, e) =>
             {
-                value = (short)e[$"{mapping}.SafeMotion.Header.NumberOfActiveSlots"];
+                if (e.FieldCount > 0)
+                {
+                    value = (short)e[$"{mapping}.SafeMotion.Header.NumberOfActiveSlots"];
+                }
             }, PlcWatchReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", 10),
                                                                   PlcWatchReference.FromAddress($"{mapping}.SafeMotion.Header.States.ChecksumInvalid", 10));
 
@@ -585,7 +591,7 @@ namespace Papper.Tests
             Test(mapping, accessDict, "");
 
             //Byte data check
-            var dbData = MockPlc.GetPlcEntry("DB30").Data;
+            var dbData = MockPlc.Instance.GetPlcEntry("DB30").Data;
             Assert.True(dbData.Slice(0, 2).Span.SequenceEqual(new byte[] { 35, 5 }));
             Assert.True(dbData.Slice(2, 5).Span.SequenceEqual("TEST1".ToByteArray(5)));
 
@@ -648,7 +654,7 @@ namespace Papper.Tests
 
 
         [Fact]
-        public void TestInvalidMappings()
+        public async Task TestInvalidMappings()
         {
 
             using var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite, UpdateHandler, ReadMetaData, OptimizerType.Items);
@@ -656,13 +662,13 @@ namespace Papper.Tests
 
             using (var subscription = papper.CreateSubscription(ChangeDetectionStrategy.Event))
             {
-                Assert.True(subscription.TryAddItems(PlcWatchReference.FromAddress("DB_Safety.SafeMotion.Slots[0]", 100)));
-                Assert.False(subscription.TryAddItems(PlcWatchReference.FromAddress("Test.XY", 100)));
-                Assert.False(subscription.TryAddItems(PlcWatchReference.FromAddress("DB_Safety.XY", 100)));
+                Assert.True(await subscription.TryAddItemsAsync(PlcWatchReference.FromAddress("DB_Safety.SafeMotion.Slots[0]", 100)));
+                Assert.False(await subscription.TryAddItemsAsync(PlcWatchReference.FromAddress("Test.XY", 100)));
+                Assert.False(await subscription.TryAddItemsAsync(PlcWatchReference.FromAddress("DB_Safety.XY", 100)));
 
 
-                Assert.Throws<InvalidVariableException>(() => subscription.AddItems(PlcWatchReference.FromAddress("Test.XY", 100)));
-                Assert.Throws<InvalidVariableException>(() => subscription.AddItems(PlcWatchReference.FromAddress("DB_Safety.XY", 100)));
+                await Assert.ThrowsAsync<InvalidVariableException>(() => subscription.AddItemsAsync(PlcWatchReference.FromAddress("Test.XY", 100))).ConfigureAwait(false);
+                await Assert.ThrowsAsync<InvalidVariableException>(() => subscription.AddItemsAsync(PlcWatchReference.FromAddress("DB_Safety.XY", 100))).ConfigureAwait(false);
             }
         }
 
@@ -801,7 +807,7 @@ namespace Papper.Tests
         {
             foreach (var item in monitoring)
             {
-                MockPlc.UpdateDataChangeItem(item, !add);
+                MockPlc.Instance.UpdateDataChangeItem(item, !add);
             }
             return Task.CompletedTask;
         }
@@ -821,7 +827,7 @@ namespace Papper.Tests
             foreach (var item in result)
             {
                 Console.WriteLine($"OnRead: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
-                var res = MockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length);
+                var res = MockPlc.Instance.GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length);
                 if (!res.IsEmpty)
                 {
                     item.ApplyData(res);
@@ -840,7 +846,7 @@ namespace Papper.Tests
             var result = reads.ToList();
             foreach (var item in result)
             {
-                var entry = MockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length);
+                var entry = MockPlc.Instance.GetPlcEntry(item.Selector, item.Offset + item.Length);
                 if (!item.HasBitMask)
                 {
                     Console.WriteLine($"OnWrite: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");

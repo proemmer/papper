@@ -41,21 +41,30 @@ namespace Papper.Tests.Util
     }
 
 
-    public static class MockPlc
+    public sealed class MockPlc
     {
-        private static readonly Dictionary<string, PlcItem> _items = new Dictionary<string, PlcItem>();
-        private static Task _watchTask;
-        private static bool _stop;
-
-        public static Action<IEnumerable<PlcItem>> OnItemChanged { get; set; }
 
 
-        private static readonly Dictionary<string, PlcBlock> _plc = new Dictionary<string, PlcBlock>();
+        private readonly Dictionary<string, PlcItem> _items = new Dictionary<string, PlcItem>();
+        private Task _watchTask;
+        private bool _stop;
+
+        public Action<IEnumerable<PlcItem>> OnItemChanged { get; set; }
 
 
-        public static void Clear() => _plc.Clear();
+        private readonly Dictionary<string, PlcBlock> _plc = new Dictionary<string, PlcBlock>();
+        private static readonly Lazy<MockPlc> _instance  = new Lazy<MockPlc>(() => new MockPlc());
+        public static MockPlc Instance { get { return _instance.Value; } }
 
-        public static PlcBlock GetPlcEntry(string selector, int minSize = -1)
+        public MockPlc()
+        {
+
+        }
+
+
+        public void Clear() => _plc.Clear();
+
+        public PlcBlock GetPlcEntry(string selector, int minSize = -1)
         {
             if (!_plc.TryGetValue(selector, out var plcblock))
             {
@@ -77,7 +86,7 @@ namespace Papper.Tests.Util
             return plcblock;
         }
 
-        public static void UpdateDataChangeItem(DataPack item, bool remove = false)
+        public void UpdateDataChangeItem(DataPack item, bool remove = false)
         {
             if (item == null)
             {
@@ -120,7 +129,7 @@ namespace Papper.Tests.Util
             }
         }
 
-        private static void Watch()
+        private void Watch()
         {
             var changed = new List<PlcItem>();
             while (!_stop)

@@ -63,7 +63,7 @@ namespace Papper.Internal
                 else
                 {
                     CancellationTokenRegistration registration = default;
-                    var tcs = new TaskCompletionSource<T>();
+                    var tcs = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
                     if (token != CancellationToken.None && token.CanBeCanceled)
                     {
                         registration = token.Register(() =>
@@ -80,7 +80,7 @@ namespace Papper.Internal
                             registration.Dispose();
                         }
                         return t.Result;
-                    }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+                    }, CancellationToken.None, TaskContinuationOptions.RunContinuationsAsynchronously, TaskScheduler.Default);
                 }
             }
         }
