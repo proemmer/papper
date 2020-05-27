@@ -95,10 +95,11 @@ namespace Papper.Extensions.Notification
 
 
 
-        private static void RunWatchTask(Subscription subscription, OnChangeEventHandler callback) 
-            => _ = Task.Factory.StartNew(async () => await WatchLoop(subscription, callback)
-                               .ConfigureAwait(false), 
-                                System.Threading.CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Current);
+        private static Task RunWatchTask(Subscription subscription, OnChangeEventHandler callback) 
+            => Task.Factory.StartNew(() => WatchLoop(subscription, callback), 
+                                         System.Threading.CancellationToken.None, 
+                                         TaskCreationOptions.LongRunning,
+                                         TaskScheduler.Default).Unwrap();
 
         private static async Task WatchLoop(Subscription subscription, OnChangeEventHandler callback)
         {
