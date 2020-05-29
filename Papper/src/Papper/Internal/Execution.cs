@@ -75,7 +75,8 @@ namespace Papper.Internal
         {
             var res =  Bindings.Where(x => !x.Value.MetaData.IsReadOnly)
                                .Select(x => new KeyValuePair<string, IEnumerable<DataPack>>(x.Key, Create(values[x.Key], x.Value, memoryBuffer, x.Value.Offset)))
-                               .SelectMany(x => x.Value).ToList();
+                               .SelectMany(x => x.Value)
+                               .ToList();
             return new KeyValuePair<Execution, IEnumerable<DataPack>>(this, res);
         }
 

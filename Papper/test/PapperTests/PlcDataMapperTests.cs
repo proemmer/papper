@@ -48,6 +48,8 @@ namespace Papper.Tests
             _papper.AddMapping(typeof(PrimitiveValuesMapping));
             _papper.AddMapping(typeof(DB_MotionHMI));
             _papper.AddMapping(typeof(MSpindleInterface));
+            _papper.AddMapping(typeof(RfData));
+
 
         }
 
@@ -767,6 +769,109 @@ namespace Papper.Tests
             await _papper.ReadAsync(PlcReadReference.FromAddress("DI_VK_BST1.Index.bew.MovingState1")).ConfigureAwait(false);
 
 
+        }
+
+
+        [Fact]
+        public async Task ReadBigAndSmallPart()
+        {
+            var write = PlcWriteReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", new char[4] { 'A', 'B', 'C', 'D' });
+
+            var exec2 = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
+            var exec = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", 200) });
+
+            Assert.True(exec[0].Bindings.Values.FirstOrDefault().RawData.Size == 4);
+            Assert.True(exec2[0].Bindings.Values.FirstOrDefault().RawData.Size == 7970);
+
+            await _papper.WriteAsync(write).ConfigureAwait(false);
+
+
+            var data = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA") }).ConfigureAwait(false);
+            Assert.True(data[0].Value is byte[] b && b.Length == 7970);
+
+
+            var data2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number") }).ConfigureAwait(false);
+            Assert.True(data2[0].Value is byte[] b2 && b2.Length == 4);
+
+
+            Assert.True(data2[0].Value is byte[] bX1 && data[0].Value is byte[] bx2 && bX1.SequenceEqual(bx2.SubArray(0, 4)));
+        }
+
+        [Fact]
+        public async Task ReadSmallAndBigPart()
+        {
+            var write = PlcWriteReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", new char[4] { 'A', 'B', 'C', 'D' });
+
+            var exec = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", 200) });
+            var exec2 = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
+
+            Assert.True(exec[0].Bindings.Values.FirstOrDefault().RawData.Size == 4);
+            Assert.True(exec2[0].Bindings.Values.FirstOrDefault().RawData.Size == 7970);
+
+
+            await _papper.WriteAsync(write).ConfigureAwait(false);
+
+
+            var data2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number") }).ConfigureAwait(false);
+            Assert.True(data2[0].Value is byte[] b2 && b2.Length == 4);
+
+            var data = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA") }).ConfigureAwait(false);
+            Assert.True(data[0].Value is byte[] b && b.Length == 7970);
+
+
+
+            Assert.True(data2[0].Value is byte[] bX1 && data[0].Value is byte[] bx2 && bX1.SequenceEqual(bx2.SubArray(0, 4)));
+        }
+
+
+        [Fact]
+        public async Task ReadBigAndSmallPartsWithGap()
+        {
+            var write = PlcWriteReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", new char[4] { 'A', 'B', 'C', 'D' });
+
+            var exec2 = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
+            var exec = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", 200), PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.EngineData.EngineNo", 200) });
+
+            Assert.True(exec[0].Bindings.Values.FirstOrDefault().RawData.Size == 4);
+            Assert.True(exec2[0].Bindings.Values.FirstOrDefault().RawData.Size == 7970);
+
+            await _papper.WriteAsync(write).ConfigureAwait(false);
+
+
+            var data = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA") }).ConfigureAwait(false);
+            Assert.True(data[0].Value is byte[] b && b.Length == 7970);
+
+
+            var data2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number") }).ConfigureAwait(false);
+            Assert.True(data2[0].Value is byte[] b2 && b2.Length == 4);
+
+
+            Assert.True(data2[0].Value is byte[] bX1 && data[0].Value is byte[] bx2 && bX1.SequenceEqual(bx2.SubArray(0, 4)));
+        }
+
+        [Fact]
+        public async Task ReadBigAndSmallPartsWithoutGap()
+        {
+            var write = PlcWriteReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", new char[4] { 'A', 'B', 'C', 'D' });
+
+            var exec2 = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
+            var exec = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", 200), PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Status", 200) });
+
+            Assert.True(exec[0].Bindings.Values.FirstOrDefault().RawData.Size == 4);
+            Assert.True(exec2[0].Bindings.Values.FirstOrDefault().RawData.Size == 7970);
+
+            await _papper.WriteAsync(write).ConfigureAwait(false);
+
+
+            var data = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA") }).ConfigureAwait(false);
+            Assert.True(data[0].Value is byte[] b && b.Length == 7970);
+
+
+            var data2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number") }).ConfigureAwait(false);
+            Assert.True(data2[0].Value is byte[] b2 && b2.Length == 4);
+
+
+            Assert.True(data2[0].Value is byte[] bX1 && data[0].Value is byte[] bx2 && bX1.SequenceEqual(bx2.SubArray(0, 4)));
         }
 
 

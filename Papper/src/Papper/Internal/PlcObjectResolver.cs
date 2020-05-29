@@ -41,7 +41,7 @@ namespace Papper.Internal
         /// <param name="plcObj"></param>
         /// <param name="plcObjects"></param>
         /// <param name="values"></param>
-        internal static bool AddRawPlcObjects(ITreeNode plcObj, Dictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values)
+        internal static bool AddRawPlcObjects(ITreeNode plcObj, IDictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values)
         {
             var adds = new Dictionary<string, Tuple<int, PlcObject>>();
             var updated = false;

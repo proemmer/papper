@@ -296,7 +296,7 @@ namespace Papper.Extensions.Notification
                             var needUpdate = PlcDataMapper.UpdateableItems(_executions, true, DetermineChanges(cycles, interval));
 
                             // read outdated
-                            await _mapper.ReadFromPlcAsync(needUpdate).ConfigureAwait(false); // Update the read cache;
+                            await _mapper.ReadFromPlcAsync(needUpdate.Values).ConfigureAwait(false); // Update the read cache;
 
                             // filter to get only changed items
                             readRes = PlcDataMapper.CreatePlcReadResults(needUpdate.Keys, needUpdate, _lastRun, (x) => FilterChanged(detect, x));

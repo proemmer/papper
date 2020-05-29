@@ -29,7 +29,6 @@ namespace Papper.Tests
             _papper.AddMapping(typeof(DB_MotionHMI));
             _papper.AddMapping(typeof(DB_BST1_ChargenRV));
             _papper.AddMapping(typeof(MSpindleInterface));
-
         }
 
 

@@ -7,7 +7,7 @@ namespace Papper.Internal
 {
 
 
-    internal class WriteSlot
+    internal class Slot
     {
         public int Offset { get; set; }
         public int Size { get; set; }
@@ -24,7 +24,7 @@ namespace Papper.Internal
 
         public IDictionary<string, Tuple<int, PlcObject>> References { get; private set; } = new Dictionary<string, Tuple<int, PlcObject>>();
 
-        public List<WriteSlot> WriteSlots { get; private set; } = new List<WriteSlot>();
+        public List<Slot> WriteSlots { get; private set; } = new List<Slot>();
 
         public string? Selector { get; set; }
         public int Offset { get; set; }
@@ -75,7 +75,7 @@ namespace Papper.Internal
             var lastSlot = WriteSlots.LastOrDefault();
             if (lastSlot == null || offset >= (lastSlot.Offset + lastSlot.Size))
             {
-                WriteSlots.Add(new WriteSlot
+                WriteSlots.Add(new Slot
                 {
                     Offset = offset,
                     Size = size,
