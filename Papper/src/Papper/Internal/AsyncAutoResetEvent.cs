@@ -68,7 +68,16 @@ namespace Papper.Internal
                     {
                         registration = token.Register(() =>
                         {
-                            tcs.TrySetResult(default);
+                            bool removed;
+                            lock (_waits)
+                            {
+                                removed = _waits.RemoveMidQueue(tcs);
+                            }
+
+                            if (removed)
+                            {
+                                tcs.TrySetResult(default);
+                            }
                         }, false);
                     }
 

@@ -12,7 +12,7 @@ namespace Papper.Internal
         {
         }
 
-        protected override bool AddObject(ITreeNode plcObj, IDictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values)
-            => PlcObjectResolver.AddRawPlcObjects(PlcObject, Variables, values);
+        protected override bool AddObject(ITreeNode plcObj, IDictionary<string, OperationItem> plcObjects, IEnumerable<string> values)
+            => PlcObjectResolver.AddRawPlcObjects(PlcObject, plcObjects, values);
     }
 }

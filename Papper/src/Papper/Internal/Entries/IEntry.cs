@@ -9,7 +9,7 @@ namespace Papper.Internal
         int ReadDataBlockSize { get; }
         int ValidationTimeMs { get; set; }
         PlcObject PlcObject { get; }
-        IDictionary<string, Tuple<int, PlcObject>> Variables { get; }
+        IDictionary<string, OperationItem> Variables { get; }
         IEnumerable<Execution> GetOperations(IEnumerable<string> vars);
     }
 }

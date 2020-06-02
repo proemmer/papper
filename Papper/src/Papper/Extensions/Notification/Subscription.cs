@@ -299,7 +299,7 @@ namespace Papper.Extensions.Notification
                             await _mapper.ReadFromPlcAsync(needUpdate.Values).ConfigureAwait(false); // Update the read cache;
 
                             // filter to get only changed items
-                            readRes = PlcDataMapper.CreatePlcReadResults(needUpdate.Keys, needUpdate, _lastRun, (x) => FilterChanged(detect, x));
+                            readRes = PlcDataMapper.CreatePlcReadResults(_executions, needUpdate, _lastRun, (x) => FilterChanged(detect, x));
                         }
                         else
                         {
@@ -351,28 +351,6 @@ namespace Papper.Extensions.Notification
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="cycles">the cycle interval of the current variable</param>
-        /// <param name="cycleInterval">the minimum of all watches</param>
-        /// <returns></returns>
-        private static Func<IEnumerable<string>, DateTime, bool> DetermineChanges(Dictionary<string, int>? cycles, int cycleInterval)
-            => (variables, lastChange) => cycles != null &&
-                                          !cycles.Any() &&
-                                          !string.IsNullOrWhiteSpace(variables.FirstOrDefault(x => cycles.TryGetValue(x, out var interval) &&
-                                                                                                   lastChange.AddMilliseconds(interval < cycleInterval * 2 ? cycleInterval : interval) < DateTime.Now));
-        private async Task InternalStopSubscription()
-        {
-            _watchingTcs.TrySetResult(null);
-            await _watchingTcs.Task.ConfigureAwait(false);
-            _mapper.RemoveSubscription(this);
-            _variables.Clear();
-            _lruCache.Dispose();
-        }
-
-
-
         internal void OnDataChanged(IEnumerable<DataPack> changed)
         {
             if (_changeEvent != null)
@@ -384,6 +362,31 @@ namespace Papper.Extensions.Notification
                 ExceptionThrowHelper.ThrowOperationNotAllowedForCurrentChangeDetectionStrategy();
             }
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cycles">the cycle interval of the current variable</param>
+        /// <param name="cycleInterval">the minimum of all watches</param>
+        /// <returns></returns>
+        private static Func<IEnumerable<string>, DateTime, bool> DetermineChanges(Dictionary<string, int>? cycles, int cycleInterval)
+            => (variables, lastChange) => cycles != null &&
+                                          !cycles.Any() &&
+                                          !string.IsNullOrWhiteSpace(variables.FirstOrDefault(x => cycles.TryGetValue(x, out var interval) &&
+                                                                                                   lastChange.AddMilliseconds(interval < cycleInterval * 2 ? cycleInterval : interval) < DateTime.Now));
+
+
+
+
+        private async Task InternalStopSubscription()
+        {
+            _watchingTcs.TrySetResult(null);
+            await _watchingTcs.Task.ConfigureAwait(false);
+            _mapper.RemoveSubscription(this);
+            _variables.Clear();
+            _lruCache.Dispose();
+        }
+
 
         private async Task<bool> InternalAddItemsAsync(IEnumerable<PlcWatchReference>? vars, bool throwExceptions)
         {

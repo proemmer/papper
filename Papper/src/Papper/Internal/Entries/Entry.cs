@@ -18,7 +18,7 @@ namespace Papper.Internal
         public int ReadDataBlockSize => _mapper.ReadDataBlockSize;
         public int ValidationTimeMs { get; set; }
         public PlcObject PlcObject { get; private set; }
-        public IDictionary<string, Tuple<int, PlcObject>> Variables { get; private set; }
+        public IDictionary<string, OperationItem> Variables { get; private set; }
 
         public bool HasActiveVariables
         {
@@ -34,7 +34,7 @@ namespace Papper.Internal
             _mapper = mapper ?? ExceptionThrowHelper.ThrowArgumentNullException<PlcDataMapper>(nameof(mapper));
             PlcObject = plcObject ?? ExceptionThrowHelper.ThrowArgumentNullException<PlcObject>(nameof(plcObject));
             ValidationTimeMs = validationTimeInMs;
-            Variables = new ConcurrentDictionary<string, Tuple<int, PlcObject>>();
+            Variables = new ConcurrentDictionary<string, OperationItem>();
         }
 
         public IEnumerable<Execution> GetOperations(IEnumerable<string> vars)
@@ -47,14 +47,13 @@ namespace Papper.Internal
         {
             if (vars.Any(v => !_bindings.ContainsKey(v)))
             {
-                List<KeyValuePair<string, Tuple<int, PlcObject>>> currentVars;
+                List<KeyValuePair<string, OperationItem>> currentVars;
                 lock(_bindingLock)
                 {
                     AddObject(PlcObject, Variables, vars);
                     currentVars = _mapper.Optimizer is ItemBasedReadOperationOptimizer ? Variables.Where(x => vars.Contains(x.Key)).ToList() : Variables.ToList();
                 }
 
-                var bindings = new Dictionary<string, PlcObjectBinding>();
                 foreach (var rawDataBlock in _mapper.Optimizer.CreateRawReadOperations(PlcObject.Selector ?? string.Empty, currentVars, ReadDataBlockSize))
                 {
                     if (rawDataBlock.References.Any())
@@ -68,7 +67,7 @@ namespace Papper.Internal
             }
         }
 
-        protected abstract bool AddObject(ITreeNode plcObj, IDictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values);
+        protected abstract bool AddObject(ITreeNode plcObj, IDictionary<string, OperationItem> plcObjects, IEnumerable<string> values);
 
         protected IEnumerable<Execution> CreateExecutions(IEnumerable<string> vars, bool onlyActive = false)
         {
