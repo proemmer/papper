@@ -259,7 +259,6 @@ namespace Papper
         /// <returns>return true if all operations are succeeded</returns>
         public async Task<PlcWriteResult[]> WriteAsync(IEnumerable<PlcWriteReference> vars)
         {
-
             // because we need the byte arrays only for converting, we can use the ArrayPool
             var memoryBuffer = new Dictionary<PlcRawData, byte[]>();
             try
@@ -272,8 +271,11 @@ namespace Papper
                                          .ToDictionary(x => x.Key, x => x.Value);
 
                 await WriteToPlcAsync(prepared.Values.SelectMany(x => x)).ConfigureAwait(false);
-
-                executions.ForEach(exec => exec.Invalidate());
+                executions.ForEach(exec =>
+                {
+                    if(exec.ExecutionResult == ExecutionResult.Ok)
+                        exec.Invalidate();
+                });
 
                 return CreatePlcWriteResults(values, prepared);
             }

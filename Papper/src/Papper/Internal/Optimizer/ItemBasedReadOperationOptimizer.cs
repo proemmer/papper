@@ -61,11 +61,12 @@ namespace Papper.Internal
                 else
                 {
                     var directOffset = pred.Offset + pred.Size;
-                    if (directOffset == current.Offset)
+                    var newElementSize = pred.Size + current.Size;
+                    if (directOffset == current.Offset && newElementSize <= readDataBlockSize)
                     {
                         //follows direct
                         offset = current.Offset - pred.Offset;
-                        pred.Size += current.Size;
+                        pred.Size = newElementSize;
                         if(current.ContainsReadOnlyParts)
                         {
                             pred.ContainsReadOnlyParts = true;

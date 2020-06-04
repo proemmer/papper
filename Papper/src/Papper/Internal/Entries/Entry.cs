@@ -3,7 +3,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 
 namespace Papper.Internal
 {
@@ -19,15 +18,6 @@ namespace Papper.Internal
         public int ValidationTimeMs { get; set; }
         public PlcObject PlcObject { get; private set; }
         public IDictionary<string, OperationItem> Variables { get; private set; }
-
-        public bool HasActiveVariables
-        {
-            get
-            {
-                return _bindings.Any(x => x.Value.IsActive);
-            }
-        }
-
 
         public Entry(PlcDataMapper mapper, PlcObject? plcObject, int validationTimeInMs)
         {
@@ -48,7 +38,7 @@ namespace Papper.Internal
             if (vars.Any(v => !_bindings.ContainsKey(v)))
             {
                 List<KeyValuePair<string, OperationItem>> currentVars;
-                lock(_bindingLock)
+                lock (_bindingLock)
                 {
                     AddObject(PlcObject, Variables, vars);
                     currentVars = _mapper.Optimizer is ItemBasedReadOperationOptimizer ? Variables.Where(x => vars.Contains(x.Key)).ToList() : Variables.ToList();
@@ -60,7 +50,10 @@ namespace Papper.Internal
                     {
                         foreach (var reference in rawDataBlock.References)
                         {
-                            _bindings.TryAdd(reference.Key, new PlcObjectBinding(rawDataBlock, reference.Value.Item2, reference.Value.Item1, ValidationTimeMs));
+                            if (!_bindings.ContainsKey(reference.Key))
+                            {
+                                _bindings.TryAdd(reference.Key, new PlcObjectBinding(rawDataBlock, reference.Value.Item2, reference.Value.Item1, ValidationTimeMs));
+                            }
                         }
                     }
                 }
@@ -69,10 +62,10 @@ namespace Papper.Internal
 
         protected abstract bool AddObject(ITreeNode plcObj, IDictionary<string, OperationItem> plcObjects, IEnumerable<string> values);
 
-        protected IEnumerable<Execution> CreateExecutions(IEnumerable<string> vars, bool onlyActive = false)
+        protected IEnumerable<Execution> CreateExecutions(IEnumerable<string> vars)
         {
             var result = new Dictionary<PlcRawData, Dictionary<string, PlcObjectBinding>>();
-            foreach (var binding in _bindings.Where(binding => (vars == null || vars.Contains(binding.Key)) && (!onlyActive || binding.Value.IsActive)).ToList())
+            foreach (var binding in _bindings.Where(binding => (vars == null || vars.Contains(binding.Key))).ToList())
             {
                 if (!result.TryGetValue(binding.Value.RawData, out var entry))
                 {
@@ -85,33 +78,25 @@ namespace Papper.Internal
         }
 
         #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
+        private bool _disposedValue;
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
 
                 }
-                disposedValue = true;
+                _disposedValue = true;
             }
         }
 
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~Entry()
-        // {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
 
         // This code added to correctly implement the disposable pattern.
         public void Dispose()
         {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
             GC.SuppressFinalize(this);
         }
         #endregion

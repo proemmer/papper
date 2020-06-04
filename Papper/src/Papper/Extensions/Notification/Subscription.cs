@@ -304,13 +304,13 @@ namespace Papper.Extensions.Notification
                         else
                         {
                             var packs = await _changeEvent.WaitAsync(_cts.Token).ConfigureAwait(false);
-                            if (packs != null && packs.Any())
+                            if (packs?.Any() == true)
                             {
                                 readRes = PlcDataMapper.CreatePlcReadResults(_executions, packs);
                             }
                         }
 
-                        if (readRes != null && readRes.Any())
+                        if (readRes?.Any() == true)
                         {
                             _lastRun = detect;
                             return new ChangeResult(readRes, Watching.IsCanceled, Watching.IsCompleted);
@@ -328,7 +328,6 @@ namespace Papper.Extensions.Notification
                         {
                             using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, timeoutCts.Token))
                             {
-                                //await Task.Delay(interval, linkedCts.Token).ConfigureAwait(false);
                                 await _modifiedEvent.WaitAsync(linkedCts.Token).ConfigureAwait(false);
                             }
                         }
