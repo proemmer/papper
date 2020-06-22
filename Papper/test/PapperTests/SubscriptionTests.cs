@@ -362,7 +362,61 @@ namespace Papper.Tests
 
 
 
+        [Fact]
+        public async Task PerformRawDataArrayChange()
+        {
+            var intiState = true;
+            var originData = new Dictionary<string, object> {
+                    { "B0_10", new byte[]{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
+                };
+            var writeData = new Dictionary<string, object> {
+                    { "B0_10", new byte[]{ 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 } },
+                };
+            using var are = new AutoResetEvent(false);
+            void callback(object s, PlcNotificationEventArgs e)
+            {
 
+                if(e.Exception != null)
+                {
+
+                }
+
+
+                foreach (var item in e)
+                {
+                    if (!intiState)
+                    {
+                        Assert.Equal(writeData[item.Variable], item.Value);
+                    }
+                    else
+                    {
+                        Assert.Equal(originData[item.Variable], item.Value);
+                    }
+                }
+                are.Set();
+            }
+            var subscription = _papper.SubscribeDataChanges(callback, writeData.Keys.Select(variable => PlcWatchReference.FromAddress($"DB66.{variable}", 100)).ToArray());
+
+
+            //waiting for initialize
+            Assert.True(are.WaitOne(5000));
+            intiState = false;
+            var writeResults = await _papper.WriteAsync(PlcWriteReference.FromRoot("DB66", writeData.ToArray()).ToArray()).ConfigureAwait(false);
+            foreach (var item in writeResults)
+            {
+                Assert.Equal(ExecutionResult.Ok, item.ActionResult);
+            }
+
+            //waiting for write update
+            Assert.True(are.WaitOne(5000));
+
+            //test if data change only occurred if data changed
+            Assert.False(are.WaitOne(5000));
+
+            await subscription.DisposeAsync();
+
+
+        }
 
 
         [Fact]
