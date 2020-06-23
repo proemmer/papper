@@ -13,7 +13,7 @@ namespace Papper
         internal class MappingEntry
         {
             public PlcObject PlcObject { get; private set; }
-            public Dictionary<string, Tuple<int, PlcObject>> Variables { get; private set; }
+            public Dictionary<string, OperationItem> Variables { get; private set; }
             public Dictionary<string, PlcObjectBinding> Bindings { get; private set; }
             public PlcObjectBinding BaseBinding { get; private set; }
 
@@ -21,7 +21,7 @@ namespace Papper
             {
                 PlcObject = plcObject ?? ExceptionThrowHelper.ThrowArgumentNullException<PlcObject>(nameof(plcObject));
                 BaseBinding = new PlcObjectBinding(new PlcRawData(plcObject!.ByteSize), plcObject, 0, 0, true);
-                Variables = new Dictionary<string, Tuple<int, PlcObject>>();
+                Variables = new Dictionary<string, OperationItem>();
                 Bindings = new Dictionary<string, PlcObjectBinding>();
             }
         }
@@ -49,7 +49,7 @@ namespace Papper
             {
                 if (mappingEntry.Variables.TryGetValue(variable, out var accessObject))
                 {
-                    mappingEntry.Bindings.Add(variable, new PlcObjectBinding(mappingEntry.BaseBinding.RawData, accessObject.Item2, accessObject.Item1 + accessObject.Item2.ByteOffset, 0));
+                    mappingEntry.Bindings.Add(variable, new PlcObjectBinding(mappingEntry.BaseBinding.RawData, accessObject.PlcObject, accessObject.Offset + accessObject.PlcObject.ByteOffset, 0));
                     return true;
                 }
             }

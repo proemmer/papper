@@ -11,16 +11,18 @@ namespace Papper.Extensions.Notification
     /// <summary>
     /// This representates a subscription to a plc value change detection.
     /// </summary>
-    public sealed class Subscription : IDisposable
+    public sealed class Subscription : IDisposable, IAsyncDisposable
     {
         private readonly TaskCompletionSource<object?> _watchingTcs = new TaskCompletionSource<object?>();
         private readonly PlcDataMapper _mapper;
         private readonly LruCache _lruCache = new LruCache();
         private readonly Dictionary<string, PlcWatchReference> _variables = new Dictionary<string, PlcWatchReference>();
-        private readonly ReaderWriterLockSlim _lock;
+        private readonly SemaphoreSlim _semaphore;
         private readonly ChangeDetectionStrategy _changeDetectionStrategy;
         private readonly int _defaultInterval;
         private readonly AsyncAutoResetEvent<IEnumerable<DataPack>>? _changeEvent;
+        private readonly AsyncAutoResetEvent<bool> _modifiedEvent = new AsyncAutoResetEvent<bool>();
+        private bool _disposed;
 
         private CancellationTokenSource? _cts;
         private List<Execution>? _executions;
@@ -65,7 +67,7 @@ namespace Papper.Extensions.Notification
             _mapper = mapper ?? ExceptionThrowHelper.ThrowArgumentNullException<PlcDataMapper>(nameof(mapper));
             _changeDetectionStrategy = changeDetectionStrategy;
             _defaultInterval = defaultInterval;
-            _lock = new ReaderWriterLockSlim();
+            _semaphore = new SemaphoreSlim(1);
             UpdateWatchCycle(vars);
 
             if (changeDetectionStrategy == ChangeDetectionStrategy.Event)
@@ -74,7 +76,11 @@ namespace Papper.Extensions.Notification
             }
             if (vars != null)
             {
-                AddItems(vars);
+                // Add Items synchrone
+                if(TryBuilAddableVariableList(vars, out var variables, true))
+                {
+                    AddValidatedVariables(variables!);
+                }
             }
         }
 
@@ -83,42 +89,67 @@ namespace Papper.Extensions.Notification
         /// </summary>
         public void Dispose()
         {
-            _watchingTcs.SetResult(null);
-            _mapper.RemoveSubscription(this);
-            _variables.Clear();
-            _lruCache.Dispose();
-            _lock.Dispose();
+            if (_disposed) return;
+            using (new SemaphoreGuard(_semaphore))
+            {
+                _watchingTcs.TrySetResult(null);
+                _mapper.RemoveSubscription(this);
+                _variables.Clear();
+                _lruCache.Dispose();
+            }
+            _semaphore.Dispose();
+            _disposed = true;
+        }
+
+        /// <summary>
+        /// Disposing all allocations and unregister from mapper
+        /// </summary>
+        public async ValueTask DisposeAsync()
+        {
+            if (_disposed) return;
+            if (_semaphore != null)
+            {
+                using (await SemaphoreGuard.Async(_semaphore).ConfigureAwait(false))
+                {
+                    await InternalStopSubscription().ConfigureAwait(false);
+                }
+                _semaphore.Dispose();
+                _disposed = true;
+            }
         }
 
         /// <summary>
         /// This method cancels the current call of DetectChangesAsync. After calling the DetectChangesAsync again,
         /// this cancellation is automatically reseted and ready for a newly cancellation.
         /// </summary>
-        public void CancelCurrentDetection() => _cts?.Cancel();
+        public void CancelCurrentDetection()
+        {
+            _cts?.Cancel();
+        }
 
         /// <summary>
         /// Add items to the subscription. This items are active in the next watch cycle, so you will get a data change if the update was activated.
         /// </summary>
         /// <param name="vars">Vars to activate </param>
-        public void AddItems(params PlcWatchReference[] vars) => AddItems(vars as IEnumerable<PlcWatchReference>);
+        public Task<bool> AddItemsAsync(params PlcWatchReference[] vars) => AddItemsAsync(vars as IEnumerable<PlcWatchReference>);
 
         /// <summary>
         /// Add items to the subscription. This items are active in the next watch cycle, so you will get a data change if the update was activated.
         /// </summary>
         /// <param name="vars">Vars to activate </param>
-        public bool TryAddItems(params PlcWatchReference[] vars) => TryAddItems(vars as IEnumerable<PlcWatchReference>);
+        public Task<bool> TryAddItemsAsync(params PlcWatchReference[] vars) => TryAddItemsAsync(vars as IEnumerable<PlcWatchReference>);
 
         /// <summary>
         /// Add items to the subscription. This items are active in the next watch cycle, so you will get a data change if the update was activated.
         /// </summary>
         /// <param name="vars">Vars to activate </param>
-        public void AddItems(IEnumerable<PlcWatchReference> vars) => InternalAddItems(vars, true);
+        public Task<bool> AddItemsAsync(IEnumerable<PlcWatchReference> vars) => InternalAddItemsAsync(vars, true);
 
         /// <summary>
         /// Add items to the subscription. This items are active in the next watch cycle, so you will get a data change if the update was activated.
         /// </summary>
         /// <param name="vars">Vars to activate </param>
-        public bool TryAddItems(IEnumerable<PlcWatchReference> vars) => InternalAddItems(vars, false);
+        public Task<bool> TryAddItemsAsync(IEnumerable<PlcWatchReference> vars) => InternalAddItemsAsync(vars, false);
 
 
         /// <summary>
@@ -126,24 +157,33 @@ namespace Papper.Extensions.Notification
         /// The internal 
         /// </summary>
         /// <param name="vars"></param>
-        public bool RemoveItems(params PlcWatchReference[] vars) => RemoveItems(vars as IEnumerable<PlcWatchReference>);
+        public Task<bool> RemoveItemsAsync(params PlcWatchReference[] vars) => RemoveItemsAsync(vars as IEnumerable<PlcWatchReference>);
 
         /// <summary>
         /// Remove items from the watch list. This items will be removed before the next watch cycle.
         /// The internal 
         /// </summary>
         /// <param name="vars"></param>
-        public bool RemoveItems(IEnumerable<PlcWatchReference> vars)
+        public async Task<bool> RemoveItemsAsync(IEnumerable<PlcWatchReference> vars)
         {
-            using (new WriterGuard(_lock))
+            var filteredVars = vars.Where(item => !string.IsNullOrEmpty(item.Address)).ToList();
+            using (await SemaphoreGuard.Async(_semaphore).ConfigureAwait(false))
             {
-                var result = vars.Where(item => !string.IsNullOrEmpty(item.Address)).Any(item => _variables.Remove(item.Address)) | _modified;
+                var result = false;
+                foreach (var item in filteredVars)
+                {
+                    if(_variables.Remove(item.Address))
+                    {
+                        result = true;
+                        _modified = true;
+                    }
+                }
                 if (result)
                 {
                     UpdateWatchCycle(_variables.Values);
                 }
-
                 _modified = result;
+                _modifiedEvent?.Set(true);
                 return result;
             }
         }
@@ -168,29 +208,31 @@ namespace Papper.Extensions.Notification
         /// </summary>
         /// <param name="vars"></param>
         /// <returns></returns>
-        public PlcReadResult[]? ReadResultsFromCache(IEnumerable<PlcWatchReference> vars)
+        public async ValueTask<PlcReadResult[]?> ReadResultsFromCache(IEnumerable<PlcWatchReference> vars)
         {
             if (_executions!.IsNullOrEmpty() || !vars.Any())
             {
                 return null;
             }
 
-            var variables = vars.Select(x => x.Address).ToList();
-            using (new ReaderGuard(_lock))
+            List<Execution>? executions = null;
+            using (await SemaphoreGuard.Async(_semaphore).ConfigureAwait(false))
             {
-                if (_executions!.IsNullOrEmpty())
-                {
-                    return null;
-                }
-
-                return _executions.GroupBy(exec => exec.ExecutionResult) // Group by execution result
-                                                     .SelectMany(group => group.SelectMany(g => g.Bindings)
-                                                                               .Where(b => variables.Contains(b.Key))
-                                                                               .Select(b => new PlcReadResult(b.Key,
-                                                                                                              b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache.Span),
-                                                                                                              group.Key)
-                                                                               )).ToArray();
+                executions = _executions?.ToList();
             }
+
+            if (executions!.IsNullOrEmpty())
+            {
+                return null;
+            }
+            var variables = vars.Select(x => x.Address).ToList();
+            return executions.GroupBy(exec => exec.ExecutionResult) // Group by execution result
+                                                  .SelectMany(group => group.SelectMany(g => g.Bindings)
+                                                                            .Where(b => variables.Contains(b.Key))
+                                                                            .Select(b => new PlcReadResult(b.Key,
+                                                                                                            b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache.Span),
+                                                                                                            group.Key)
+                                                                            )).ToArray();
         }
 
         /// <summary>
@@ -200,6 +242,7 @@ namespace Papper.Extensions.Notification
         /// <returns></returns>
         public async Task<ChangeResult> DetectChangesAsync()
         {
+
             var cts = new CancellationTokenSource();
             if (Interlocked.CompareExchange(ref _cts, cts, null) != null)
             {
@@ -220,19 +263,27 @@ namespace Papper.Extensions.Notification
 
                     if (_modified)
                     {
-                        using (new WriterGuard(_lock))
+                        // test if sema is free, if not test it the next cycle
+                        if (_semaphore.Wait(0))
                         {
-                            if (_modified)
+                            try
                             {
-                                cycles = _variables.Values.ToDictionary(x => x.Address, x => x.WatchCycle);
-                                interval = Interval;
-                                _executions = _mapper.DetermineExecutions(_variables.Values);
-                                if (_changeDetectionStrategy == ChangeDetectionStrategy.Event)
+                                if (_modified)
                                 {
-                                    var needUpdate = PlcDataMapper.UpdateableItems(_executions, false);
-                                    await _mapper.UpdateMonitoringItemsAsync(needUpdate.Values).ConfigureAwait(false);
+                                    cycles = _variables.Values.ToDictionary(x => x.Address, x => x.WatchCycle);
+                                    interval = Interval;
+                                    _executions = _mapper.DetermineExecutions(_variables.Values);
+                                    if (_changeDetectionStrategy == ChangeDetectionStrategy.Event)
+                                    {
+                                        var needUpdate = PlcDataMapper.UpdateableItems(_executions, false);
+                                        await _mapper.UpdateMonitoringItemsAsync(needUpdate.Values).ConfigureAwait(false);
+                                    }
+                                    _modified = false;
                                 }
-                                _modified = false;
+                            }
+                            finally
+                            {
+                                _semaphore.Release();
                             }
                         }
                     }
@@ -253,21 +304,21 @@ namespace Papper.Extensions.Notification
                             var needUpdate = PlcDataMapper.UpdateableItems(_executions, true, DetermineChanges(cycles, interval));
 
                             // read outdated
-                            await _mapper.ReadFromPlcAsync(needUpdate).ConfigureAwait(false); // Update the read cache;
+                            await _mapper.ReadFromPlcAsync(needUpdate.Values).ConfigureAwait(false); // Update the read cache;
 
                             // filter to get only changed items
-                            readRes = PlcDataMapper.CreatePlcReadResults(needUpdate.Keys, needUpdate, _lastRun, (x) => FilterChanged(detect, x));
+                            readRes = PlcDataMapper.CreatePlcReadResults(_executions, needUpdate, _lastRun, (x) => FilterChanged(detect, x));
                         }
                         else
                         {
-                            var packs = await _changeEvent.WaitAsync().ConfigureAwait(false);
-                            if (packs != null && packs.Any())
+                            var packs = await _changeEvent.WaitAsync(_cts.Token).ConfigureAwait(false);
+                            if (packs?.Any() == true)
                             {
                                 readRes = PlcDataMapper.CreatePlcReadResults(_executions, packs);
                             }
                         }
 
-                        if (readRes != null && readRes.Any())
+                        if (readRes?.Any() == true)
                         {
                             _lastRun = detect;
                             return new ChangeResult(readRes, Watching.IsCanceled, Watching.IsCompleted);
@@ -281,9 +332,17 @@ namespace Papper.Extensions.Notification
 
                     try
                     {
-                        await Task.Delay(interval, _cts.Token).ConfigureAwait(false);
+                        using (var timeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(interval)))
+                        {
+                            using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, timeoutCts.Token))
+                            {
+                                await _modifiedEvent.WaitAsync(linkedCts.Token).ConfigureAwait(false);
+                            }
+                        }
                     }
-                    catch (TaskCanceledException) { }
+                    catch (TaskCanceledException) 
+                    { 
+                    }
 
                     if (_cts.IsCancellationRequested)
                     {
@@ -294,8 +353,20 @@ namespace Papper.Extensions.Notification
             }
             finally
             {
-                _cts.Dispose();
                 _cts = null;
+                cts?.Dispose();
+            }
+        }
+
+        internal void OnDataChanged(IEnumerable<DataPack> changed)
+        {
+            if (_changeEvent != null)
+            {
+                _changeEvent.Set(changed);
+            }
+            else
+            {
+                ExceptionThrowHelper.ThrowOperationNotAllowedForCurrentChangeDetectionStrategy();
             }
         }
 
@@ -311,63 +382,74 @@ namespace Papper.Extensions.Notification
                                           !string.IsNullOrWhiteSpace(variables.FirstOrDefault(x => cycles.TryGetValue(x, out var interval) &&
                                                                                                    lastChange.AddMilliseconds(interval < cycleInterval * 2 ? cycleInterval : interval) < DateTime.Now));
 
-        internal void OnDataChanged(IEnumerable<DataPack> changed)
+
+
+
+        private async Task InternalStopSubscription()
         {
-            if (_changeEvent != null)
-            {
-                _changeEvent.Set(changed);
-            }
-            else
-            {
-                ExceptionThrowHelper.ThrowOperationNotAllowedForCurrentChangeDetectionStrategy();
-            }
+            _watchingTcs.TrySetResult(null);
+            await _watchingTcs.Task.ConfigureAwait(false);
+            _mapper.RemoveSubscription(this);
+            _variables.Clear();
+            _lruCache.Dispose();
         }
 
-        private bool InternalAddItems(IEnumerable<PlcWatchReference>? vars, bool throwExceptions)
+
+        private async Task<bool> InternalAddItemsAsync(IEnumerable<PlcWatchReference>? vars, bool throwExceptions)
+        {
+            if (TryBuilAddableVariableList(vars, out var variables, throwExceptions))
+            {
+                using (await SemaphoreGuard.Async(_semaphore).ConfigureAwait(false))
+                {
+                    return AddValidatedVariables(variables!);
+                }
+            }
+            return false;
+        }
+
+        private bool TryBuilAddableVariableList(IEnumerable<PlcWatchReference>? vars, out Dictionary<string, PlcWatchReference>? variables,  bool throwExceptions)
         {
             if (vars == null || !vars.Any())
             {
+                variables = null;
                 return false;
             }
 
-            using (new WriterGuard(_lock))
+            variables = new Dictionary<string, PlcWatchReference>();
+            foreach (var variable in vars)
             {
-                var variables = new Dictionary<string, PlcWatchReference>();
-                foreach (var variable in vars)
+                if (!_mapper.IsValidReference(variable))
                 {
-                    if (!_mapper.IsValidReference(variable))
+                    if (throwExceptions)
                     {
-                        if (throwExceptions)
-                        {
-                            ExceptionThrowHelper.ThrowInvalidVariableException(variable.Address);
-                        }
-                        return false;
+                        ExceptionThrowHelper.ThrowInvalidVariableException(variable.Address);
                     }
-                    variables.Add(variable.Address, variable);
+                    return false;
                 }
-
-                if (variables.Any())
-                {
-                    // After we validate all items, we add all
-                    // if one is not valid non of them will be added, this is because of consistence
-                    foreach (var variable in variables.Values)
-                    {
-                        if (_variables.ContainsKey(variable.Address))
-                        {
-                            _variables[variable.Address] = variable;
-                        }
-                        else
-                        {
-                            _variables.Add(variable.Address, variable);
-                        }
-                    }
-
-
-                    UpdateWatchCycle(_variables.Values);
-                    return _modified = true;
-                }
-                return false;
+                variables.Add(variable.Address, variable);
             }
+            return variables.Any();
+        }
+
+        private bool AddValidatedVariables(Dictionary<string, PlcWatchReference> variables)
+        {
+            // After we validate all items, we add all
+            // if one is not valid non of them will be added, this is because of consistence
+            foreach (var variable in variables.Values)
+            {
+                if (_variables.ContainsKey(variable.Address))
+                {
+                    _variables[variable.Address] = variable;
+                }
+                else
+                {
+                    _variables.Add(variable.Address, variable);
+                }
+            }
+            UpdateWatchCycle(_variables.Values);
+            var result = _modified = true;
+            _modifiedEvent?.Set(true);
+            return result;
         }
 
 

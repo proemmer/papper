@@ -35,7 +35,7 @@ namespace Papper.Tests
             foreach (var item in result)
             {
                 Console.WriteLine($"OnRead: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
-                var res = MockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length);
+                var res = MockPlc.Instance.GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length);
                 if (!res.IsEmpty)
                 {
                     item.ApplyData(res);
@@ -54,7 +54,7 @@ namespace Papper.Tests
             var result = reads.ToList();
             foreach (var item in result)
             {
-                var entry = MockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length);
+                var entry = MockPlc.Instance.GetPlcEntry(item.Selector, item.Offset + item.Length);
                 if (!item.HasBitMask)
                 {
                     Console.WriteLine($"OnWrite: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");

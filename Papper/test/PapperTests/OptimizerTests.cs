@@ -23,7 +23,7 @@ namespace Papper.Tests
         {
             var tree = new PlcMetaDataTree();
             var mapping = PlcObjectResolver.GetMapping(mappingName, tree, type);
-            var variables = new Dictionary<string, Tuple<int, PlcObject>>();
+            var variables = new Dictionary<string, OperationItem>();
             PlcObjectResolver.AddPlcObjects(mapping, variables, values);
 
             var optimizer = OptimizerFactory.CreateOptimizer(optimzerType);
