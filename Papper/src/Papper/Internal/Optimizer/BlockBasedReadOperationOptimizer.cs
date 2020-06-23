@@ -5,6 +5,10 @@ using System.Linq;
 
 namespace Papper.Internal
 {
+
+
+
+
     internal class BlockBasedReadOperationOptimizer : IReadOperationOptimizer
     {
 
@@ -13,22 +17,22 @@ namespace Papper.Internal
         /// Create RawReadOperations to use it in the reader. This method tries to optimize the PLC access, 
         /// to it creates blocks for minimum operations on plc.
         /// </summary>
-        public IEnumerable<PlcRawData> CreateRawReadOperations(string selector, IEnumerable<KeyValuePair<string, Tuple<int, PlcObject>>> objects, int readDataBlockSize)
+        public IEnumerable<PlcRawData> CreateRawReadOperations(string selector, IEnumerable<KeyValuePair<string, OperationItem>> objects, int readDataBlockSize)
         {
             var rawBlocks = new List<PlcRawData>();
             PlcRawData? pred = null;
             var offsetCountedAsBoolean = -1;
             var offset = 0;
-            foreach (var item in objects.OrderBy(i => i.Value.Item1 + i.Value.Item2.Offset.Bytes)
-                                        .ThenBy(i => i.Value.Item2.Offset.Bits)
+            foreach (var item in objects.OrderBy(i => i.Value.Offset + i.Value.PlcObject.Offset.Bytes)
+                                        .ThenBy(i => i.Value.PlcObject.Offset.Bits)
                                         .ThenBy(i => i.Key.Length)
                                         .ToList())
             {
                 var count = true;
-                var currentOffset = item.Value.Item1 + item.Value.Item2.Offset.Bytes;
-                var sizeInBytes = item.Value.Item2.Size == null ? 0 : item.Value.Item2.Size.Bytes;
+                var currentOffset = item.Value.Offset + item.Value.PlcObject.Offset.Bytes;
+                var sizeInBytes = item.Value.PlcObject.Size == null ? 0 : item.Value.PlcObject.Size.Bytes;
 
-                if (item.Value.Item2 is PlcBool)
+                if (item.Value.PlcObject is PlcBool)
                 {
                     if (currentOffset != offsetCountedAsBoolean)
                     {
@@ -39,7 +43,7 @@ namespace Papper.Internal
                         count = false;
                     }
                 }
-                if (item.Value.Item2 is PlcArray arr && arr.Size.Bits > 0)
+                if (item.Value.PlcObject is PlcArray arr && arr.Size.Bits > 0)
                 {
                     sizeInBytes += 1;
                 }
@@ -49,7 +53,7 @@ namespace Papper.Internal
                     Offset = currentOffset,
                     Size = sizeInBytes == 0 && count ? 1 : sizeInBytes,
                     Selector = selector,
-                    ContainsReadOnlyParts = item.Value.Item2.IsReadOnly || item.Value.Item2.HasReadOnlyChilds
+                    ContainsReadOnlyParts = item.Value.PlcObject.IsReadOnly || item.Value.PlcObject.HasReadOnlyChilds
                 };
 
 
@@ -113,7 +117,7 @@ namespace Papper.Internal
                     }
                 }
 
-                pred.AddReference(item.Key, offset, item.Value.Item2);
+                pred.AddReference(item.Key, offset, item.Value.PlcObject);
             }
 
             OptimizerFactory.CreateWriteAreas(rawBlocks);

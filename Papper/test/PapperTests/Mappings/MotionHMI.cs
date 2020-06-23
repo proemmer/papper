@@ -147,6 +147,55 @@ namespace Papper.Tests.Mappings
 
     }
 
+
+    public class UdtMotion
+    {
+        public ushort Version { get; set; }
+        public byte DataLength { get; set; }
+
+        public bool MovingState1 { get; set; }
+        public bool MovingState2 { get; set; }
+
+        public bool Executability1 { get; set; }
+        public bool Executability2 { get; set; }
+
+        public bool GroupError { get; set; }
+        public byte NumberOfFinalPosition { get; set; }
+
+        [ArrayBounds(0, 15)]
+        public bool[] FinalPosition { get; set; }
+
+        public bool Interlock1 { get; set; }
+        public bool Interlock2 { get; set; }
+
+        public bool ManualInterlock1 { get; set; }
+        public bool ManualInterlock2 { get; set; }
+
+        public bool ManualEnable1 { get; set; }
+        public bool ManualEnable2 { get; set; }
+
+        public bool ManualOperation1 { get; set; }
+        public bool ManualOperation2 { get; set; }
+
+        [ArrayBounds(0, 15)]
+        public bool[] DisplayOrder { get; set; }
+
+        public bool Trigger1 { get; set; }
+        public bool Trigger2 { get; set; }
+
+        public bool AutomaticTrigger1 { get; set; }
+        public bool AutomaticTrigger2 { get; set; }
+
+        public bool Control1 { get; set; }
+        public bool Control2 { get; set; }
+
+        [ArrayBounds(0, 15)]
+        public bool[] PositionFlag { get; set; }
+
+        public uint HmiId { get; set; }
+    }
+
+
 }
 
 #pragma warning restore CA1707 // Identifiers should not contain underscores

@@ -18,8 +18,8 @@ namespace Papper.Internal
             Type = type ?? ExceptionThrowHelper.ThrowArgumentNullException<Type>(nameof(type));
         }
 
-        protected override bool AddObject(ITreeNode plcObj, Dictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values)
-         => PlcObjectResolver.AddPlcObjects(PlcObject, plcObjects, values);
+        protected override bool AddObject(ITreeNode plcObj, IDictionary<string, OperationItem> plcObjects, IEnumerable<string> values)
+         => PlcObjectResolver.AddPlcObjects(plcObj, plcObjects, values);
     }
 
 }

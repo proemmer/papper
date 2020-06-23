@@ -15,6 +15,7 @@ namespace Papper.Tests
 {
     public sealed class SubscriptionTests : IDisposable
     {
+        private static readonly MockPlc _mockPlc = new MockPlc();
         private readonly PlcDataMapper _papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
         private readonly ITestOutputHelper _output;
 
@@ -28,12 +29,11 @@ namespace Papper.Tests
             _papper.AddMapping(typeof(DB_MotionHMI));
             _papper.AddMapping(typeof(DB_BST1_ChargenRV));
             _papper.AddMapping(typeof(MSpindleInterface));
-
         }
 
 
         [Fact]
-        public void AddAndRemoveSubscriptionsTest()
+        public async Task AddAndRemoveSubscriptionsTest()
         {
             var writeData = new Dictionary<string, object> {
                     { "W88", (ushort)3},
@@ -44,28 +44,27 @@ namespace Papper.Tests
             using (var sub = _papper.CreateSubscription())
             {
                 Assert.False(sub.HasVariables);
-                Assert.True(sub.TryAddItems(items));
+                Assert.True(await sub.TryAddItemsAsync(items).ConfigureAwait(false));
                 var c = sub.DetectChangesAsync();  // returns because we start a new detection
-                Thread.Sleep(100);
+               
                 Assert.True(sub.HasVariables);
                 Assert.Equal(2, sub.Count);
-                Assert.True(sub.RemoveItems(items.FirstOrDefault()));
-                Assert.True(sub.RemoveItems(items.FirstOrDefault())); // <- modified is already true
-                c = sub.DetectChangesAsync();      // returns because we modified the detection
-                Assert.False(sub.RemoveItems(items.FirstOrDefault()));
+                Assert.True(await sub.RemoveItemsAsync(items.FirstOrDefault()).ConfigureAwait(false));
+                Assert.True(await sub.RemoveItemsAsync(items.FirstOrDefault()).ConfigureAwait(false)); // <- modified is already true
 
-                Thread.Sleep(100);
-                Assert.True(sub.RemoveItems(items.LastOrDefault()));
+                await c.ConfigureAwait(false); // wait for the other detection to complete
                 c = sub.DetectChangesAsync();      // returns because we modified the detection
-                Thread.Sleep(100);
+                Assert.False(await sub.RemoveItemsAsync(items.FirstOrDefault()).ConfigureAwait(false));
 
+               
+                Assert.True(await sub.RemoveItemsAsync(items.LastOrDefault()).ConfigureAwait(false));
                 Assert.Equal(0, sub.Count);
                 Assert.False(sub.HasVariables);
             }
         }
 
         [Fact]
-        public void AddAndRemoveAllItemsFromSubscriptionsTest()
+        public async Task AddAndRemoveAllItemsFromSubscriptionsTest()
         {
             var mapping = "DB_SafetyDataChange1";
             var originData = new Dictionary<string, object> {
@@ -83,8 +82,14 @@ namespace Papper.Tests
                 using (var subscription = _papper.CreateSubscription())
                 {
                     var items = originData.Keys.Select(variable => PlcWatchReference.FromAddress($"{mapping}.{variable}", 100)).ToArray();
-                    subscription.AddItems(items);
-                    subscription.RemoveItems(items);
+                    await subscription.AddItemsAsync(items).ConfigureAwait(false);
+
+                    Assert.True(subscription.HasVariables);
+
+
+                    await subscription.RemoveItemsAsync(items).ConfigureAwait(false);
+
+                    Assert.False(subscription.HasVariables);
                 }
             }
         }
@@ -97,14 +102,16 @@ namespace Papper.Tests
             {
                 Assert.False(sub.HasVariables);
                 var c = sub.DetectChangesAsync();  // returns because we start a new detection
-                Thread.Sleep(100);
+               
                 Assert.False(sub.HasVariables);
             }
+
+           
         }
 
 
         [Fact]
-        public async void DuplicateDetectionTest()
+        public async Task DuplicateDetectionTest()
         {
             var writeData = new Dictionary<string, object> {
                     { "W88", (ushort)3},
@@ -124,7 +131,7 @@ namespace Papper.Tests
         }
 
         [Fact]
-        public async void SubscriptionCancellationTest()
+        public async Task SubscriptionCancellationTest()
         {
             var writeData = new Dictionary<string, object> {
                     { "W88", (ushort)3},
@@ -134,7 +141,7 @@ namespace Papper.Tests
 
             using (var sub = _papper.CreateSubscription())
             {
-                Assert.True(sub.TryAddItems(items));
+                Assert.True(await sub.TryAddItemsAsync(items).ConfigureAwait(false));
                 var c = sub.DetectChangesAsync();  // returns because we start a new detection
                 Thread.Sleep(500);
                 var res = await c.ConfigureAwait(false);
@@ -174,7 +181,7 @@ namespace Papper.Tests
             {
                 using (var subscription = _papper.CreateSubscription())
                 {
-                    subscription.AddItems(originData.Keys.Select(variable => PlcWatchReference.FromAddress($"{mapping}.{variable}", 100)));
+                    subscription.AddItemsAsync(originData.Keys.Select(variable => PlcWatchReference.FromAddress($"{mapping}.{variable}", 100)));
                     var t = Task.Run(async () =>
                     {
                         try
@@ -239,6 +246,8 @@ namespace Papper.Tests
 
                 }
             }
+
+           
         }
 
         [Fact]
@@ -251,7 +260,7 @@ namespace Papper.Tests
 
             using (var subscription = _papper.CreateSubscription())
             {
-                subscription.AddItems(PlcWatchReference.FromAddress(address, 100));
+                subscription.AddItemsAsync(PlcWatchReference.FromAddress(address, 100));
                 var t = Task.Run(async () =>
                 {
                     try
@@ -292,6 +301,9 @@ namespace Papper.Tests
 
                 are.Dispose();
             }
+
+
+           
         }
 
 
@@ -302,7 +314,7 @@ namespace Papper.Tests
 
 
         [Fact]
-        public void PerformRawDataChange()
+        public async Task PerformRawDataChange()
         {
             var intiState = true;
             var originData = new Dictionary<string, object> {
@@ -337,7 +349,7 @@ namespace Papper.Tests
             //waiting for initialize
             Assert.True(are.WaitOne(5000));
             intiState = false;
-            var writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot("DB15", writeData.ToArray()).ToArray()).GetAwaiter().GetResult();
+            var writeResults = await _papper.WriteAsync(PlcWriteReference.FromRoot("DB15", writeData.ToArray()).ToArray()).ConfigureAwait(false);
             foreach (var item in writeResults)
             {
                 Assert.Equal(ExecutionResult.Ok, item.ActionResult);
@@ -349,12 +361,68 @@ namespace Papper.Tests
             //test if data change only occurred if data changed
             Assert.False(are.WaitOne(5000));
 
-            subscription.Dispose();
+            await subscription.DisposeAsync();
+
+           
         }
 
 
 
+        [Fact]
+        public async Task PerformRawDataArrayChange()
+        {
+            var intiState = true;
+            var originData = new Dictionary<string, object> {
+                    { "B0_10", new byte[]{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
+                };
+            var writeData = new Dictionary<string, object> {
+                    { "B0_10", new byte[]{ 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 } },
+                };
+            using var are = new AutoResetEvent(false);
+            void callback(object s, PlcNotificationEventArgs e)
+            {
 
+                if(e.Exception != null)
+                {
+
+                }
+
+
+                foreach (var item in e)
+                {
+                    if (!intiState)
+                    {
+                        Assert.Equal(writeData[item.Variable], item.Value);
+                    }
+                    else
+                    {
+                        Assert.Equal(originData[item.Variable], item.Value);
+                    }
+                }
+                are.Set();
+            }
+            var subscription = _papper.SubscribeDataChanges(callback, writeData.Keys.Select(variable => PlcWatchReference.FromAddress($"DB66.{variable}", 100)).ToArray());
+
+
+            //waiting for initialize
+            Assert.True(are.WaitOne(5000));
+            intiState = false;
+            var writeResults = await _papper.WriteAsync(PlcWriteReference.FromRoot("DB66", writeData.ToArray()).ToArray()).ConfigureAwait(false);
+            foreach (var item in writeResults)
+            {
+                Assert.Equal(ExecutionResult.Ok, item.ActionResult);
+            }
+
+            //waiting for write update
+            Assert.True(are.WaitOne(5000));
+
+            //test if data change only occurred if data changed
+            Assert.False(are.WaitOne(5000));
+
+            await subscription.DisposeAsync();
+
+
+        }
 
 
         [Fact]
@@ -363,7 +431,7 @@ namespace Papper.Tests
 
             using var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite, UpdateHandler, ReadMetaData, OptimizerType.Items);
             papper.AddMapping(typeof(DB_Safety));
-            MockPlc.OnItemChanged = (items) =>
+            _mockPlc.OnItemChanged = (items) =>
             {
                 papper.OnDataChanges(items.Select(i => new DataPack
                 {
@@ -395,7 +463,7 @@ namespace Papper.Tests
 
             using (var subscription = papper.CreateSubscription(ChangeDetectionStrategy.Event))
             {
-                subscription.AddItems(originData.Keys.Select(variable => PlcWatchReference.FromAddress($"{mapping}.{variable}", 100)));
+                subscription.AddItemsAsync(originData.Keys.Select(variable => PlcWatchReference.FromAddress($"{mapping}.{variable}", 100)));
                 var t = Task.Run(async () =>
                 {
                     try
@@ -449,6 +517,7 @@ namespace Papper.Tests
 
                 //waiting for initialize
                 Assert.True(are.WaitOne(sleepTime), "waiting for initialize");
+
                 intiState = false;
                 var writeResults = papper.WriteAsync(PlcWriteReference.FromRoot(mapping, writeData.ToArray()).ToArray()).GetAwaiter().GetResult();
                 foreach (var item in writeResults)
@@ -462,12 +531,105 @@ namespace Papper.Tests
                 Assert.False(are.WaitOne(sleepTime), $"test if data change only occurred if data changed");
 
             }
+
+           
         }
 
 
 
 
+        [Fact]
+        public async Task TestMultipleChanges()
+        {
+            var address1 = "DB_SafetyDataChange.SafeMotion.Slots[11].Commands.TakeoverPermitted";
+            var address2 = "DB_SafetyDataChange.SafeMotion.Slots[11].Commands";
+            var address1Changes = 0;
+            var address2Changes = 0;
+            var t1 = Task.Run(async () =>
+           {
+               using (var subscription = _papper.CreateSubscription())
+               {
+                   await subscription.AddItemsAsync(PlcWatchReference.FromAddress(address1, 50)).ConfigureAwait(false);
+                   try
+                   {
+                       while (!subscription.Watching.IsCompleted)
+                       {
+                           _output.WriteLine($"1:DetectChangesAsync");
+                           var res = await subscription.DetectChangesAsync().ConfigureAwait(false);
+                           _output.WriteLine($"1:DetectChangesAsync has a result");
+                           if (!res.IsCompleted && !res.IsCanceled)
+                           {
+                               var resItem = res.Results.FirstOrDefault();
+                               _output.WriteLine($"1: {resItem.Address}={resItem.Value}");
+                               address1Changes++;
+                           }
+                       }
+                   }
+                   catch (Exception ex)
+                   {
+                       _output.WriteLine($"1 Error: {ex.Message}");
+                   }
+                   _output.WriteLine($"1 Finished");
+               }
+           });
 
+
+            var t2 = Task.Run(async () =>
+            {
+                using (var subscription = _papper.CreateSubscription())
+                {
+                    await subscription.AddItemsAsync(PlcWatchReference.FromAddress(address2, 50)).ConfigureAwait(false);
+                    try
+                    {
+                        while (!subscription.Watching.IsCompleted)
+                        {
+                            _output.WriteLine($"2:DetectChangesAsync");
+                            var res = await subscription.DetectChangesAsync().ConfigureAwait(false);
+                            _output.WriteLine($"2:DetectChangesAsync has a result");
+                            if (!res.IsCompleted && !res.IsCanceled)
+                            {
+                                var resItem = res.Results.FirstOrDefault();
+                                _output.WriteLine($"2: {resItem.Address}={resItem.Value}");
+                                address2Changes++;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _output.WriteLine($"2 Error: {ex.Message}");
+                    }
+                    _output.WriteLine($"2 Finished");
+                }
+            });
+
+
+            await Task.Delay(1000).ConfigureAwait(false);
+            var exec1 = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress(address1, 200) });
+            _output.WriteLine($"Exec1: {exec1[0].PlcRawData.Size}");
+            var exec2 = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress(address2, 200) });
+            _output.WriteLine($"Exec2: {exec2[0].PlcRawData.Size}");
+
+            for (var i = 0; i < 5; i++)
+            {
+                _output.WriteLine($"WriteAsync: {i % 2 == 0}");
+                var writeResults = await _papper.WriteAsync(PlcWriteReference.FromAddress(address1, i % 2 == 0)).ConfigureAwait(false);
+                
+                foreach (var item in writeResults)
+                {
+                    Assert.Equal(ExecutionResult.Ok, item.ActionResult);
+                    _output.WriteLine($"WriteAsync: {item.ActionResult}");
+                }
+                await Task.Delay(200).ConfigureAwait(false);
+            }
+
+            await Task.Delay(1000).ConfigureAwait(false);
+
+
+            Assert.Equal(address1Changes, address2Changes);
+            Assert.Equal(6, address1Changes);
+            Assert.Equal(6, address2Changes);
+
+        }
 
 
 
@@ -476,11 +638,13 @@ namespace Papper.Tests
             var result = reads.ToList();
             foreach (var item in result)
             {
-                Console.WriteLine($"OnRead: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
-                var res = MockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length);
+                //Console.WriteLine($"OnRead: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
+                var res = _mockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length);
                 if (!res.IsEmpty)
                 {
-                    item.ApplyData(res);
+                    var data = new byte[res.Length];
+                    res.CopyTo(data);
+                    item.ApplyData(data);
                     item.ExecutionResult = ExecutionResult.Ok;
                 }
                 else
@@ -496,10 +660,10 @@ namespace Papper.Tests
             var result = reads.ToList();
             foreach (var item in result)
             {
-                var entry = MockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length);
+                var entry = _mockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length);
                 if (!item.HasBitMask)
                 {
-                    Console.WriteLine($"OnWrite: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
+                    //Console.WriteLine($"OnWrite: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
                     item.Data.Slice(0, item.Length).CopyTo(entry.Data.Slice(item.Offset, item.Length));
                     item.ExecutionResult = ExecutionResult.Ok;
                 }
@@ -552,7 +716,7 @@ namespace Papper.Tests
         {
             foreach (var item in monitoring)
             {
-                MockPlc.UpdateDataChangeItem(item, !add);
+                _mockPlc.UpdateDataChangeItem(item, !add);
             }
             return Task.CompletedTask;
         }

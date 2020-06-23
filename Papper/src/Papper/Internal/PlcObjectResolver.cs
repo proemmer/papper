@@ -41,9 +41,9 @@ namespace Papper.Internal
         /// <param name="plcObj"></param>
         /// <param name="plcObjects"></param>
         /// <param name="values"></param>
-        internal static bool AddRawPlcObjects(ITreeNode plcObj, Dictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values)
+        internal static bool AddRawPlcObjects(ITreeNode plcObj, IDictionary<string, OperationItem> plcObjects, IEnumerable<string> values)
         {
-            var adds = new Dictionary<string, Tuple<int, PlcObject>>();
+            var adds = new Dictionary<string, OperationItem>();
             var updated = false;
             foreach (var value in values)
             {
@@ -85,7 +85,7 @@ namespace Papper.Internal
                     plcObject.Offset.Bytes = int.Parse(parts[0], CultureInfo.InvariantCulture);
                     if (!plcObjects.ContainsKey(value))
                     {
-                        adds.Add(value, new Tuple<int, PlcObject>(0, plcObject));
+                        adds.Add(value, new OperationItem(0, plcObject));
                     }
                 }
                 else
@@ -223,7 +223,7 @@ namespace Papper.Internal
         /// <summary>
         /// Adds the meta data of requested variables to the dictionary 
         /// </summary>
-        internal static bool AddPlcObjects(ITreeNode plcObj, IDictionary<string, Tuple<int, PlcObject>> plcObjects, IEnumerable<string> values, string prefix = "", int offset = 0)
+        internal static bool AddPlcObjects(ITreeNode plcObj, IDictionary<string, OperationItem> plcObjects, IEnumerable<string> values, string prefix = "", int offset = 0)
         {
             var updated = false;
             foreach (var value in values.Where(x => !plcObjects.ContainsKey(x)))
@@ -242,7 +242,7 @@ namespace Papper.Internal
                 {
                     try
                     {
-                        plcObjects.Add(key, new Tuple<int, PlcObject>(baseOffset, item));
+                        plcObjects.Add(key, new OperationItem(baseOffset, item));
                     }
                     catch (Exception)
                     {

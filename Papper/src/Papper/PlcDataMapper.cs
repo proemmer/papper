@@ -259,7 +259,6 @@ namespace Papper
         /// <returns>return true if all operations are succeeded</returns>
         public async Task<PlcWriteResult[]> WriteAsync(IEnumerable<PlcWriteReference> vars)
         {
-
             // because we need the byte arrays only for converting, we can use the ArrayPool
             var memoryBuffer = new Dictionary<PlcRawData, byte[]>();
             try
@@ -272,8 +271,11 @@ namespace Papper
                                          .ToDictionary(x => x.Key, x => x.Value);
 
                 await WriteToPlcAsync(prepared.Values.SelectMany(x => x)).ConfigureAwait(false);
-
-                executions.ForEach(exec => exec.Invalidate());
+                executions.ForEach(exec =>
+                {
+                    if(exec.ExecutionResult == ExecutionResult.Ok)
+                        exec.Invalidate();
+                });
 
                 return CreatePlcWriteResults(values, prepared);
             }
@@ -308,7 +310,7 @@ namespace Papper
 
         internal bool RemoveSubscription(Subscription sub) => _subscriptions.Remove(sub);
 
-        internal Task ReadFromPlcAsync(Dictionary<Execution, DataPack> needUpdate) => _readEventHandler != null ? _readEventHandler.Invoke(needUpdate.Values) : Task.CompletedTask;
+        internal Task ReadFromPlcAsync(IEnumerable<DataPack> packs) => _readEventHandler != null ? _readEventHandler.Invoke(packs) : Task.CompletedTask;
 
         internal Task WriteToPlcAsync(IEnumerable<DataPack> packs) => _writeEventHandler != null ? _writeEventHandler.Invoke(packs) : Task.CompletedTask;
 
@@ -323,7 +325,7 @@ namespace Papper
                                                                 ? (execution, entry)
                                                                 : (null, null))
                                 .Where(x => x.execution != null)
-                                .SelectMany(x => x.entry.GetOperations(x.execution.Select(exec => exec.Variable)))
+                                .SelectMany(x => x.entry.GetOperations(x.execution.Select(exec => exec.Variable).ToList()))
                                 .ToList();
         }
 
@@ -420,7 +422,7 @@ namespace Papper
             var needUpdate = UpdateableItems(executions, true);  // true = read some items from cache!!
 
             // read from plc
-            await ReadFromPlcAsync(needUpdate).ConfigureAwait(false);
+            await ReadFromPlcAsync(needUpdate.Values).ConfigureAwait(false);
 
             // transform to result
             return CreatePlcReadResults(executions, needUpdate, null, null, doNotConvert);

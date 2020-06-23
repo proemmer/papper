@@ -35,18 +35,26 @@ namespace Papper.Internal
         {
             if (pack.ExecutionResult == ExecutionResult.Ok)
             {
-                if (PlcRawData.ReadDataCache.IsEmpty || !PlcRawData.ReadDataCache.Span.SequenceEqual(pack.Data.Span))
+                var cache = PlcRawData.ReadDataCache;
+                var ts = pack.Timestamp;
+                if (cache.IsEmpty || !cache.Span.SequenceEqual(pack.Data.Span))
                 {
-                    if (pack.Timestamp > LastChange)
+                    if (ts > LastChange || LastChange == DateTime.MaxValue)
                     {
-                        LastChange = pack.Timestamp; // We detected a change in this data area 
+                        LastChange = ts; // We detected a change in this data area 
                     }
                 }
-                PlcRawData.ReadDataCache = pack.Data;
 
-                if (pack.Timestamp > LastChange)
+                if (ts > PlcRawData.LastUpdate)
                 {
-                    PlcRawData.LastUpdate = pack.Timestamp;
+                    lock (PlcRawData)
+                    {
+                        if (ts > PlcRawData.LastUpdate)
+                        {
+                            PlcRawData.ReadDataCache = pack.Data;
+                            PlcRawData.LastUpdate = ts;
+                        }
+                    }
                 }
             }
             ExecutionResult = pack.ExecutionResult;
@@ -56,7 +64,7 @@ namespace Papper.Internal
         /// <summary>
         /// After a write we can invalidate the data area, so the subscriber reads before the validation time is over
         /// </summary>
-        public void Invalidate() => PlcRawData.LastUpdate = LastChange = DateTime.MinValue;
+        public void Invalidate() => PlcRawData.LastUpdate = DateTime.MinValue;
 
 
         public KeyValuePair<Execution, DataPack> CreateReadDataPack()
@@ -73,9 +81,10 @@ namespace Papper.Internal
 
         public KeyValuePair<Execution, IEnumerable<DataPack>> CreateWriteDataPack(Dictionary<string, object> values, Dictionary<PlcRawData, byte[]> memoryBuffer)
         {
-            var res =  Bindings.Where(x => !x.Value.MetaData.IsReadOnly)
+            var res = Bindings.Where(x => !x.Value.MetaData.IsReadOnly)
                                .Select(x => new KeyValuePair<string, IEnumerable<DataPack>>(x.Key, Create(values[x.Key], x.Value, memoryBuffer, x.Value.Offset)))
-                               .SelectMany(x => x.Value).ToList();
+                               .SelectMany(x => x.Value)
+                               .ToList();
             return new KeyValuePair<Execution, IEnumerable<DataPack>>(this, res);
         }
 
@@ -109,7 +118,7 @@ namespace Papper.Internal
 
             return binding.RawData.WriteSlots.Select(slot =>
             {
-                var res =  new DataPack
+                var res = new DataPack
                 {
                     Selector = binding.RawData.Selector,
                     Offset = binding.Offset + slot.Offset,
