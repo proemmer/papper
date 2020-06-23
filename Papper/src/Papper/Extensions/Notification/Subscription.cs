@@ -175,15 +175,14 @@ namespace Papper.Extensions.Notification
                     if(_variables.Remove(item.Address))
                     {
                         result = true;
-                        _modified = true;
                     }
                 }
                 if (result)
                 {
                     UpdateWatchCycle(_variables.Values);
+                    _modified = true;
+                    _modifiedEvent?.Set(true);
                 }
-                _modified = result;
-                _modifiedEvent?.Set(true);
                 return result;
             }
         }

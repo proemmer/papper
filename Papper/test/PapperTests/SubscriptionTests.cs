@@ -47,16 +47,16 @@ namespace Papper.Tests
                 Assert.True(await sub.TryAddItemsAsync(items).ConfigureAwait(false));
                 var c = sub.DetectChangesAsync();  // returns because we start a new detection
                
-                Assert.True(sub.HasVariables);
+                Assert.True(sub.HasVariables, "has no variable");
                 Assert.Equal(2, sub.Count);
-                Assert.True(await sub.RemoveItemsAsync(items.FirstOrDefault()).ConfigureAwait(false));
-                Assert.True(await sub.RemoveItemsAsync(items.FirstOrDefault()).ConfigureAwait(false)); // <- modified is already true
+                Assert.True(await sub.RemoveItemsAsync(items.FirstOrDefault()).ConfigureAwait(false), "could not remove first item");
+                Assert.Equal(1, sub.Count);
+                Assert.False(await sub.RemoveItemsAsync(items.FirstOrDefault()).ConfigureAwait(false), "Could remove item but has no"); // <- coudl not remove twice
 
                 await c.ConfigureAwait(false); // wait for the other detection to complete
                 c = sub.DetectChangesAsync();      // returns because we modified the detection
-                Assert.False(await sub.RemoveItemsAsync(items.FirstOrDefault()).ConfigureAwait(false));
+                Assert.False(await sub.RemoveItemsAsync(items.FirstOrDefault()).ConfigureAwait(false), "Could remove item but has no");
 
-               
                 Assert.True(await sub.RemoveItemsAsync(items.LastOrDefault()).ConfigureAwait(false));
                 Assert.Equal(0, sub.Count);
                 Assert.False(sub.HasVariables);
