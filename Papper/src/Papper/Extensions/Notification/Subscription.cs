@@ -169,7 +169,15 @@ namespace Papper.Extensions.Notification
             var filteredVars = vars.Where(item => !string.IsNullOrEmpty(item.Address)).ToList();
             using (await SemaphoreGuard.Async(_semaphore).ConfigureAwait(false))
             {
-                var result = filteredVars.Any(item => _variables.Remove(item.Address)) | _modified;
+                var result = false;
+                foreach (var item in filteredVars)
+                {
+                    if(_variables.Remove(item.Address))
+                    {
+                        result = true;
+                        _modified = true;
+                    }
+                }
                 if (result)
                 {
                     UpdateWatchCycle(_variables.Values);

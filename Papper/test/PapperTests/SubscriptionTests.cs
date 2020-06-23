@@ -83,7 +83,13 @@ namespace Papper.Tests
                 {
                     var items = originData.Keys.Select(variable => PlcWatchReference.FromAddress($"{mapping}.{variable}", 100)).ToArray();
                     await subscription.AddItemsAsync(items).ConfigureAwait(false);
+
+                    Assert.True(subscription.HasVariables);
+
+
                     await subscription.RemoveItemsAsync(items).ConfigureAwait(false);
+
+                    Assert.False(subscription.HasVariables);
                 }
             }
         }
