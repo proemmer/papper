@@ -49,6 +49,26 @@ namespace Papper.Tests
         }
 
         [Fact]
+        public void TestSerialisationOfNonASCII()
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            PlcSettings.StringEncoding =  Encoding.GetEncoding(1250);
+            var s = new PlcDataMapperSerializer();
+            var tt = new StringArrayTestMapping
+            {
+                TEST = "ÄÜÖäüö–",
+            };
+
+            var serialized = s.Serialize(tt);
+            var size = s.SerializedByteSize<StringArrayTestMapping>();
+            var deserialized = s.Deserialize<StringArrayTestMapping>(serialized);
+
+            Assert.Equal(tt.TEST, deserialized.TEST);
+        }
+
+
+
+        [Fact]
         public void TestSerialisation2()
         {
             var s = new PlcDataMapperSerializer();
