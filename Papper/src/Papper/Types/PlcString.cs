@@ -43,7 +43,7 @@ namespace Papper.Types
             var maxLength = data[plcObjectBinding.Offset];
             var curLength = data[plcObjectBinding.Offset + 1];
             var take = Math.Min(Math.Min(maxLength, curLength), Size!.Bytes - 2);
-            var encoding = PlcSettings.StringEncoding;
+            var encoding = PlcEncoding.Default;
             if (encoding == null)
             {
                 return Encoding.UTF7.GetString(data.ToArray(), plcObjectBinding.Offset + 2, take);
@@ -68,7 +68,7 @@ namespace Papper.Types
                 fill = str.Substring(0, take);
 
                 data[i++] = take;
-                var encoding = PlcSettings.StringEncoding;
+                var encoding = PlcEncoding.Default;
                 if (encoding == null)
                 {
                     foreach (var c in fill)

@@ -51,8 +51,6 @@ namespace Papper.Tests
         [Fact]
         public void TestSerialisationOfNonASCII()
         {
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            PlcSettings.StringEncoding =  Encoding.GetEncoding(1250);
             var s = new PlcDataMapperSerializer();
             var tt = new StringArrayTestMapping
             {
@@ -75,7 +73,6 @@ namespace Papper.Tests
             var tt = new PLCDataPMS
             {
             };
-
             var size = s.SerializedByteSize<PLCDataPMS>();
             var deserialized = s.Deserialize<PLCDataPMS>(data);
 

@@ -4,8 +4,15 @@ using System.Text;
 
 namespace Papper
 {
-    public static class PlcSettings
+    public static class PlcEncoding
     {
-        public static Encoding StringEncoding { get; set; } = Encoding.GetEncoding(1250);
+        public static Encoding? Default { get; set; } 
+
+
+        static PlcEncoding()
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Default = Encoding.GetEncoding(1252);
+        }
     }
 }
