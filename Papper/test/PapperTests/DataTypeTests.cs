@@ -76,6 +76,21 @@ namespace Papper.Tests
 
         }
 
+        [Fact]
+        public void TestTIme()
+        {
+            var value = TimeSpan.FromHours(2);
+
+            var type = new PlcTime("TEST");
+            var data = new byte[type.Size.Bytes];
+            var binding = new PlcObjectBinding(new PlcRawData(512), type, 0, 0);
+
+            type.ConvertToRaw(value, binding, data);
+            var result1 = (TimeSpan)type.ConvertFromRaw(binding, data);
+            Assert.Equal(value, result1);
+
+        }
+
 
         [Fact]
         public void TestLTIme()
