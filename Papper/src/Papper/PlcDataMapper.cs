@@ -127,7 +127,7 @@ namespace Papper
         public IEnumerable<string> Mappings => EntriesByName.Keys;
 
         /// <summary>
-        /// Return all variable names of an mapping
+        /// Return all variable names of a mapping
         /// </summary>
         /// <param name="mapping"></param>
         /// <returns></returns>
@@ -137,6 +137,23 @@ namespace Papper
             if (EntriesByName.TryGetValue(mapping, out var entry))
             {
                 return PlcObjectResolver.GetLeafs(entry.PlcObject, result);
+            }
+
+            ExceptionThrowHelper.ThrowMappingNotFoundException(mapping);
+            return Array.Empty<string>();
+        }
+
+        /// <summary>
+        /// Return all writeable variable names of a mapping
+        /// </summary>
+        /// <param name="mapping"></param>
+        /// <returns></returns>
+        public IEnumerable<string> GetWriteableVariablesOf(string mapping)
+        {
+            var result = new List<string>();
+            if (EntriesByName.TryGetValue(mapping, out var entry))
+            {
+                return PlcObjectResolver.GetLeafs(entry.PlcObject, result, true);
             }
 
             ExceptionThrowHelper.ThrowMappingNotFoundException(mapping);

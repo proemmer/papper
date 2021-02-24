@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Papper.Internal
@@ -260,13 +261,23 @@ namespace Papper.Internal
             return updated;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsReadOnlyElement(ITreeNode node)
+        {
+            if(node is PlcObject plco)
+            {
+                return plco.IsReadOnly;
+            }
+            return false;
+        }
+
         /// <summary>
         /// Get all leafs from the meta tree, normally this should b only value types.
         /// </summary>
         /// <param name="obj">TreeNode</param>
         /// <param name="path">Path to node</param>
         /// <returns>List of leafs</returns>
-        public static IEnumerable<string> GetLeafs(ITreeNode obj, ICollection<string> path)
+        public static IEnumerable<string> GetLeafs(ITreeNode obj, ICollection<string> path, bool onlyWriteable = false)
         {
             var list = new List<string>();
             if (obj != null)
@@ -283,19 +294,22 @@ namespace Papper.Internal
                     path.Add(obj.Name);
                 }
 
-                if (obj.Childs.Any())
+
+                var currentChilds = obj.Childs.Where(c => !onlyWriteable || !IsReadOnlyElement(c)).ToList();
+                if (currentChilds.Any())
                 {
                     if (obj is PlcArray)
                     {
-                        foreach (var child in obj.Childs)
+                        foreach (var child in currentChilds)
                         {
-                            if (child.Childs.Any())
+                            var arrayChilds = child.Childs.Where(c => !onlyWriteable || !IsReadOnlyElement(c)).ToList();
+                            if (arrayChilds.Any())
                             {
-                                var nunmberOfChilds = child.Childs.Count();
+                                var nunmberOfChilds = arrayChilds.Count;
                                 var internalPath = new List<string>(path.Take(path.Count - 1)) { obj.Name + child.Name };
-                                foreach (var c in child.Childs)
+                                foreach (var c in arrayChilds)
                                 {
-                                    list.AddRange(GetLeafs(c, internalPath.ToList()));
+                                    list.AddRange(GetLeafs(c, internalPath.ToList(), onlyWriteable));
                                 }
                             }
                             else
@@ -307,9 +321,9 @@ namespace Papper.Internal
                     }
                     else
                     {
-                        foreach (var child in obj.Childs)
+                        foreach (var child in currentChilds)
                         {
-                            list.AddRange(GetLeafs(child, path.ToList()));
+                            list.AddRange(GetLeafs(child, path.ToList(), onlyWriteable));
                         }
                     }
 

@@ -54,14 +54,25 @@ namespace Papper.Tests
         }
 
         [Theory]
+        [InlineData(nameof(DB_Setup_AGV_BST1), 4244)]
         [InlineData(nameof(DB_Safety), 4596)]
         [InlineData("ARRAY_TEST_MAPPING_1", 105030)]
         [InlineData("STRING_ARRAY_TEST_MAPPING", 21)]
         [InlineData(nameof(PrimitiveValuesMapping), 6)]
         [InlineData(nameof(DB_MotionHMI), 725)]
+        [InlineData(nameof(DB_BST1_ChargenRV), 4384)]
         public void TestVariables(string mapping, int expectedVariables)
         {
             var vars = _papper.GetVariablesOf(mapping);
+            Assert.Equal(expectedVariables, vars.Count());
+        }
+
+        [Theory]
+        [InlineData(nameof(DB_Setup_AGV_BST1), 4050)]
+        [InlineData(nameof(DB_BST1_ChargenRV), 4284)]
+        public void TestWriteableVariables(string mapping, int expectedVariables)
+        {
+            var vars = _papper.GetWriteableVariablesOf(mapping);
             Assert.Equal(expectedVariables, vars.Count());
         }
 
