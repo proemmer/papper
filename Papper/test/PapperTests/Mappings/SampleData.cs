@@ -27,4 +27,27 @@ namespace PapperTests.Mappings
         public bool Bit7 { get; set; }
         public bool Bit8 { get; set; }
     }
+
+
+    [Mapping("SampleDataSubstruct", "DB989", 0)]
+    public class SampleDataSubstruct
+    {
+        [ReadOnly(true)]
+        public UInt16 UInt16 { get; set; }
+        public SampleDataSubstruct1 SubStruct { get; set; }
+        public SampleDataSubstruct2 SubStruct2 { get; set; }
+    }
+
+    public class SampleDataSubstruct1
+    {
+        [ReadOnly(true)]
+        public UInt16 UInt16 { get; set; }
+        public Int16 Int16 { get; set; }
+    }
+
+    public class SampleDataSubstruct2
+    {
+        public UInt16 UInt16 { get; set; }
+        public Int16 Int16 { get; set; }
+    }
 }

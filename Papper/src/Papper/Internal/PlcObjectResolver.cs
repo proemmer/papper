@@ -336,6 +336,89 @@ namespace Papper.Internal
             return list;
         }
 
+        public static IEnumerable<string> GetWriteableBlocks(ITreeNode obj, ICollection<string> path, out bool hasReadOnlyVariables)
+        {
+            var list = new List<string>();
+            hasReadOnlyVariables = false;
+            if (obj != null)
+            {
+                var idx = obj.Name.IndexOf("[", StringComparison.Ordinal);
+
+                if (idx >= 0)
+                {
+                    var p = path.Last();
+                    path = new List<string>(path.Take(path.Count - 1)) { p + obj.Name.Substring(idx) };
+                }
+                else
+                {
+                    path.Add(obj.Name);
+                }
+
+                hasReadOnlyVariables = obj.Childs.Any(c => IsReadOnlyElement(c));
+                var currentChilds = obj.Childs.Where(c => !IsReadOnlyElement(c)).ToList();
+                if (currentChilds.Any())
+                {
+                    if (obj is PlcArray)
+                    {
+                        foreach (var child in currentChilds)
+                        {
+                            var hasCurrentChildReadOnlyAttribute = child.Childs.Any(c => IsReadOnlyElement(c));
+                            if (hasCurrentChildReadOnlyAttribute)
+                                hasReadOnlyVariables = true;
+                            var arrayChilds = child.Childs.Where(c => !IsReadOnlyElement(c)).ToList();
+                            if (arrayChilds.Any())
+                            {
+                                var numberOfChilds = arrayChilds.Count;
+                                var internalPath = new List<string>(path.Take(path.Count - 1)) { obj.Name + child.Name };
+                                foreach (var c in arrayChilds)
+                                {
+                                    var childVars = GetWriteableBlocks(c, internalPath.ToList(), out var hasReadOnlyChild);
+                                    if (!hasReadOnlyChild)
+                                    {
+                                        var internalElementPath = new List<string>(internalPath) { c.Name };
+                                        list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalElementPath.Skip(1)).Path.Substring(1));
+                                    }
+                                    else
+                                    {
+                                        hasReadOnlyVariables = true;
+                                        list.AddRange(childVars);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                var internalPath = new List<string>(path.Take(path.Count - 1)) { child.Name };
+                                list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalPath.Skip(1)).Path.Substring(1));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        foreach (var child in currentChilds)
+                        {
+                            var childVars = GetWriteableBlocks(child, path.ToList(), out var hasReadOnlyChild);
+                            if (!hasReadOnlyChild)
+                            {
+                                var internalPath = new List<string>(path) { child.Name };
+                                list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalPath.Skip(1)).Path.Substring(1));
+                            }
+                            else
+                            {
+                                hasReadOnlyVariables = true;
+                                list.AddRange(childVars);
+                            }
+                        }
+                    }
+
+                }
+                else
+                {
+                    list.Add(PlcMetaDataTreePath.CreateAbsolutePath(path.Skip(1)).Path.Substring(1));
+                }
+            }
+            return list;
+        }
+
         /// <summary>
         /// Try to get the mapping from MetaTree. If the data are not in the tree, try to create and add it. 
         /// </summary>

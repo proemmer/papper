@@ -42,6 +42,7 @@ namespace Papper.Tests
             _papper.AddMapping(typeof(DB_BST4_Boxen_1_Konfig));
             _papper.AddMapping(typeof(DB_BST1_Regal_1_Konfig));
             _papper.AddMapping(typeof(SampleData));
+            _papper.AddMapping(typeof(SampleDataSubstruct));
             _papper.AddMapping(typeof(DB_Safety));
             _papper.AddMapping(typeof(ArrayTestMapping));
             _papper.AddMapping(typeof(StringArrayTestMapping));
@@ -73,6 +74,18 @@ namespace Papper.Tests
         public void TestWriteableVariables(string mapping, int expectedVariables)
         {
             var vars = _papper.GetWriteableVariablesOf(mapping);
+            Assert.Equal(expectedVariables, vars.Count());
+        }
+
+
+        [Theory]
+        [InlineData(nameof(DB_Setup_AGV_BST1), 67)]
+        [InlineData(nameof(DB_BST1_ChargenRV), 452)]
+        [InlineData(nameof(SampleData), 12)]
+        [InlineData(nameof(SampleDataSubstruct), 2)]
+        public void TestWriteableBlocks(string mapping, int expectedVariables)
+        {
+            var vars = _papper.GetWriteableBlocksOf(mapping);
             Assert.Equal(expectedVariables, vars.Count());
         }
 

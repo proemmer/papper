@@ -161,6 +161,23 @@ namespace Papper
         }
 
         /// <summary>
+        /// Return all writeable variable names of a mapping
+        /// </summary>
+        /// <param name="mapping"></param>
+        /// <returns></returns>
+        public IEnumerable<string> GetWriteableBlocksOf(string mapping)
+        {
+            var result = new List<string>();
+            if (EntriesByName.TryGetValue(mapping, out var entry))
+            {
+                return PlcObjectResolver.GetWriteableBlocks(entry.PlcObject, result, out _);
+            }
+
+            ExceptionThrowHelper.ThrowMappingNotFoundException(mapping);
+            return Array.Empty<string>();
+        }
+
+        /// <summary>
         /// Add a type with an MappingAttribute to register this type as an mapping for read and write operations
         /// </summary>
         /// <param name="type">Has to be a type with at least one MappingAttribute</param>
