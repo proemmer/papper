@@ -17,7 +17,7 @@ namespace Papper.Types
         public PlcSize Offset { get; } = new PlcSize();
 
         public virtual bool HasReadOnlyChilds { get; internal set; }
-        public bool IsReadOnly { get; internal set; }
+        public virtual bool IsReadOnly { get; internal set; }
 
         public virtual int ByteOffset => Offset.Bytes;
         public virtual int BitOffset => Offset.Bits;

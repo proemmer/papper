@@ -356,9 +356,13 @@ namespace Papper.Internal
 
                 hasReadOnlyVariables = obj.Childs.Any(c => IsReadOnlyElement(c));
                 var currentChilds = obj.Childs.Where(c => !IsReadOnlyElement(c)).ToList();
-                if (currentChilds.Any())
+                if (hasReadOnlyVariables || currentChilds.Any())
                 {
-                    if (obj is PlcArray)
+                    if(!currentChilds.Any())
+                    {
+                        // nothing to add
+                    }
+                    else if (obj is PlcArray)
                     {
                         foreach (var child in currentChilds)
                         {
@@ -519,7 +523,13 @@ namespace Papper.Internal
                     }
                     else if (plcObject is PlcStruct)
                     {
-                        plcObject = new PlcObjectRef(plcObject.Name, GetMetaData(tree, pi.PropertyType));
+                        var refObject = new PlcObjectRef(plcObject.Name, GetMetaData(tree, pi.PropertyType));
+                        if(refObject != null)
+                        {
+                            refObject.IsReadOnly = plcObject.IsReadOnly;
+                        }
+
+                        plcObject = refObject;
                     }
 
                     if (plcObject != null)
