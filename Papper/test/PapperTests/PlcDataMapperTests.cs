@@ -56,6 +56,7 @@ namespace Papper.Tests
             _papper.AddMapping(typeof(RfData));
             _papper.AddMapping(typeof(DB_BST_An_Abwahl_BST1));
             _papper.AddMapping(typeof(DB_BST1_Geraete_1_Konfig));
+            _papper.AddMapping(typeof(SampleDataAccessNames));
 
 
         }
@@ -93,10 +94,28 @@ namespace Papper.Tests
         [InlineData(nameof(DB_BST_An_Abwahl_BST1), 4)]
         [InlineData(nameof(DB_BST1_Regal_1_Konfig), 56)]
         [InlineData(nameof(DB_BST1_Geraete_1_Konfig), 4)]
-        
+        [InlineData(nameof(SampleDataAccessNames), 11)]
+
         public void TestWriteableBlocks(string mapping, int expectedVariables)
         {
-            var vars = _papper.GetWriteableBlocksOf(mapping);
+            var vars = _papper.GetVariableBlocksOf(mapping, VariableListTypes.Write);
+            Assert.Equal(expectedVariables, vars.Count());
+        }
+
+        [Theory]
+        [InlineData(nameof(DB_Setup_AGV_BST1), 12)]
+        [InlineData(nameof(DB_BST3_ChargenRV), 1)]
+        [InlineData(nameof(DB_BST1_ChargenRV), 1)]
+        [InlineData(nameof(SampleData), 14)]
+        [InlineData(nameof(SampleDataSubstruct), 3)]
+        [InlineData(nameof(DB_BST_An_Abwahl_BST1), 1)]
+        [InlineData(nameof(DB_BST1_Regal_1_Konfig), 2)]
+        [InlineData(nameof(DB_BST1_Geraete_1_Konfig), 1)]
+        [InlineData(nameof(SampleDataAccessNames),13)]
+
+        public void TestReadableBlocks(string mapping, int expectedVariables)
+        {
+            var vars = _papper.GetVariableBlocksOf(mapping, VariableListTypes.Read);
             Assert.Equal(expectedVariables, vars.Count());
         }
 

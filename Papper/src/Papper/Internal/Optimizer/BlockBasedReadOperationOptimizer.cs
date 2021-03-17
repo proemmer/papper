@@ -53,7 +53,7 @@ namespace Papper.Internal
                     Offset = currentOffset,
                     Size = sizeInBytes == 0 && count ? 1 : sizeInBytes,
                     Selector = selector,
-                    ContainsReadOnlyParts = item.Value.PlcObject.IsReadOnly || item.Value.PlcObject.HasReadOnlyChilds
+                    ContainsReadOnlyParts = item.Value.PlcObject.IsReadOnly || item.Value.PlcObject.HasReadOnlyChilds 
                 };
 
 

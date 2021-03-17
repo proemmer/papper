@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Papper.Types
 {
@@ -178,6 +179,7 @@ namespace Papper.Types
             }
 
             UpdateReadOnlyPoperty(pi, instance);
+            UpdateSymbolicAccessName(pi, instance);
             return instance;
         }
 
@@ -212,6 +214,7 @@ namespace Papper.Types
             return plcObject;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void UpdateReadOnlyPoperty(MemberInfo pi, PlcObject? plcObject)
         {
             if (plcObject != null)
@@ -221,9 +224,29 @@ namespace Papper.Types
                 {
                     plcObject.IsReadOnly = readOnlyAttribute.IsReadOnly;
                 }
+                var notAcessibleAttribute = pi.GetCustomAttributes<NotAccessibleAttribute>().FirstOrDefault();
+                if (notAcessibleAttribute != null)
+                {
+                    // not accessible is also readonly
+                    plcObject.IsNotAccessible = plcObject.IsReadOnly = notAcessibleAttribute.IsNotAccessible;
+                }
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void UpdateSymbolicAccessName(MemberInfo pi, PlcObject? plcObject)
+        {
+            if (plcObject != null)
+            {
+                var aliasAttribute = pi.GetCustomAttributes<SymbolicAccessNameAttribute>().FirstOrDefault();
+                if (aliasAttribute != null)
+                {
+                    plcObject.SymbolicaAccessName = aliasAttribute.Name;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void UpdateSize(MemberInfo pi, PlcObject? plcObject, int dimension = 0)
         {
             if (plcObject is ISupportStringLengthAttribute s)
@@ -246,6 +269,7 @@ namespace Papper.Types
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static string GetName(MemberInfo pi)
         {
             var aliasAttribute = pi.GetCustomAttributes<AliasNameAttribute>().FirstOrDefault();
@@ -256,6 +280,8 @@ namespace Papper.Types
             return pi.Name;
         }
 
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool GetOffsetFromAttribute(MemberInfo pi, ref int byteOffset, ref int bitOffset)
         {
             var mappingOffsets = pi.GetCustomAttributes<MappingOffsetAttribute>().FirstOrDefault();
@@ -279,6 +305,7 @@ namespace Papper.Types
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static Type? GetTypeFromAttribute(MemberInfo pi)
         {
             var attribute = pi.GetCustomAttributes<PlcTypeAttribute>().FirstOrDefault();

@@ -13,6 +13,8 @@ using System.Threading.Tasks;
 
 namespace Papper
 {
+
+
     // This project can output the Class library as a NuGet Package.
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
     public class PlcDataMapper : IDisposable
@@ -165,12 +167,12 @@ namespace Papper
         /// </summary>
         /// <param name="mapping"></param>
         /// <returns></returns>
-        public IEnumerable<string> GetWriteableBlocksOf(string mapping)
+        public IEnumerable<string> GetVariableBlocksOf(string mapping, VariableListTypes variableListType)
         {
             var result = new List<string>();
             if (EntriesByName.TryGetValue(mapping, out var entry))
             {
-                return PlcObjectResolver.GetWriteableBlocks(entry.PlcObject, result, out _);
+                return PlcObjectResolver.GetAccessibleBlocks(entry.PlcObject, result, variableListType, out _);
             }
 
             ExceptionThrowHelper.ThrowMappingNotFoundException(mapping);

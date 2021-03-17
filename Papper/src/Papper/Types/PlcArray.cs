@@ -22,6 +22,7 @@ namespace Papper.Types
         public int Dimension { get; set; }
 
         public override bool HasReadOnlyChilds => ArrayType.HasReadOnlyChilds;
+        public override bool HasNotAccessibleChilds => ArrayType.HasNotAccessibleChilds;
 
         public int From
         {
