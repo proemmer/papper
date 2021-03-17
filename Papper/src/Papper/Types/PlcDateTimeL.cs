@@ -51,9 +51,8 @@ namespace Papper.Types
 
         private static int GetNanoseconds(DateTime self)
         {
-            const int ticksPerMicrosecond = 10;
             const int nanosecondsPerTick = 100;
-            return (int)(self.Ticks % TimeSpan.TicksPerMillisecond % ticksPerMicrosecond) * nanosecondsPerTick;
+            return (int)(self.Ticks % TimeSpan.TicksPerMillisecond) * nanosecondsPerTick;
         }
 
         private static DateTime AddNanoseconds(DateTime self, int nanoseconds)
