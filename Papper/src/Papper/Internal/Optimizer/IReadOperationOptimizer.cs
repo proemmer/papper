@@ -19,6 +19,6 @@ namespace Papper.Internal
 
     internal interface IReadOperationOptimizer
     {
-        IEnumerable<PlcRawData> CreateRawReadOperations(string selector, IEnumerable<KeyValuePair<string, OperationItem>> objects, int readDataBlockSize);
+        IEnumerable<PlcRawData> CreateRawReadOperations(string name, string selector, IEnumerable<KeyValuePair<string, OperationItem>> objects, int readDataBlockSize);
     }
 }

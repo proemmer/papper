@@ -342,9 +342,9 @@ namespace Papper.Internal
 
         private static string GetAccessName(ITreeNode node)
         {
-            if(node is PlcObject obj && !string.IsNullOrWhiteSpace(obj.SymbolicaAccessName))
+            if(node is PlcObject obj && !string.IsNullOrWhiteSpace(obj.SymbolicAccessName))
             {
-                return obj.SymbolicaAccessName!;
+                return obj.SymbolicAccessName!;
             }
             return node.Name;
         }
@@ -542,6 +542,7 @@ namespace Papper.Internal
                         {
                             refObject.IsReadOnly = plcObject.IsReadOnly;
                             refObject.IsNotAccessible = plcObject.IsNotAccessible;
+                            refObject.SymbolicAccessName = plcObject.SymbolicAccessName;
                         }
 
                         plcObject = refObject;

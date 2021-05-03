@@ -7,7 +7,7 @@ namespace Papper
         public string? Selector { get; set; }
         public int Offset { get; set; }
         public int Length { get; set; }
-
+        public string? SymbolicName { get; set; }
 
         public byte BitMask => BitMaskBegin;
 

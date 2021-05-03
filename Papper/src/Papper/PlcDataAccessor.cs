@@ -16,7 +16,7 @@ namespace Papper
         /// <param name="data"></param>
         /// <param name="variable"></param>
         /// <returns></returns>
-        public TValue GetValue<TStruct, TValue>(string variable, Span<byte> data)
+        public TValue? GetValue<TStruct, TValue>(string variable, Span<byte> data)
             => GetValue<TValue>(typeof(TStruct), variable, data);
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace Papper
         /// <param name="variable"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        public TValue GetValue<TValue>(Type type, string variable, Span<byte> data)
+        public TValue? GetValue<TValue>(Type type, string variable, Span<byte> data)
         {
             if (type == null || variable == null)
             {

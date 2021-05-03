@@ -44,7 +44,7 @@ namespace Papper.Internal
                     currentVars = _mapper.Optimizer is ItemBasedReadOperationOptimizer ? Variables.Where(x => vars.Contains(x.Key)).ToList() : Variables.ToList();
                 }
 
-                foreach (var rawDataBlock in _mapper.Optimizer.CreateRawReadOperations(PlcObject.Selector ?? string.Empty, currentVars, ReadDataBlockSize))
+                foreach (var rawDataBlock in _mapper.Optimizer.CreateRawReadOperations(PlcObject.Name ?? string.Empty, PlcObject.Selector ?? string.Empty, currentVars, ReadDataBlockSize))
                 {
                     if (rawDataBlock.References.Any())
                     {

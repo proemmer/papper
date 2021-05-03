@@ -176,9 +176,9 @@ namespace PapperCmd
                     { "SafeMotion.Header.Generated", DateTime.Now},
                     { "SafeMotion.Slots[42].SlotId", 3},
                     { "SafeMotion.Slots[42].HmiId", 4},
-                    { "SafeMotion.Slots[42].Commands.TakeoverPermitted", !_toggle ? true : false },
+                    { "SafeMotion.Slots[42].Commands.TakeoverPermitted", !_toggle },
                     { "SafeMotion.Slots[250].SlotId", 1},
-                    { "SafeMotion.Slots[150].Handshake.MotionSelected", !_toggle ? true : false}
+                    { "SafeMotion.Slots[150].Handshake.MotionSelected", !_toggle}
                 };
             _toggle = !_toggle;
             foreach (var item in writeData)
@@ -210,7 +210,7 @@ namespace PapperCmd
             var writeData = new Dictionary<string, object> {
                     { "SafeMotion.Slots[15].SlotId", 3},
                     { "SafeMotion.Slots[15].HmiId", 4},
-                    { "SafeMotion.Slots[15].Commands.TakeoverPermitted", !_toggle ? true : false },
+                    { "SafeMotion.Slots[15].Commands.TakeoverPermitted", !_toggle },
                 };
             _toggle = !_toggle;
             var are = new AutoResetEvent(false);
@@ -263,11 +263,11 @@ namespace PapperCmd
             Console.ForegroundColor = ConsoleColor.Red;
             var writeData = new Dictionary<string, object> {
                     { "W0", 3},
-                    { "X5_0", !_toggle ? true : false },
+                    { "X5_0", !_toggle },
                 };
             _toggle = !_toggle;
             var are = new AutoResetEvent(false);
-            OnChangeEventHandler callback = (s, e) =>
+            void callback(object s, PlcNotificationEventArgs e)
             {
                 foreach (var item in e)
                 {
@@ -275,7 +275,7 @@ namespace PapperCmd
                 }
 
                 are.Set();
-            };
+            }
             //papper.SubscribeRawDataChanges("DB15", callback);
             //papper.SetRawActiveState(true, "DB15", writeData.Keys.ToArray());
 

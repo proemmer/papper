@@ -27,7 +27,7 @@ namespace Papper.Tests
             PlcObjectResolver.AddPlcObjects(mapping, variables, values);
 
             var optimizer = OptimizerFactory.CreateOptimizer(optimzerType);
-            var rawBlocks = optimizer.CreateRawReadOperations(mapping.Selector, variables, size).ToList();
+            var rawBlocks = optimizer.CreateRawReadOperations(mapping.Name, mapping.Selector, variables, size).ToList();
 
             Assert.Equal(expectedPartitions, rawBlocks.Count);
         }

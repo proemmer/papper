@@ -244,7 +244,11 @@ namespace Papper.Types
                 var aliasAttribute = pi.GetCustomAttributes<SymbolicAccessNameAttribute>().FirstOrDefault();
                 if (aliasAttribute != null)
                 {
-                    plcObject.SymbolicaAccessName = aliasAttribute.Name;
+                    plcObject.SymbolicAccessName = aliasAttribute.Name;
+                }
+                else
+                {
+                    plcObject.SymbolicAccessName = pi.Name;
                 }
             }
         }

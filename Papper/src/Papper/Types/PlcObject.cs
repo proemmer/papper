@@ -10,6 +10,8 @@ namespace Papper.Types
 {
     internal abstract class PlcObject : PlcMetaDataTreeNode, IPlcObject
     {
+        private string? _symbolicAccessName;
+
         public string? Selector { get; set; }
         public Type? ElemenType { get; set; }
         public bool AllowOddByteOffsetInArray { get; set; }
@@ -21,7 +23,7 @@ namespace Papper.Types
         public virtual bool IsReadOnly { get; internal set; }
         public virtual bool IsNotAccessible { get; internal set; }
 
-        public string? SymbolicaAccessName { get; set; }
+        public string? SymbolicAccessName { get => _symbolicAccessName ?? Name; set => _symbolicAccessName = value; }
 
         public virtual int ByteOffset => Offset.Bytes;
         public virtual int BitOffset => Offset.Bits;
@@ -42,7 +44,7 @@ namespace Papper.Types
                 return null;
             }
 
-            if (!(tree.Get(node) is PlcObject metaDataNode))
+            if (tree.Get(node) is not PlcObject metaDataNode)
             {
                 lock (tree.Root)
                 {
