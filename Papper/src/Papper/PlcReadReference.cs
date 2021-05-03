@@ -30,7 +30,7 @@ namespace Papper
         /// </summary>
         /// <param name="address"> [Mapping].[Variable]</param>
         /// <returns></returns>
-        public static PlcReadReference FromAddress(string address) => new PlcReadReference(address);
+        public static PlcReadReference FromAddress(string address) => new(address);
 
 
         public PlcReadReference(string address)

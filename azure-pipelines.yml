@@ -38,6 +38,6 @@ steps:
     artifactNamePrefix: 'papper'
     framework: 'netstandard2.0'
     runTests: 'true'
-    dotnetCoreSdk: '3.0.100'
+    dotnetCoreSdk: '5.0.100'
     nugetConfig: './papper/nuget.config'
     nugetChannelName: $(nugetChannelName)

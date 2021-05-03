@@ -13,7 +13,7 @@ namespace Papper.Tests
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
     public sealed class MemoryUsageTests : IDisposable
     {
-        private readonly PlcDataMapper _papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
+        private readonly PlcDataMapper _papper = new(960, Papper_OnRead, Papper_OnWrite);
         private readonly ITestOutputHelper _output;
 
         public MemoryUsageTests(ITestOutputHelper output) => _output = output;

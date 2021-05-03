@@ -7,8 +7,8 @@ namespace Papper.Types
     internal class PlcDateTimeL : PlcObject
     {
         // Use share size for this data type, we will never change the size
-        private static readonly PlcSize _size = new PlcSize { Bytes = 12 };
-        private static readonly DateTime _epochTime = new DateTime(1970, 01, 01, 00, 00, 00);
+        private static readonly PlcSize _size = new() { Bytes = 12 };
+        private static readonly DateTime _epochTime = new(1970, 01, 01, 00, 00, 00);
         public override Type DotNetType => typeof(DateTime);
 
         public PlcDateTimeL(string name) : base(name)
@@ -44,7 +44,7 @@ namespace Papper.Types
             destination[5] = (byte)dt.Hour;
             destination[6] = (byte)dt.Minute;
             destination[7] = (byte)dt.Second;
-            BinaryPrimitives.WriteUInt32BigEndian(destination.Slice(8), (UInt32)((dt.Millisecond * 1000000) + GetNanoseconds(dt)));
+            BinaryPrimitives.WriteUInt32BigEndian(destination.Slice(8), (uint)((dt.Millisecond * 1000000) + GetNanoseconds(dt)));
         }
 
 

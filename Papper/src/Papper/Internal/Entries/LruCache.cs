@@ -6,7 +6,7 @@ namespace Papper.Internal
 {
     internal class LruCache : IDisposable
     {
-        private readonly Dictionary<string, LruState> _states = new Dictionary<string, LruState>();
+        private readonly Dictionary<string, LruState> _states = new();
 
         public bool TryGetValue(string key, out LruState state) => _states.TryGetValue(key, out state);
 

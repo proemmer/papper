@@ -10,7 +10,7 @@ namespace Papper.Internal
     {
         public const string Separator = ".";
         private static readonly string[] _splitSeparator = { Separator };
-        private readonly List<string> _nodes = new List<string>();
+        private readonly List<string> _nodes = new();
         private int[]? _arrayIndizes;
 
         public static PlcMetaDataTreePath CreateAbsolutePath(string nodeName)

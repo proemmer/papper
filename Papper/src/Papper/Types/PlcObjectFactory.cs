@@ -10,7 +10,7 @@ namespace Papper.Types
 {
     internal static class PlcObjectFactory
     {
-        private static readonly Dictionary<Type, Type> TypeMatch = new Dictionary<Type, Type>
+        private static readonly Dictionary<Type, Type> _typeMatch = new()
         {
             {typeof (bool), typeof (PlcBool)},
             {typeof (byte), typeof (PlcByte)},
@@ -28,9 +28,9 @@ namespace Papper.Types
             {typeof (char), typeof (PlcChar)},
         };
 
-        private static readonly Dictionary<Type, Type> ReverseTypeMatch = TypeMatch.ToDictionary(x => x.Value, x => x.Key);
+        private static readonly Dictionary<Type, Type> _reverseTypeMatch = _typeMatch.ToDictionary(x => x.Value, x => x.Key);
 
-        private static readonly Dictionary<string, Type> TypeNameMatch = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase)
+        private static readonly Dictionary<string, Type> _typeNameMatch = new(StringComparer.OrdinalIgnoreCase)
         {
             {"S5Time", typeof (PlcS5Time)},
             {"TimeOfDay", typeof (PlcTimeOfDay)},
@@ -65,7 +65,7 @@ namespace Papper.Types
 
         public static PlcObject? CreatePlcObjectFromType(Type t, object? value)
         {
-            if (TypeMatch.TryGetValue(t, out var plcType))
+            if (_typeMatch.TryGetValue(t, out var plcType))
             {
                 var plcObject = Activator.CreateInstance(plcType, t.Name) as PlcObject;
 
@@ -108,7 +108,7 @@ namespace Papper.Types
                 var dimensions = 0;
 
 
-                if (plcType != null || TypeMatch.TryGetValue(elementType, out plcType))
+                if (plcType != null || _typeMatch.TryGetValue(elementType, out plcType))
                 {
                     element = Activator.CreateInstance(plcType, name) as PlcObject;
                     UpdateSize(pi, element);
@@ -121,7 +121,7 @@ namespace Papper.Types
                         dimensions++;
                     }
 
-                    if (TypeMatch.TryGetValue(elementType, out plcType))
+                    if (_typeMatch.TryGetValue(elementType, out plcType))
                     {
                         element = Activator.CreateInstance(plcType, name) as PlcObject;
                         UpdateSize(pi, element);
@@ -165,7 +165,7 @@ namespace Papper.Types
             }
             else
             {
-                if (plcType != null || TypeMatch.TryGetValue(arrayIndex == null ? pi.PropertyType : pi.PropertyType.GetElementType(), out plcType))
+                if (plcType != null || _typeMatch.TryGetValue(arrayIndex == null ? pi.PropertyType : pi.PropertyType.GetElementType(), out plcType))
                 {
                     instance = Activator.CreateInstance(plcType, arrayIndex == null ? name : name + string.Format(CultureInfo.InvariantCulture, "[{0}]", arrayIndex)) as PlcObject;
                     UpdateSize(pi, instance);
@@ -314,7 +314,7 @@ namespace Papper.Types
             var attribute = pi.GetCustomAttributes<PlcTypeAttribute>().FirstOrDefault();
             if (attribute != null)
             {
-                if (TypeNameMatch.TryGetValue(attribute.Name, out var plcType))
+                if (_typeNameMatch.TryGetValue(attribute.Name, out var plcType))
                 {
                     return plcType;
                 }
@@ -322,6 +322,6 @@ namespace Papper.Types
             return null;
         }
 
-        public static Type GetTypeForPlcObject(Type plcObjectType) => ReverseTypeMatch.TryGetValue(plcObjectType, out var retType) ? retType : typeof(object);
+        public static Type GetTypeForPlcObject(Type plcObjectType) => _reverseTypeMatch.TryGetValue(plcObjectType, out var retType) ? retType : typeof(object);
     }
 }

@@ -37,7 +37,7 @@ namespace Papper
         /// <param name="address"> [Mapping].[Variable]</param>
         /// <param name="value">Value to write</param>
         /// <returns>An instance of a <see cref="PlcWriteReference"/></returns>
-        public static PlcWriteReference FromAddress(string address, object? value) => new PlcWriteReference(address, value);
+        public static PlcWriteReference FromAddress(string address, object? value) => new(address, value);
 
         public PlcWriteReference(string address, object? value)
         {

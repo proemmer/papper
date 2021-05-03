@@ -47,10 +47,10 @@ namespace Papper
         #endregion
 
         #region Fields
-        private readonly HashSet<Subscription> _subscriptions = new HashSet<Subscription>();
+        private readonly HashSet<Subscription> _subscriptions = new();
         private const int _readDataHeaderLength = 18;
-        private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
-        private readonly ReaderWriterLockSlim _mappingsLock = new ReaderWriterLockSlim();
+        private readonly PlcMetaDataTree _tree = new();
+        private readonly ReaderWriterLockSlim _mappingsLock = new();
         private ReadOperation? _readEventHandler;
         private WriteOperation? _writeEventHandler;
         private UpdateMonitoring? _updateHandler;
@@ -560,11 +560,11 @@ namespace Papper
         }
 
         #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
+        private bool _disposedValue = false; // To detect redundant calls
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
@@ -576,7 +576,7 @@ namespace Papper
                 _updateHandler = null;
                 _blockInfoHandler = null;
 
-                disposedValue = true;
+                _disposedValue = true;
             }
         }
 

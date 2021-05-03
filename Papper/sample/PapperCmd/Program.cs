@@ -119,7 +119,7 @@ namespace PapperCmd
                 }
             }
         }
-        private static readonly Dictionary<string, PlcBlock> _plc = new Dictionary<string, PlcBlock>();
+        private static readonly Dictionary<string, PlcBlock> _plc = new();
 
 
         public static void Main(string[] args)

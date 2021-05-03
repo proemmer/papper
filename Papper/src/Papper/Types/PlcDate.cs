@@ -7,8 +7,8 @@ namespace Papper.Types
     internal class PlcDate : PlcObject
     {
         // Use share size for this data type, we will never change the size
-        private static readonly PlcSize _size = new PlcSize { Bytes = 2 };
-        private static readonly DateTime _epochTime = new DateTime(1990, 01, 01, 00, 00, 00);
+        private static readonly PlcSize _size = new() { Bytes = 2 };
+        private static readonly DateTime _epochTime = new(1990, 01, 01, 00, 00, 00);
         public override Type DotNetType => typeof(DateTime);
 
 

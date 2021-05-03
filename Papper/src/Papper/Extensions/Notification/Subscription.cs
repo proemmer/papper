@@ -13,15 +13,15 @@ namespace Papper.Extensions.Notification
     /// </summary>
     public sealed class Subscription : IDisposable, IAsyncDisposable
     {
-        private readonly TaskCompletionSource<object?> _watchingTcs = new TaskCompletionSource<object?>();
+        private readonly TaskCompletionSource<object?> _watchingTcs = new();
         private readonly PlcDataMapper _mapper;
-        private readonly LruCache _lruCache = new LruCache();
-        private readonly Dictionary<string, PlcWatchReference> _variables = new Dictionary<string, PlcWatchReference>();
+        private readonly LruCache _lruCache = new();
+        private readonly Dictionary<string, PlcWatchReference> _variables = new();
         private readonly SemaphoreSlim _semaphore;
         private readonly ChangeDetectionStrategy _changeDetectionStrategy;
         private readonly int _defaultInterval;
         private readonly AsyncAutoResetEvent<IEnumerable<DataPack>>? _changeEvent;
-        private readonly AsyncAutoResetEvent<bool> _modifiedEvent = new AsyncAutoResetEvent<bool>();
+        private readonly AsyncAutoResetEvent<bool> _modifiedEvent = new();
         private bool _disposed;
 
         private CancellationTokenSource? _cts;

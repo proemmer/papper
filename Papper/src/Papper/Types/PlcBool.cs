@@ -7,7 +7,7 @@ namespace Papper.Types
     internal class PlcBool : PlcObject
     {
         // Use share size for this datatype, we will never change the size
-        private static readonly PlcSize _size = new PlcSize { Bits = 1 };
+        private static readonly PlcSize _size = new() { Bits = 1 };
 
         public override Type DotNetType => typeof(bool);
 

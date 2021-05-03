@@ -27,7 +27,7 @@ namespace Papper.Attributes
         ///       read-only.
         ///    </para>
         /// </devdoc>
-        public static readonly ReadOnlyAttribute Yes = new ReadOnlyAttribute(true);
+        public static readonly ReadOnlyAttribute Yes = new(true);
 
         /// <devdoc>
         ///    <para>
@@ -35,7 +35,7 @@ namespace Papper.Attributes
         ///       be modified at design time. This <see langword='static '/>field is read-only.
         ///    </para>
         /// </devdoc>
-        public static readonly ReadOnlyAttribute No = new ReadOnlyAttribute(false);
+        public static readonly ReadOnlyAttribute No = new(false);
 
         /// <devdoc>
         ///    <para>

@@ -8,7 +8,7 @@ namespace Papper.Types
     internal class PlcUInt : PlcObject
     {
         // Use share size for this data type, we will never change the size
-        private static readonly PlcSize _size = new PlcSize { Bytes = 2 };
+        private static readonly PlcSize _size = new() { Bytes = 2 };
         public override Type DotNetType => typeof(ushort);
 
         public PlcUInt(string name) : base(name)

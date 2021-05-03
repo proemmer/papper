@@ -32,7 +32,7 @@ namespace Papper.Tests
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
     public sealed class PlcDataMapperTests : IDisposable
     {
-        private readonly PlcDataMapper _papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite, OptimizerType.Items);
+        private readonly PlcDataMapper _papper = new(960, Papper_OnRead, Papper_OnWrite, OptimizerType.Items);
         private readonly ITestOutputHelper _output;
 
         public PlcDataMapperTests(ITestOutputHelper output)
@@ -262,7 +262,7 @@ namespace Papper.Tests
                     { "BigCharArray", Enumerable.Repeat<char>('a',50000).ToArray()},
                 };
 
-            Test(mapping, accessDict, Enumerable.Repeat<char>(default(char), 50000).ToArray());
+            Test(mapping, accessDict, Enumerable.Repeat<char>(default, 50000).ToArray());
         }
 
         [Fact]
@@ -562,14 +562,12 @@ namespace Papper.Tests
         [InlineData("DB2008.X0.4,16", new bool[] { false, false, true, true, false, false, true, true, false, false, true, true, false, false, true, true })]
         public void PerformReadWriteRaw(string address, object value)
         {
-            using (var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite))
-            {
-                var readResults = papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult();
-                var writeResults = papper.WriteAsync(PlcWriteReference.FromAddress(address, value)).GetAwaiter().GetResult();
-                var afterWriteReadResults = papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult();
+            using var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
+            var readResults = papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult();
+            var writeResults = papper.WriteAsync(PlcWriteReference.FromAddress(address, value)).GetAwaiter().GetResult();
+            var afterWriteReadResults = papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult();
 
-                Assert.Equal(value, afterWriteReadResults[0].Value);
-            }
+            Assert.Equal(value, afterWriteReadResults[0].Value);
         }
 
 
@@ -583,9 +581,10 @@ namespace Papper.Tests
         public async Task PerformReadStruct(string address, string propertyWritable, object valueWritable, string propertyReadonly, object valueReadonly)
         {
             var readResults = await _papper.ReadAsync(PlcReadReference.FromAddress(address)).ConfigureAwait(false);
-
-            var res1 = GetPropertyInExpandoObject(readResults[0].Value, propertyWritable);
-            var res2 = GetPropertyInExpandoObject(readResults[0].Value, propertyReadonly);
+            Assert.NotNull(propertyWritable);
+            Assert.NotNull(propertyReadonly);
+            var res1 = GetPropertyInExpandoObject(readResults[0].Value, propertyWritable!);
+            var res2 = GetPropertyInExpandoObject(readResults[0].Value, propertyReadonly!);
 
             SetPropertyInExpandoObject(readResults[0].Value, propertyWritable, valueWritable);
             SetPropertyInExpandoObject(readResults[0].Value, propertyReadonly, valueReadonly);
@@ -716,16 +715,14 @@ namespace Papper.Tests
             using var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite, UpdateHandler, ReadMetaData, OptimizerType.Items);
             papper.AddMapping(typeof(DB_Safety));
 
-            using (var subscription = papper.CreateSubscription(ChangeDetectionStrategy.Event))
-            {
-                Assert.True(await subscription.TryAddItemsAsync(PlcWatchReference.FromAddress("DB_Safety.SafeMotion.Slots[0]", 100)));
-                Assert.False(await subscription.TryAddItemsAsync(PlcWatchReference.FromAddress("Test.XY", 100)));
-                Assert.False(await subscription.TryAddItemsAsync(PlcWatchReference.FromAddress("DB_Safety.XY", 100)));
+            using var subscription = papper.CreateSubscription(ChangeDetectionStrategy.Event);
+            Assert.True(await subscription.TryAddItemsAsync(PlcWatchReference.FromAddress("DB_Safety.SafeMotion.Slots[0]", 100)).ConfigureAwait(false));
+            Assert.False(await subscription.TryAddItemsAsync(PlcWatchReference.FromAddress("Test.XY", 100)).ConfigureAwait(false));
+            Assert.False(await subscription.TryAddItemsAsync(PlcWatchReference.FromAddress("DB_Safety.XY", 100)).ConfigureAwait(false));
 
 
-                await Assert.ThrowsAsync<InvalidVariableException>(() => subscription.AddItemsAsync(PlcWatchReference.FromAddress("Test.XY", 100))).ConfigureAwait(false);
-                await Assert.ThrowsAsync<InvalidVariableException>(() => subscription.AddItemsAsync(PlcWatchReference.FromAddress("DB_Safety.XY", 100))).ConfigureAwait(false);
-            }
+            await Assert.ThrowsAsync<InvalidVariableException>(() => subscription.AddItemsAsync(PlcWatchReference.FromAddress("Test.XY", 100))).ConfigureAwait(false);
+            await Assert.ThrowsAsync<InvalidVariableException>(() => subscription.AddItemsAsync(PlcWatchReference.FromAddress("DB_Safety.XY", 100))).ConfigureAwait(false);
         }
 
         [Fact]

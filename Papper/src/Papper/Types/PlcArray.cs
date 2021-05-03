@@ -13,9 +13,9 @@ namespace Papper.Types
 
         public override Type DotNetType => typeof(ExpandoObject);
 
-        private readonly Dictionary<Type, object> _typeInstances = new Dictionary<Type, object>();
-        private readonly Dictionary<int, ITreeNode> _indexCache = new Dictionary<int, ITreeNode>();
-        private readonly PlcSize _size = new PlcSize();
+        private readonly Dictionary<Type, object> _typeInstances = new();
+        private readonly Dictionary<int, ITreeNode> _indexCache = new();
+        private readonly PlcSize _size = new();
         private PlcObject _arrayType;
         private int _from;
         private int _to;

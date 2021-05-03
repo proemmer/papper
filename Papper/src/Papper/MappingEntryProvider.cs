@@ -7,8 +7,8 @@ namespace Papper
 {
     public class MappingEntryProvider
     {
-        private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
-        private readonly Dictionary<Type, MappingEntry> _entries = new Dictionary<Type, MappingEntry>();
+        private readonly PlcMetaDataTree _tree = new();
+        private readonly Dictionary<Type, MappingEntry> _entries = new();
 
         internal class MappingEntry
         {

@@ -8,8 +8,8 @@ namespace Papper.Internal
 {
     internal abstract partial class Entry : IEntry, IDisposable
     {
-        private readonly ConcurrentDictionary<string, PlcObjectBinding> _bindings = new ConcurrentDictionary<string, PlcObjectBinding>();
-        private readonly object _bindingLock = new object();
+        private readonly ConcurrentDictionary<string, PlcObjectBinding> _bindings = new();
+        private readonly object _bindingLock = new();
         private readonly PlcDataMapper _mapper;
 
 
