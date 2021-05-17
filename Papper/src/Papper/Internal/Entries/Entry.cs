@@ -8,8 +8,8 @@ namespace Papper.Internal
 {
     internal abstract partial class Entry : IEntry, IDisposable
     {
-        private readonly ConcurrentDictionary<string, PlcObjectBinding> _bindings = new ConcurrentDictionary<string, PlcObjectBinding>();
-        private readonly object _bindingLock = new object();
+        private readonly ConcurrentDictionary<string, PlcObjectBinding> _bindings = new();
+        private readonly object _bindingLock = new();
         private readonly PlcDataMapper _mapper;
 
 
@@ -44,7 +44,7 @@ namespace Papper.Internal
                     currentVars = _mapper.Optimizer is ItemBasedReadOperationOptimizer ? Variables.Where(x => vars.Contains(x.Key)).ToList() : Variables.ToList();
                 }
 
-                foreach (var rawDataBlock in _mapper.Optimizer.CreateRawReadOperations(PlcObject.Selector ?? string.Empty, currentVars, ReadDataBlockSize))
+                foreach (var rawDataBlock in _mapper.Optimizer.CreateRawReadOperations(PlcObject.Name ?? string.Empty, PlcObject.Selector ?? string.Empty, currentVars, ReadDataBlockSize))
                 {
                     if (rawDataBlock.References.Any())
                     {

@@ -1,5 +1,4 @@
 ﻿using Papper.Types;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,7 +12,7 @@ namespace Papper.Internal
         /// Create RawReadOperations to use it in the reader. This method tries to optimize the PLC access, 
         /// to it creates blocks for minimum operations on plc.
         /// </summary>
-        public IEnumerable<PlcRawData> CreateRawReadOperations(string selector, IEnumerable<KeyValuePair<string, OperationItem>> objects, int readDataBlockSize)
+        public IEnumerable<PlcRawData> CreateRawReadOperations(string name, string selector, IEnumerable<KeyValuePair<string, OperationItem>> objects, int readDataBlockSize)
         {
             var rawBlocks = new List<PlcRawData>();
             PlcRawData? pred = null;
@@ -48,7 +47,8 @@ namespace Papper.Internal
                     Offset = currentOffset,
                     Size = sizeInBytes,
                     Selector = selector,
-                    ContainsReadOnlyParts = item.Value.PlcObject.IsReadOnly || item.Value.PlcObject.HasReadOnlyChilds
+                    ContainsReadOnlyParts = item.Value.PlcObject.IsReadOnly || item.Value.PlcObject.HasReadOnlyChilds,
+                    SymbolicAccessName = $"{name}.{item.Key}"
                 };
 
 
@@ -67,7 +67,7 @@ namespace Papper.Internal
                         //follows direct
                         offset = current.Offset - pred.Offset;
                         pred.Size = newElementSize;
-                        if(current.ContainsReadOnlyParts)
+                        if (current.ContainsReadOnlyParts)
                         {
                             pred.ContainsReadOnlyParts = true;
                         }

@@ -4,12 +4,13 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Papper.Types
 {
     internal static class PlcObjectFactory
     {
-        private static readonly Dictionary<Type, Type> TypeMatch = new Dictionary<Type, Type>
+        private static readonly Dictionary<Type, Type> _typeMatch = new()
         {
             {typeof (bool), typeof (PlcBool)},
             {typeof (byte), typeof (PlcByte)},
@@ -27,9 +28,9 @@ namespace Papper.Types
             {typeof (char), typeof (PlcChar)},
         };
 
-        private static readonly Dictionary<Type, Type> ReverseTypeMatch = TypeMatch.ToDictionary(x => x.Value, x => x.Key);
+        private static readonly Dictionary<Type, Type> _reverseTypeMatch = _typeMatch.ToDictionary(x => x.Value, x => x.Key);
 
-        private static readonly Dictionary<string, Type> TypeNameMatch = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase)
+        private static readonly Dictionary<string, Type> _typeNameMatch = new(StringComparer.OrdinalIgnoreCase)
         {
             {"S5Time", typeof (PlcS5Time)},
             {"TimeOfDay", typeof (PlcTimeOfDay)},
@@ -48,6 +49,9 @@ namespace Papper.Types
             {"DateTime", typeof (PlcDateTime)},
             {"Date", typeof (PlcDate)},
             {"LDateTime", typeof (PlcLDateTime)},
+            {"DateTimeL", typeof (PlcDateTimeL)},
+            {"LDT", typeof (PlcLDateTime)},
+            {"DTL", typeof (PlcDateTimeL)},
             {"Time", typeof (PlcTime)},
             {"LTime", typeof (PlcLTime)},
             {"String", typeof (PlcString)},
@@ -61,7 +65,7 @@ namespace Papper.Types
 
         public static PlcObject? CreatePlcObjectFromType(Type t, object? value)
         {
-            if (TypeMatch.TryGetValue(t, out var plcType))
+            if (_typeMatch.TryGetValue(t, out var plcType))
             {
                 var plcObject = Activator.CreateInstance(plcType, t.Name) as PlcObject;
 
@@ -104,7 +108,7 @@ namespace Papper.Types
                 var dimensions = 0;
 
 
-                if (plcType != null || TypeMatch.TryGetValue(elementType, out plcType))
+                if (plcType != null || _typeMatch.TryGetValue(elementType, out plcType))
                 {
                     element = Activator.CreateInstance(plcType, name) as PlcObject;
                     UpdateSize(pi, element);
@@ -117,7 +121,7 @@ namespace Papper.Types
                         dimensions++;
                     }
 
-                    if (TypeMatch.TryGetValue(elementType, out plcType))
+                    if (_typeMatch.TryGetValue(elementType, out plcType))
                     {
                         element = Activator.CreateInstance(plcType, name) as PlcObject;
                         UpdateSize(pi, element);
@@ -161,7 +165,7 @@ namespace Papper.Types
             }
             else
             {
-                if (plcType != null || TypeMatch.TryGetValue(arrayIndex == null ? pi.PropertyType : pi.PropertyType.GetElementType(), out plcType))
+                if (plcType != null || _typeMatch.TryGetValue(arrayIndex == null ? pi.PropertyType : pi.PropertyType.GetElementType(), out plcType))
                 {
                     instance = Activator.CreateInstance(plcType, arrayIndex == null ? name : name + string.Format(CultureInfo.InvariantCulture, "[{0}]", arrayIndex)) as PlcObject;
                     UpdateSize(pi, instance);
@@ -178,6 +182,7 @@ namespace Papper.Types
             }
 
             UpdateReadOnlyPoperty(pi, instance);
+            UpdateSymbolicAccessName(pi, instance);
             return instance;
         }
 
@@ -212,6 +217,7 @@ namespace Papper.Types
             return plcObject;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void UpdateReadOnlyPoperty(MemberInfo pi, PlcObject? plcObject)
         {
             if (plcObject != null)
@@ -221,9 +227,33 @@ namespace Papper.Types
                 {
                     plcObject.IsReadOnly = readOnlyAttribute.IsReadOnly;
                 }
+                var notAcessibleAttribute = pi.GetCustomAttributes<NotAccessibleAttribute>().FirstOrDefault();
+                if (notAcessibleAttribute != null)
+                {
+                    // not accessible is also readonly
+                    plcObject.IsNotAccessible = plcObject.IsReadOnly = notAcessibleAttribute.IsNotAccessible;
+                }
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void UpdateSymbolicAccessName(MemberInfo pi, PlcObject? plcObject)
+        {
+            if (plcObject != null)
+            {
+                var aliasAttribute = pi.GetCustomAttributes<SymbolicAccessNameAttribute>().FirstOrDefault();
+                if (aliasAttribute != null)
+                {
+                    plcObject.SymbolicAccessName = aliasAttribute.Name;
+                }
+                else
+                {
+                    plcObject.SymbolicAccessName = pi.Name;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void UpdateSize(MemberInfo pi, PlcObject? plcObject, int dimension = 0)
         {
             if (plcObject is ISupportStringLengthAttribute s)
@@ -246,6 +276,7 @@ namespace Papper.Types
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static string GetName(MemberInfo pi)
         {
             var aliasAttribute = pi.GetCustomAttributes<AliasNameAttribute>().FirstOrDefault();
@@ -256,6 +287,8 @@ namespace Papper.Types
             return pi.Name;
         }
 
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool GetOffsetFromAttribute(MemberInfo pi, ref int byteOffset, ref int bitOffset)
         {
             var mappingOffsets = pi.GetCustomAttributes<MappingOffsetAttribute>().FirstOrDefault();
@@ -279,12 +312,13 @@ namespace Papper.Types
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static Type? GetTypeFromAttribute(MemberInfo pi)
         {
             var attribute = pi.GetCustomAttributes<PlcTypeAttribute>().FirstOrDefault();
             if (attribute != null)
             {
-                if (TypeNameMatch.TryGetValue(attribute.Name, out var plcType))
+                if (_typeNameMatch.TryGetValue(attribute.Name, out var plcType))
                 {
                     return plcType;
                 }
@@ -292,6 +326,6 @@ namespace Papper.Types
             return null;
         }
 
-        public static Type GetTypeForPlcObject(Type plcObjectType) => ReverseTypeMatch.TryGetValue(plcObjectType, out var retType) ? retType : typeof(object);
+        public static Type GetTypeForPlcObject(Type plcObjectType) => _reverseTypeMatch.TryGetValue(plcObjectType, out var retType) ? retType : typeof(object);
     }
 }

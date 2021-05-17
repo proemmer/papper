@@ -3,6 +3,7 @@
     public enum OptimizerType
     {
         Block,
-        Items
+        Items,
+        Symbolic
     }
 }

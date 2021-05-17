@@ -15,8 +15,8 @@ namespace Papper.Tests
 {
     public sealed class SubscriptionTests : IDisposable
     {
-        private static readonly MockPlc _mockPlc = new MockPlc();
-        private readonly PlcDataMapper _papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
+        private static readonly MockPlc _mockPlc = new();
+        private readonly PlcDataMapper _papper = new(960, Papper_OnRead, Papper_OnWrite);
         private readonly ITestOutputHelper _output;
 
         public SubscriptionTests(ITestOutputHelper output)

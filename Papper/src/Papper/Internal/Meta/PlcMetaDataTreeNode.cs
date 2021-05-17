@@ -6,7 +6,7 @@ namespace Papper.Internal
 {
     internal class PlcMetaDataTreeNode : PlcMetaDataBaseTreeNode
     {
-        private static readonly List<ITreeNode> _empty = new List<ITreeNode>();
+        private static readonly List<ITreeNode> _empty = new();
         private List<ITreeNode>? _childs;
         private ConcurrentDictionary<string, ITreeNode>? _childByNameCache;
 

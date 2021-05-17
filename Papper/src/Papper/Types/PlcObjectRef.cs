@@ -19,6 +19,7 @@ namespace Papper.Types
         public override int BitSize => Size == null ? 0 : Size.Bits;
 
         public override bool HasReadOnlyChilds => _referencedObject != null ? _referencedObject.HasReadOnlyChilds : false;
+        public override bool HasNotAccessibleChilds => _referencedObject != null ? _referencedObject.HasNotAccessibleChilds : false;
 
         public PlcObjectRef(string name, PlcObject reference) :
             base(name) => _referencedObject = reference;

@@ -1,11 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26228.10
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31220.234
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3FB1D2A8-9F36-4FCB-897B-A938935616C0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2A91A3C8-7278-4D3B-B552-4D911768F110}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+		nuget.config = nuget.config
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Papper", "src\Papper\Papper.csproj", "{AD09B8AF-6803-4CD7-9692-C31BEFD364AD}"
 EndProject
@@ -17,7 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sample", "sample", "{77B9FE
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PapperCmd", "sample\PapperCmd\PapperCmd.csproj", "{0FBA763A-1CA5-4F21-BDC2-837363323D23}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarks", "test\Benchmarks\Benchmarks.csproj", "{1E97C032-4463-4D60-A153-74F2E4599779}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "test\Benchmarks\Benchmarks.csproj", "{1E97C032-4463-4D60-A153-74F2E4599779}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

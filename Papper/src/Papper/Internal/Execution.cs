@@ -73,7 +73,8 @@ namespace Papper.Internal
             {
                 Selector = PlcRawData.Selector,
                 Offset = PlcRawData.Offset,
-                Length = PlcRawData.Size > 0 ? PlcRawData.Size : 1
+                Length = PlcRawData.Size > 0 ? PlcRawData.Size : 1,
+                SymbolicName = PlcRawData.SymbolicAccessName
             });
         }
 
@@ -125,6 +126,7 @@ namespace Papper.Internal
                     Length = Math.Min(slot.Size, GetSize(binding)),
                     BitMaskBegin = slot.Mask != 0xff ? slot.Mask : begin,
                     BitMaskEnd = slot.Mask != 0xff ? (byte)0xFF : end,
+                    SymbolicName = binding.RawData.SymbolicAccessName,
                     Data = data
                 };
                 res.Data = res.Data.Slice(dataOffset + slot.Offset - binding.RawData.Offset, res.Length);

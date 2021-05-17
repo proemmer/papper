@@ -1,13 +1,4 @@
-﻿//------------------------------------------------------------------------------
-// <copyright file="ReadOnlyAttribute.cs" company="Microsoft">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-//     Modified to use in DNX  from Benjamin Proemmer
-// </copyright>                                                                
-//------------------------------------------------------------------------------
-
-/*
- */
-using System;
+﻿using System;
 
 
 namespace Papper.Attributes
@@ -17,7 +8,7 @@ namespace Papper.Attributes
     ///       is read-only or read/write.</para>
     /// </devdoc>
     [AttributeUsage(AttributeTargets.All)]
-    public sealed class ReadOnlyAttribute : Attribute
+    public sealed class NotAccessibleAttribute : Attribute
     {
 
         /// <devdoc>
@@ -27,7 +18,7 @@ namespace Papper.Attributes
         ///       read-only.
         ///    </para>
         /// </devdoc>
-        public static readonly ReadOnlyAttribute Yes = new(true);
+        public static readonly NotAccessibleAttribute Yes = new(true);
 
         /// <devdoc>
         ///    <para>
@@ -35,22 +26,22 @@ namespace Papper.Attributes
         ///       be modified at design time. This <see langword='static '/>field is read-only.
         ///    </para>
         /// </devdoc>
-        public static readonly ReadOnlyAttribute No = new(false);
+        public static readonly NotAccessibleAttribute No = new(false);
 
         /// <devdoc>
         ///    <para>
-        ///       Specifies the default value for the <see cref='System.ComponentModel.ReadOnlyAttribute'/> , which is <see cref='System.ComponentModel.ReadOnlyAttribute.No'/>, that is,
+        ///       Specifies the default value for the <see cref='System.ComponentModel.NotAccessibleAttribute'/> , which is <see cref='System.ComponentModel.NotAccessibleAttribute.No'/>, that is,
         ///       the property this attribute is bound to is read/write. This <see langword='static'/> field is read-only.
         ///    </para>
         /// </devdoc>
-        public static readonly ReadOnlyAttribute Default = No;
+        public static readonly NotAccessibleAttribute Default = No;
 
         /// <devdoc>
         ///    <para>
         ///       Initializes a new instance of the <see cref='System.ComponentModel.ReadOnlyAttribute'/> class.
         ///    </para>
         /// </devdoc>
-        public ReadOnlyAttribute(bool isReadOnly) => IsReadOnly = isReadOnly;
+        public NotAccessibleAttribute(bool isNotAccessible) => IsNotAccessible = isNotAccessible;
 
         /// <devdoc>
         ///    <para>
@@ -58,7 +49,7 @@ namespace Papper.Attributes
         ///       read-only.
         ///    </para>
         /// </devdoc>
-        public bool IsReadOnly { get; } = false;
+        public bool IsNotAccessible { get; } = false;
 
         /// <internalonly/>
         /// <devdoc>
@@ -70,7 +61,7 @@ namespace Papper.Attributes
                 return true;
             }
 
-            return value is ReadOnlyAttribute other && other.IsReadOnly == IsReadOnly;
+            return value is NotAccessibleAttribute other && other.IsNotAccessible == IsNotAccessible;
         }
 
         /// <devdoc>

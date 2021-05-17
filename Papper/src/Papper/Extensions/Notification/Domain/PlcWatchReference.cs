@@ -35,20 +35,20 @@ namespace Papper.Extensions.Notification
         /// </summary>
         /// <param name="address"> [Mapping].[Variable]</param>
         /// <returns></returns>
-        public static PlcWatchReference FromAddress(string address, int watchCycle) => new PlcWatchReference(address, watchCycle);
+        public static PlcWatchReference FromAddress(string address, int watchCycle) => new(address, watchCycle);
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="address"> [Mapping].[Variable]</param>
         /// <returns></returns>
-        public static PlcWatchReference FromPlcReadReference(PlcReadReference reference, int watchCycle) => new PlcWatchReference(reference.Address, watchCycle);
+        public static PlcWatchReference FromPlcReadReference(PlcReadReference reference, int watchCycle) => new(reference.Address, watchCycle);
 
         /// <summary>
         /// Returns the watch reference as a read reference
         /// </summary>
         /// <returns></returns>
-        public PlcReadReference ToReadReference() => new PlcReadReference(Address);
+        public PlcReadReference ToReadReference() => new(Address);
 
 
         public PlcWatchReference(string address, int watchCycle = 1000)

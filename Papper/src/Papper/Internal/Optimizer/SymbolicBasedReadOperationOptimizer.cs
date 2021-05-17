@@ -1,15 +1,10 @@
 ﻿using Papper.Types;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Papper.Internal
 {
-
-
-
-
-    internal class BlockBasedReadOperationOptimizer : IReadOperationOptimizer
+    internal class SymbolicBasedReadOperationOptimizer : IReadOperationOptimizer
     {
 
 
@@ -25,12 +20,11 @@ namespace Papper.Internal
             var offset = 0;
             foreach (var item in objects.OrderBy(i => i.Value.Offset + i.Value.PlcObject.Offset.Bytes)
                                         .ThenBy(i => i.Value.PlcObject.Offset.Bits)
-                                        .ThenBy(i => i.Key.Length)
-                                        .ToList())
+                                        .ThenBy(i => i.Key.Length).ToList())
             {
                 var count = true;
                 var currentOffset = item.Value.Offset + item.Value.PlcObject.Offset.Bytes;
-                var sizeInBytes = item.Value.PlcObject.Size == null ? 0 : item.Value.PlcObject.Size.Bytes;
+                var sizeInBytes = item.Value.PlcObject.Size == null || item.Value.PlcObject.Size.Bytes == 0 && count ? 1 : item.Value.PlcObject.Size.Bytes;
 
                 if (item.Value.PlcObject is PlcBool)
                 {
@@ -51,7 +45,7 @@ namespace Papper.Internal
                 var current = new PlcRawData(readDataBlockSize)
                 {
                     Offset = currentOffset,
-                    Size = sizeInBytes == 0 && count ? 1 : sizeInBytes,
+                    Size = sizeInBytes,
                     Selector = selector,
                     ContainsReadOnlyParts = item.Value.PlcObject.IsReadOnly || item.Value.PlcObject.HasReadOnlyChilds,
                     SymbolicAccessName = $"{name}.{item.Key}"
@@ -67,17 +61,8 @@ namespace Papper.Internal
                 else
                 {
                     var directOffset = pred.Offset + pred.Size;
-                    if (directOffset == current.Offset)
-                    {
-                        //follows direct
-                        offset = current.Offset - pred.Offset;
-                        pred.Size += current.Size;
-                        if (current.ContainsReadOnlyParts)
-                        {
-                            pred.ContainsReadOnlyParts = true;
-                        }
-                    }
-                    else if (directOffset > current.Offset)
+                    var newElementSize = pred.Size + current.Size;
+                    if (directOffset > current.Offset)
                     {
                         //is subElement
                         offset = current.Offset - pred.Offset;
@@ -94,29 +79,12 @@ namespace Papper.Internal
                     }
                     else
                     {
-                        var unusedBytes = current.Offset - directOffset;
-                        var modifiedSize = pred.Size + unusedBytes + current.Size;
-                        if (pred.Size + unusedBytes + current.Size <= readDataBlockSize)
-                        {
-                            //It is OK to use one block, because its in one PDU. Better one read than many
-                            if (count)
-                            {
-                                offset = pred.Size + unusedBytes;
-                                pred.Size = modifiedSize;
-                            }
-                            if (current.ContainsReadOnlyParts)
-                            {
-                                pred.ContainsReadOnlyParts = true;
-                            }
-                        }
-                        else
-                        {
-                            rawBlocks.Add(current);
-                            pred = current;
-                            offset = 0;
-                        }
+                        rawBlocks.Add(current);
+                        pred = current;
+                        offset = 0;
                     }
                 }
+
 
                 pred.AddReference(item.Key, offset, item.Value.PlcObject);
             }
@@ -124,7 +92,5 @@ namespace Papper.Internal
             OptimizerFactory.CreateWriteAreas(rawBlocks);
             return rawBlocks;
         }
-
-        
     }
 }

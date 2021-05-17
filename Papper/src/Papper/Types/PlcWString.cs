@@ -10,7 +10,7 @@ namespace Papper.Types
         private const int _defaultStringLength = 254;
         private const char _defaultFillChar = '\0';
         private readonly byte _defaultFillByte;
-        private readonly PlcSize _size = new PlcSize();
+        private readonly PlcSize _size = new();
 
         public override Type DotNetType => typeof(string);
 

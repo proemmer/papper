@@ -262,10 +262,14 @@ namespace Papper.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool IsReadOnlyElement(ITreeNode node)
+        private static bool IsNotAcessibleElement(ITreeNode node, VariableListTypes accessMode)
         {
             if(node is PlcObject plco)
             {
+                if(accessMode == VariableListTypes.Read)
+                {
+                    return plco.IsNotAccessible;
+                }
                 return plco.IsReadOnly;
             }
             return false;
@@ -295,14 +299,14 @@ namespace Papper.Internal
                 }
 
 
-                var currentChilds = obj.Childs.Where(c => !onlyWriteable || !IsReadOnlyElement(c)).ToList();
+                var currentChilds = obj.Childs.Where(c => !onlyWriteable || !IsNotAcessibleElement(c, VariableListTypes.Write)).ToList();
                 if (currentChilds.Any())
                 {
                     if (obj is PlcArray)
                     {
                         foreach (var child in currentChilds)
                         {
-                            var arrayChilds = child.Childs.Where(c => !onlyWriteable || !IsReadOnlyElement(c)).ToList();
+                            var arrayChilds = child.Childs.Where(c => !onlyWriteable || !IsNotAcessibleElement(c, VariableListTypes.Write)).ToList();
                             if (arrayChilds.Any())
                             {
                                 var nunmberOfChilds = arrayChilds.Count;
@@ -336,27 +340,37 @@ namespace Papper.Internal
             return list;
         }
 
-        public static IEnumerable<string> GetWriteableBlocks(ITreeNode obj, ICollection<string> path, out bool hasReadOnlyVariables)
+        private static string GetAccessName(ITreeNode node)
+        {
+            if(node is PlcObject obj && !string.IsNullOrWhiteSpace(obj.SymbolicAccessName))
+            {
+                return obj.SymbolicAccessName!;
+            }
+            return node.Name;
+        }
+
+        public static IEnumerable<string> GetAccessibleBlocks(ITreeNode obj, ICollection<string> path, VariableListTypes accessMode, out bool hasNotAccessibleVariables)
         {
             var list = new List<string>();
-            hasReadOnlyVariables = false;
+            hasNotAccessibleVariables = false;
             if (obj != null)
             {
-                var idx = obj.Name.IndexOf("[", StringComparison.Ordinal);
+                var currentName = GetAccessName(obj);
+                var idx = currentName.IndexOf("[", StringComparison.Ordinal);
 
                 if (idx >= 0)
                 {
                     var p = path.Last();
-                    path = new List<string>(path.Take(path.Count - 1)) { p + obj.Name.Substring(idx) };
+                    path = new List<string>(path.Take(path.Count - 1)) { p + currentName.Substring(idx) };
                 }
                 else
                 {
-                    path.Add(obj.Name);
+                    path.Add(currentName);
                 }
 
-                hasReadOnlyVariables = obj.Childs.Any(c => IsReadOnlyElement(c));
-                var currentChilds = obj.Childs.Where(c => !IsReadOnlyElement(c)).ToList();
-                if (hasReadOnlyVariables || currentChilds.Any())
+                hasNotAccessibleVariables = obj.Childs.Any(c => IsNotAcessibleElement(c, accessMode));
+                var currentChilds = obj.Childs.Where(c => !IsNotAcessibleElement(c, accessMode)).ToList();
+                if (hasNotAccessibleVariables || currentChilds.Any())
                 {
                     if(!currentChilds.Any())
                     {
@@ -366,32 +380,32 @@ namespace Papper.Internal
                     {
                         foreach (var child in currentChilds)
                         {
-                            var hasCurrentChildReadOnlyAttribute = child.Childs.Any(c => IsReadOnlyElement(c));
+                            var hasCurrentChildReadOnlyAttribute = child.Childs.Any(c => IsNotAcessibleElement(c, accessMode));
                             if (hasCurrentChildReadOnlyAttribute)
-                                hasReadOnlyVariables = true;
-                            var arrayChilds = child.Childs.Where(c => !IsReadOnlyElement(c)).ToList();
+                                hasNotAccessibleVariables = true;
+                            var arrayChilds = child.Childs.Where(c => !IsNotAcessibleElement(c, accessMode)).ToList();
                             if (arrayChilds.Any())
                             {
                                 var numberOfChilds = arrayChilds.Count;
-                                var internalPath = new List<string>(path.Take(path.Count - 1)) { obj.Name + child.Name };
+                                var internalPath = new List<string>(path.Take(path.Count - 1)) { currentName + GetAccessName(child) };
                                 foreach (var c in arrayChilds)
                                 {
-                                    var childVars = GetWriteableBlocks(c, internalPath.ToList(), out var hasReadOnlyChild);
-                                    if (!hasReadOnlyChild)
+                                    var childVars = GetAccessibleBlocks(c, internalPath.ToList(), accessMode, out var hasNotAcessibleChild);
+                                    if (!hasNotAcessibleChild)
                                     {
-                                        var internalElementPath = new List<string>(internalPath) { c.Name };
+                                        var internalElementPath = new List<string>(internalPath) { GetAccessName(c) };
                                         list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalElementPath.Skip(1)).Path.Substring(1));
                                     }
                                     else
                                     {
-                                        hasReadOnlyVariables = true;
+                                        hasNotAccessibleVariables = true;
                                         list.AddRange(childVars);
                                     }
                                 }
                             }
                             else
                             {
-                                var internalPath = new List<string>(path.Take(path.Count - 1)) { child.Name };
+                                var internalPath = new List<string>(path.Take(path.Count - 1)) { GetAccessName(child) };
                                 list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalPath.Skip(1)).Path.Substring(1));
                             }
                         }
@@ -400,15 +414,15 @@ namespace Papper.Internal
                     {
                         foreach (var child in currentChilds)
                         {
-                            var childVars = GetWriteableBlocks(child, path.ToList(), out var hasReadOnlyChild);
-                            if (!hasReadOnlyChild)
+                            var childVars = GetAccessibleBlocks(child, path.ToList(), accessMode, out var hasNotAcessibleChild);
+                            if (!hasNotAcessibleChild)
                             {
-                                var internalPath = new List<string>(path) { child.Name };
+                                var internalPath = new List<string>(path) { GetAccessName(child) };
                                 list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalPath.Skip(1)).Path.Substring(1));
                             }
                             else
                             {
-                                hasReadOnlyVariables = true;
+                                hasNotAccessibleVariables = true;
                                 list.AddRange(childVars);
                             }
                         }
@@ -527,6 +541,8 @@ namespace Papper.Internal
                         if(refObject != null)
                         {
                             refObject.IsReadOnly = plcObject.IsReadOnly;
+                            refObject.IsNotAccessible = plcObject.IsNotAccessible;
+                            refObject.SymbolicAccessName = plcObject.SymbolicAccessName;
                         }
 
                         plcObject = refObject;
@@ -541,6 +557,12 @@ namespace Papper.Internal
                         {
                             parent.HasReadOnlyChilds = true;
                         }
+                        if (!parent.HasNotAccessibleChilds && (plcObject.IsNotAccessible || plcObject.HasNotAccessibleChilds))
+                        {
+                            parent.HasNotAccessibleChilds = true;
+                            parent.HasReadOnlyChilds = true;
+                        }
+                        
                     }
                 }
                 DebugOutPut("}} = {0}", parent.Size.Bytes);

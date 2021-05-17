@@ -74,7 +74,7 @@ namespace Papper.Tests
             {
             };
             var size = s.SerializedByteSize<PLCDataPMS>();
-            var deserialized = s.Deserialize<PLCDataPMS>(data);
+            var deserialized = s.Deserialize<PLCDataPMS>(_data);
 
 
         }
@@ -250,7 +250,7 @@ namespace Papper.Tests
 
 
 
-        private static readonly byte[] data = new byte[]
+        private static readonly byte[] _data = new byte[]
         {
             0x20
             , 0x20

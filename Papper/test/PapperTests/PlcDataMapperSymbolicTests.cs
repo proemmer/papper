@@ -24,18 +24,17 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-//run in sequence because of db sharing
-[assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
 namespace Papper.Tests
 {
     // This project can output the Class library as a NuGet Package.
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
-    public sealed class PlcDataMapperTests : IDisposable
+    public sealed class PlcDataMapperSymbolicTests : IDisposable
     {
-        private readonly PlcDataMapper _papper = new(960, Papper_OnRead, Papper_OnWrite, OptimizerType.Items);
+        private readonly PlcDataMapper _papper = new(960, Papper_OnRead, Papper_OnWrite, OptimizerType.Symbolic);
+        private static readonly MockPlc _mockPlc = new MockPlc();
         private readonly ITestOutputHelper _output;
 
-        public PlcDataMapperTests(ITestOutputHelper output)
+        public PlcDataMapperSymbolicTests(ITestOutputHelper output)
         {
             _output = output;
             _papper.AddMapping(typeof(DB_BST3_ChargenRV));
@@ -646,7 +645,7 @@ namespace Papper.Tests
             Test(mapping, accessDict, "");
 
             //Byte data check
-            var dbData = MockPlc.Instance.GetPlcEntry("DB30").Data;
+            var dbData = _mockPlc.GetPlcEntry("DB30").Data;
             Assert.True(dbData.Slice(0, 2).Span.SequenceEqual(new byte[] { 35, 5 }));
             Assert.True(dbData.Slice(2, 5).Span.SequenceEqual("TEST1".ToByteArray(5)));
 
@@ -823,30 +822,7 @@ namespace Papper.Tests
         }
 
 
-        [Fact]
-        public async Task ReadBigAndSmallPart()
-        {
-            var write = PlcWriteReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", new char[4] { 'A', 'B', 'C', 'D' });
 
-            var exec2 = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
-            var exec = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", 200) });
-
-            Assert.True(exec[0].Bindings.Values.FirstOrDefault().RawData.Size == 4);
-            Assert.True(exec2[0].Bindings.Values.FirstOrDefault().RawData.Size == 7970);
-
-            await _papper.WriteAsync(write).ConfigureAwait(false);
-
-
-            var data = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA") }).ConfigureAwait(false);
-            Assert.True(data[0].Value is byte[] b && b.Length == 7970);
-
-
-            var data2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number") }).ConfigureAwait(false);
-            Assert.True(data2[0].Value is byte[] b2 && b2.Length == 4);
-
-
-            Assert.True(data2[0].Value is byte[] bX1 && data[0].Value is byte[] bx2 && bX1.SequenceEqual(bx2.SubArray(0, 4)));
-        }
 
         [Fact]
         public async Task ReadSmallAndBigPart()
@@ -900,32 +876,6 @@ namespace Papper.Tests
             Assert.True(data2[0].Value is byte[] bX1 && data[0].Value is byte[] bx2 && bX1.SequenceEqual(bx2.SubArray(0, 4)));
         }
 
-        [Fact]
-        public async Task ReadBigAndSmallPartsWithoutGap()
-        {
-            var write = PlcWriteReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", new char[4] { 'A', 'B', 'C', 'D' });
-
-            var exec2 = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
-            var exec = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", 200), PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Status", 200) });
-
-            Assert.True(exec[0].Bindings.Values.FirstOrDefault().RawData.Size == 5);
-            Assert.True(exec2[0].Bindings.Values.FirstOrDefault().RawData.Size == 7970);
-
-            await _papper.WriteAsync(write).ConfigureAwait(false);
-
-
-            var data = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA") }).ConfigureAwait(false);
-            Assert.True(data[0].Value is byte[] b && b.Length == 7970);
-
-
-            var data2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number") }).ConfigureAwait(false);
-            Assert.True(data2[0].Value is byte[] b2 && b2.Length == 4);
-
-
-            Assert.True(data2[0].Value is byte[] bX1 && data[0].Value is byte[] bx2 && bX1.SequenceEqual(bx2.SubArray(0, 4)));
-        }
-
-
         #region Helper
 
 
@@ -957,13 +907,13 @@ namespace Papper.Tests
         /// </summary>
         /// <param name="dt"></param>
         /// <returns></returns>
-        private DateTime Normalize(DateTime dt) => dt.AddTicks((dt.Ticks % 10000) * -1);
+        private static DateTime Normalize(DateTime dt) => dt.AddTicks((dt.Ticks % 10000) * -1);
 
         private Task UpdateHandler(IEnumerable<DataPack> monitoring, bool add = true)
         {
             foreach (var item in monitoring)
             {
-                MockPlc.Instance.UpdateDataChangeItem(item, !add);
+                _mockPlc.UpdateDataChangeItem(item, !add);
             }
             return Task.CompletedTask;
         }
@@ -982,8 +932,8 @@ namespace Papper.Tests
             var result = reads.ToList();
             foreach (var item in result)
             {
-                Console.WriteLine($"OnRead: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
-                var res = MockPlc.Instance.GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length);
+                Console.WriteLine($"OnRead: SymbolicName:{item.SymbolicName};");
+                var res = _mockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length);
                 if (!res.IsEmpty)
                 {
                     item.ApplyData(res);
@@ -1002,10 +952,10 @@ namespace Papper.Tests
             var result = reads.ToList();
             foreach (var item in result)
             {
-                var entry = MockPlc.Instance.GetPlcEntry(item.Selector, item.Offset + item.Length);
+                var entry = _mockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length);
                 if (!item.HasBitMask)
                 {
-                    Console.WriteLine($"OnWrite: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
+                    Console.WriteLine($"OnWrite: selector:{item.SymbolicName};");
                     item.Data.Slice(0, item.Length).CopyTo(entry.Data.Slice(item.Offset, item.Length));
                     item.ExecutionResult = ExecutionResult.Ok;
                 }

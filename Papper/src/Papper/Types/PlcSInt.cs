@@ -6,7 +6,7 @@ namespace Papper.Types
     internal class PlcSInt : PlcObject
     {
         // Use share size for this data type, we will never change the size
-        private static readonly PlcSize _size = new PlcSize { Bytes = 1 };
+        private static readonly PlcSize _size = new() { Bytes = 1 };
         public override Type DotNetType => typeof(sbyte);
 
         public PlcSInt(string name) :

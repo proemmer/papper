@@ -14,6 +14,8 @@ namespace Papper.Internal
                     return new BlockBasedReadOperationOptimizer();
                 case OptimizerType.Items:
                     return new ItemBasedReadOperationOptimizer();
+                case OptimizerType.Symbolic:
+                    return new SymbolicBasedReadOperationOptimizer();
                 default:
                     ExceptionThrowHelper.ThrowUnknownOptimizrException(type);
                     return new ItemBasedReadOperationOptimizer(); // will not be called because of exception throwing

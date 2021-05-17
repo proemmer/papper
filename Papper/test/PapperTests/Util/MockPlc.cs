@@ -45,15 +45,15 @@ namespace Papper.Tests.Util
     {
 
 
-        private readonly Dictionary<string, PlcItem> _items = new Dictionary<string, PlcItem>();
+        private readonly Dictionary<string, PlcItem> _items = new();
         private Task _watchTask;
         private bool _stop;
 
         public Action<IEnumerable<PlcItem>> OnItemChanged { get; set; }
 
 
-        private readonly Dictionary<string, PlcBlock> _plc = new Dictionary<string, PlcBlock>();
-        private static readonly Lazy<MockPlc> _instance  = new Lazy<MockPlc>(() => new MockPlc());
+        private readonly Dictionary<string, PlcBlock> _plc = new();
+        private static readonly Lazy<MockPlc> _instance  = new(() => new MockPlc());
         public static MockPlc Instance { get { return _instance.Value; } }
 
         public MockPlc()

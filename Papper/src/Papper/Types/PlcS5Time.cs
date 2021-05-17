@@ -6,7 +6,7 @@ namespace Papper.Types
     internal class PlcS5Time : PlcObject
     {
         // Use share size for this data type, we will never change the size
-        private static readonly PlcSize _size = new PlcSize { Bytes = 2 };
+        private static readonly PlcSize _size = new() { Bytes = 2 };
         public override Type DotNetType => typeof(TimeSpan);
         public PlcS5Time(string name) :
             base(name) => Size = _size;

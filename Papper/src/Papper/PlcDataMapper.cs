@@ -13,6 +13,8 @@ using System.Threading.Tasks;
 
 namespace Papper
 {
+
+
     // This project can output the Class library as a NuGet Package.
     // To enable this option, right-click on the project and select the Properties menu item. In the Build tab select "Produce outputs on build".
     public class PlcDataMapper : IDisposable
@@ -45,10 +47,10 @@ namespace Papper
         #endregion
 
         #region Fields
-        private readonly HashSet<Subscription> _subscriptions = new HashSet<Subscription>();
+        private readonly HashSet<Subscription> _subscriptions = new();
         private const int _readDataHeaderLength = 18;
-        private readonly PlcMetaDataTree _tree = new PlcMetaDataTree();
-        private readonly ReaderWriterLockSlim _mappingsLock = new ReaderWriterLockSlim();
+        private readonly PlcMetaDataTree _tree = new();
+        private readonly ReaderWriterLockSlim _mappingsLock = new();
         private ReadOperation? _readEventHandler;
         private WriteOperation? _writeEventHandler;
         private UpdateMonitoring? _updateHandler;
@@ -165,12 +167,12 @@ namespace Papper
         /// </summary>
         /// <param name="mapping"></param>
         /// <returns></returns>
-        public IEnumerable<string> GetWriteableBlocksOf(string mapping)
+        public IEnumerable<string> GetVariableBlocksOf(string mapping, VariableListTypes variableListType)
         {
             var result = new List<string>();
             if (EntriesByName.TryGetValue(mapping, out var entry))
             {
-                return PlcObjectResolver.GetWriteableBlocks(entry.PlcObject, result, out _);
+                return PlcObjectResolver.GetAccessibleBlocks(entry.PlcObject, result, variableListType, out _);
             }
 
             ExceptionThrowHelper.ThrowMappingNotFoundException(mapping);
@@ -558,11 +560,11 @@ namespace Papper
         }
 
         #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
+        private bool _disposedValue = false; // To detect redundant calls
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
@@ -574,7 +576,7 @@ namespace Papper
                 _updateHandler = null;
                 _blockInfoHandler = null;
 
-                disposedValue = true;
+                _disposedValue = true;
             }
         }
 
