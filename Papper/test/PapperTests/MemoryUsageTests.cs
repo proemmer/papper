@@ -32,7 +32,7 @@ namespace Papper.Tests
         private static Task Papper_OnRead(IEnumerable<DataPack> reads)
         {
             var result = reads.ToList();
-            foreach (var item in result)
+            foreach (var item in result.OfType<AbsoluteAdressedDataPack>())
             {
                 Console.WriteLine($"OnRead: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
                 var res = MockPlc.Instance.GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length);
@@ -52,7 +52,7 @@ namespace Papper.Tests
         private static Task Papper_OnWrite(IEnumerable<DataPack> reads)
         {
             var result = reads.ToList();
-            foreach (var item in result)
+            foreach (var item in result.OfType<AbsoluteAdressedDataPack>())
             {
                 var entry = MockPlc.Instance.GetPlcEntry(item.Selector, item.Offset + item.Length);
                 if (!item.HasBitMask)

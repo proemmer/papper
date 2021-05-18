@@ -6,7 +6,7 @@ namespace Papper.Internal
 {
     internal class SymbolicBasedReadOperationOptimizer : IReadOperationOptimizer
     {
-
+        public bool SymbolicAccess => true;
 
         /// <summary>
         /// Create RawReadOperations to use it in the reader. This method tries to optimize the PLC access, 

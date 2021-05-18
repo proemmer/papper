@@ -11,6 +11,7 @@ namespace Papper.Internal
 
     internal class BlockBasedReadOperationOptimizer : IReadOperationOptimizer
     {
+        public bool SymbolicAccess => false;
 
 
         /// <summary>

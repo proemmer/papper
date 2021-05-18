@@ -26,7 +26,7 @@ namespace Benchmarks
             _results = new List<DataValueTMP>();
             for (int i = 0; i < 30; i++)
             {
-                _reads.Add(new DataPack
+                _reads.Add(new AbsoluteAdressedDataPack
                 {
 
                 });

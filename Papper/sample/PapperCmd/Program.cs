@@ -305,7 +305,7 @@ namespace PapperCmd
         private static Task Papper_OnWrite(IEnumerable<DataPack> reads)
         {
             var result = reads.ToList();
-            foreach (var item in result)
+            foreach (var item in result.OfType<AbsoluteAdressedDataPack>())
             {
                 var entry = GetPlcEntry(item.Selector, item.Offset + item.Length);
                 if (!item.HasBitMask)
@@ -400,7 +400,7 @@ namespace PapperCmd
         private static Task Papper_OnRead(IEnumerable<DataPack> reads)
         {
             var result = reads.ToList();
-            foreach (var item in result)
+            foreach (var item in result.OfType<AbsoluteAdressedDataPack>())
             {
                 Console.WriteLine($"OnRead: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
                 var res = GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length);

@@ -11,6 +11,8 @@ namespace Papper.Internal
     /// </summary>
     internal class Execution
     {
+        private readonly bool _symbolicAccess;
+
         public PlcRawData PlcRawData { get; private set; }
         public Dictionary<string, PlcObjectBinding> Bindings { get; private set; }
         public int ValidationTimeMs { get; private set; }
@@ -18,9 +20,10 @@ namespace Papper.Internal
 
         public DateTime LastChange { get; private set; } = DateTime.MaxValue;
 
-        public Execution(PlcRawData plcRawData, Dictionary<string, PlcObjectBinding> bindings, int validationTimeMS)
+        public Execution(PlcRawData plcRawData, Dictionary<string, PlcObjectBinding> bindings, int validationTimeMS, bool symbolicAccess)
         {
             ValidationTimeMs = validationTimeMS;
+            _symbolicAccess = symbolicAccess;
             PlcRawData = plcRawData;
             Bindings = bindings;
         }
@@ -35,26 +38,33 @@ namespace Papper.Internal
         {
             if (pack.ExecutionResult == ExecutionResult.Ok)
             {
-                var cache = PlcRawData.ReadDataCache;
-                var ts = pack.Timestamp;
-                if (cache.IsEmpty || !cache.Span.SequenceEqual(pack.Data.Span))
+                if (pack is AbsoluteAdressedDataPack aadp)
                 {
-                    if (ts > LastChange || LastChange == DateTime.MaxValue)
+                    var cache = PlcRawData.ReadDataCache;
+                    var ts = pack.Timestamp;
+                    if (cache.IsEmpty || !cache.Span.SequenceEqual(aadp.Data.Span))
                     {
-                        LastChange = ts; // We detected a change in this data area 
-                    }
-                }
-
-                if (ts > PlcRawData.LastUpdate)
-                {
-                    lock (PlcRawData)
-                    {
-                        if (ts > PlcRawData.LastUpdate)
+                        if (ts > LastChange || LastChange == DateTime.MaxValue)
                         {
-                            PlcRawData.ReadDataCache = pack.Data;
-                            PlcRawData.LastUpdate = ts;
+                            LastChange = ts; // We detected a change in this data area 
                         }
                     }
+
+                    if (ts > PlcRawData.LastUpdate)
+                    {
+                        lock (PlcRawData)
+                        {
+                            if (ts > PlcRawData.LastUpdate)
+                            {
+                                PlcRawData.ReadDataCache = aadp.Data;
+                                PlcRawData.LastUpdate = ts;
+                            }
+                        }
+                    }
+                }
+                else if(pack is SymbolicAddressedDataPack sadp)
+                {
+                    // TODO:
                 }
             }
             ExecutionResult = pack.ExecutionResult;
@@ -69,13 +79,22 @@ namespace Papper.Internal
 
         public KeyValuePair<Execution, DataPack> CreateReadDataPack()
         {
-            return new KeyValuePair<Execution, DataPack>(this, new DataPack
+            if (_symbolicAccess)
             {
-                Selector = PlcRawData.Selector,
-                Offset = PlcRawData.Offset,
-                Length = PlcRawData.Size > 0 ? PlcRawData.Size : 1,
-                SymbolicName = PlcRawData.SymbolicAccessName
-            });
+                return new KeyValuePair<Execution, DataPack>(this, new SymbolicAddressedDataPack
+                {
+                    SymbolicName = PlcRawData.SymbolicAccessName
+                });
+            }
+            else
+            {
+                return new KeyValuePair<Execution, DataPack>(this, new AbsoluteAdressedDataPack
+                {
+                    Selector = PlcRawData.Selector,
+                    Offset = PlcRawData.Offset,
+                    Length = PlcRawData.Size > 0 ? PlcRawData.Size : 1
+                });
+            }
         }
 
 
@@ -83,14 +102,14 @@ namespace Papper.Internal
         public KeyValuePair<Execution, IEnumerable<DataPack>> CreateWriteDataPack(Dictionary<string, object> values, Dictionary<PlcRawData, byte[]> memoryBuffer)
         {
             var res = Bindings.Where(x => !x.Value.MetaData.IsReadOnly)
-                               .Select(x => new KeyValuePair<string, IEnumerable<DataPack>>(x.Key, Create(values[x.Key], x.Value, memoryBuffer, x.Value.Offset)))
+                               .Select(x => new KeyValuePair<string, IEnumerable<DataPack>>(x.Key, Create(values[x.Key], x.Value, memoryBuffer, x.Value.Offset, _symbolicAccess)))
                                .SelectMany(x => x.Value)
                                .ToList();
             return new KeyValuePair<Execution, IEnumerable<DataPack>>(this, res);
         }
 
         // TODO:  Create more data packs if we have a readonly property!!
-        private static IEnumerable<DataPack> Create(object value, PlcObjectBinding binding, Dictionary<PlcRawData, byte[]> memoryBuffer, int dataOffset)
+        private static IEnumerable<DataPack> Create(object value, PlcObjectBinding binding, Dictionary<PlcRawData, byte[]> memoryBuffer, int dataOffset, bool symbolicAccess)
         {
             static byte[] GetOrCreateBufferAndApplyValue(PlcObjectBinding plcBinding, Dictionary<PlcRawData, byte[]> dict, object value)
             {
@@ -117,21 +136,32 @@ namespace Papper.Internal
             var data = GetOrCreateBufferAndApplyValue(binding, memoryBuffer, value);
 
 
-            return binding.RawData.WriteSlots.Select(slot =>
+            return binding.RawData.WriteSlots.Select<Slot,DataPack>(slot =>
             {
-                var res = new DataPack
+                if (symbolicAccess)
                 {
-                    Selector = binding.RawData.Selector,
-                    Offset = binding.Offset + slot.Offset,
-                    Length = Math.Min(slot.Size, GetSize(binding)),
-                    BitMaskBegin = slot.Mask != 0xff ? slot.Mask : begin,
-                    BitMaskEnd = slot.Mask != 0xff ? (byte)0xFF : end,
-                    SymbolicName = binding.RawData.SymbolicAccessName,
-                    Data = data
-                };
-                res.Data = res.Data.Slice(dataOffset + slot.Offset - binding.RawData.Offset, res.Length);
-                return res;
-            }).ToList();
+                    var res = new SymbolicAddressedDataPack
+                    {
+                        SymbolicName = binding.RawData.SymbolicAccessName,
+                        Value = value
+                    };
+                    return res;
+                }
+                else
+                {
+                    var res = new AbsoluteAdressedDataPack
+                    {
+                        Selector = binding.RawData.Selector,
+                        Offset = binding.Offset + slot.Offset,
+                        Length = Math.Min(slot.Size, GetSize(binding)),
+                        BitMaskBegin = slot.Mask != 0xff ? slot.Mask : begin,
+                        BitMaskEnd = slot.Mask != 0xff ? (byte)0xFF : end,
+                        Data = data
+                    };
+                    res.Data = res.Data.Slice(dataOffset + slot.Offset - binding.RawData.Offset, res.Length);
+                    return res;
+                }
+            }).ToList<DataPack>();
 
         }
 

@@ -74,7 +74,7 @@ namespace Papper.Internal
                 }
                 entry.Add($"{Name}.{binding.Key}", binding.Value);
             }
-            return result.Select(res => new Execution(res.Key, res.Value, ValidationTimeMs));
+            return result.Select(res => new Execution(res.Key, res.Value, ValidationTimeMs, _mapper.Optimizer.SymbolicAccess));
         }
 
         #region IDisposable Support
