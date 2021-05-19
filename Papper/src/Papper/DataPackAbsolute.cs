@@ -2,7 +2,7 @@
 
 namespace Papper
 {
-    public class AbsoluteAdressedDataPack : DataPack
+    public class DataPackAbsolute : DataPack
     {
         public string? Selector { get; set; }
         public int Offset { get; set; }
@@ -16,21 +16,26 @@ namespace Papper
 
         public Memory<byte> Data { get; internal set; }
 
-        public override DataPack ApplyData<T>(T data)
+        public override DataPack ApplyResult<T>(ExecutionResult result, T value)
         {
-            if (data is Memory<byte> mem)
+            if (value is Memory<byte> mem)
             {
                 Data = mem;
                 Timestamp = DateTime.Now;
+                ExecutionResult = result;
             }
-            else if (data is byte[] by)
+            else if (value is byte[] by)
             {
                 Data = by;
                 Timestamp = DateTime.Now;
+                ExecutionResult = result;
+            }
+            else
+            {
+                ExecutionResult = result == ExecutionResult.Ok ?  ExecutionResult.InvalidData : result;
             }
             return this;
         }
-
         public override string ToString() => $"{Selector}.{Offset}.{Length}#{BitMaskBegin}#{BitMaskEnd}";
     }
 

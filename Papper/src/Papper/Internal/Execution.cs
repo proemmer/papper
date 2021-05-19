@@ -38,7 +38,7 @@ namespace Papper.Internal
         {
             if (pack.ExecutionResult == ExecutionResult.Ok)
             {
-                if (pack is AbsoluteAdressedDataPack aadp)
+                if (pack is DataPackAbsolute aadp)
                 {
                     var cache = PlcRawData.ReadDataCache;
                     var ts = pack.Timestamp;
@@ -62,7 +62,7 @@ namespace Papper.Internal
                         }
                     }
                 }
-                else if(pack is SymbolicAddressedDataPack sadp)
+                else if(pack is DataPackSymbolic sadp)
                 {
                     // TODO:
                 }
@@ -81,14 +81,14 @@ namespace Papper.Internal
         {
             if (_symbolicAccess)
             {
-                return new KeyValuePair<Execution, DataPack>(this, new SymbolicAddressedDataPack
+                return new KeyValuePair<Execution, DataPack>(this, new DataPackSymbolic
                 {
                     SymbolicName = PlcRawData.SymbolicAccessName
                 });
             }
             else
             {
-                return new KeyValuePair<Execution, DataPack>(this, new AbsoluteAdressedDataPack
+                return new KeyValuePair<Execution, DataPack>(this, new DataPackAbsolute
                 {
                     Selector = PlcRawData.Selector,
                     Offset = PlcRawData.Offset,
@@ -140,7 +140,7 @@ namespace Papper.Internal
             {
                 if (symbolicAccess)
                 {
-                    var res = new SymbolicAddressedDataPack
+                    var res = new DataPackSymbolic
                     {
                         SymbolicName = binding.RawData.SymbolicAccessName,
                         Value = value
@@ -149,7 +149,7 @@ namespace Papper.Internal
                 }
                 else
                 {
-                    var res = new AbsoluteAdressedDataPack
+                    var res = new DataPackAbsolute
                     {
                         Selector = binding.RawData.Selector,
                         Offset = binding.Offset + slot.Offset,

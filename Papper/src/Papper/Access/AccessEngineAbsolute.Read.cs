@@ -64,7 +64,7 @@ namespace Papper.Access
 
         internal override PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions, IEnumerable<DataPack> packs)
         {
-            return packs.OfType<AbsoluteAdressedDataPack>().Select(pack => executions.FirstOrDefault(x => pack.Selector == x.PlcRawData.Selector &&
+            return packs.OfType<DataPackAbsolute>().Select(pack => executions.FirstOrDefault(x => pack.Selector == x.PlcRawData.Selector &&
                                                                 pack.Offset == x.PlcRawData.Offset &&
                                                                 pack.Length == (x.PlcRawData.Size > 0 ? x.PlcRawData.Size : 1))?.ApplyDataPack(pack))
                         .Where(exec => exec != null)

@@ -305,14 +305,14 @@ namespace PapperCmd
         private static Task Papper_OnWrite(IEnumerable<DataPack> reads)
         {
             var result = reads.ToList();
-            foreach (var item in result.OfType<AbsoluteAdressedDataPack>())
+            foreach (var item in result.OfType<DataPackAbsolute>())
             {
                 var entry = GetPlcEntry(item.Selector, item.Offset + item.Length);
                 if (!item.HasBitMask)
                 {
                     Console.WriteLine($"OnWrite: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
                     item.Data.Slice(0, item.Length).CopyTo(entry.Data.Slice(item.Offset, item.Length));
-                    item.ExecutionResult = ExecutionResult.Ok;
+                    item.ApplyResult(ExecutionResult.Ok);
                 }
                 else
                 {
@@ -323,7 +323,7 @@ namespace PapperCmd
                         if (j > 0 && j < lastItem)
                         {
                             entry.Data.Span[item.Offset + j] = item.Data.Span[j];
-                            item.ExecutionResult = ExecutionResult.Ok;
+                            item.ApplyResult(ExecutionResult.Ok);
                         }
                         else
                         {
@@ -331,7 +331,7 @@ namespace PapperCmd
                             if (bm == 0xFF)
                             {
                                 entry.Data.Span[item.Offset + j] = item.Data.Span[j];
-                                item.ExecutionResult = ExecutionResult.Ok;
+                                item.ApplyResult(ExecutionResult.Ok);
                             }
                             else if (bm > 0)
                             {
@@ -342,7 +342,7 @@ namespace PapperCmd
                                     {
                                         var b = entry.Data.Span[item.Offset + j];
                                         entry.Data.Span[item.Offset + j] = b.SetBit(i, bItem.GetBit(i));
-                                        item.ExecutionResult = ExecutionResult.Ok;
+                                        item.ApplyResult(ExecutionResult.Ok);
                                         bm = bm.SetBit(i, false);
                                         if (bm == 0)
                                         {
@@ -400,18 +400,17 @@ namespace PapperCmd
         private static Task Papper_OnRead(IEnumerable<DataPack> reads)
         {
             var result = reads.ToList();
-            foreach (var item in result.OfType<AbsoluteAdressedDataPack>())
+            foreach (var item in result.OfType<DataPackAbsolute>())
             {
                 Console.WriteLine($"OnRead: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
                 var res = GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length);
                 if (!res.IsEmpty)
                 {
-                    item.ApplyData(res);
-                    item.ExecutionResult = ExecutionResult.Ok;
+                    item.ApplyResult(ExecutionResult.Ok, res);
                 }
                 else
                 {
-                    item.ExecutionResult = ExecutionResult.Error;
+                    item.ApplyResult(ExecutionResult.Error);
                 }
             }
             return Task.CompletedTask;

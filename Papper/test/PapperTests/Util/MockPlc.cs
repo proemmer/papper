@@ -100,7 +100,7 @@ namespace Papper.Tests.Util
                 {
                     lock (_plc)
                     {
-                        if (!_items.TryGetValue(itemKey, out _) && item is AbsoluteAdressedDataPack asd)
+                        if (!_items.TryGetValue(itemKey, out _) && item is DataPackAbsolute asd)
                         {
                             _items.Add(itemKey, new PlcItem { Selector = asd.Selector, Offset = asd.Offset, Length = asd.Length, BitMaskBegin = asd.BitMaskBegin, BitMaskEnd = asd.BitMaskEnd });
                         }
