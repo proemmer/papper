@@ -604,9 +604,9 @@ namespace Papper.Tests
 
 
             await Task.Delay(1000).ConfigureAwait(false);
-            var exec1 = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress(address1, 200) });
+            var exec1 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress(address1, 200) });
             _output.WriteLine($"Exec1: {exec1[0].PlcRawData.Size}");
-            var exec2 = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress(address2, 200) });
+            var exec2 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress(address2, 200) });
             _output.WriteLine($"Exec2: {exec2[0].PlcRawData.Size}");
 
             for (var i = 0; i < 5; i++)

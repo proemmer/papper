@@ -225,14 +225,10 @@ namespace Papper.Extensions.Notification
                 return null;
             }
             var variables = vars.Select(x => x.Address).ToList();
-            return executions.GroupBy(exec => exec.ExecutionResult) // Group by execution result
-                                                  .SelectMany(group => group.SelectMany(g => g.Bindings)
-                                                                            .Where(b => variables.Contains(b.Key))
-                                                                            .Select(b => new PlcReadResult(b.Key,
-                                                                                                            b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache.Span),
-                                                                                                            group.Key)
-                                                                            )).ToArray();
+            return _mapper.Engine.ReadVariablesFromExecutionCache(variables, executions);
         }
+
+
 
         /// <summary>
         /// Starts a detection an returns the changes if any occurred.
@@ -271,10 +267,10 @@ namespace Papper.Extensions.Notification
                                 {
                                     cycles = _variables.Values.ToDictionary(x => x.Address, x => x.WatchCycle);
                                     interval = Interval;
-                                    _executions = _mapper.DetermineExecutions(_variables.Values);
+                                    _executions = _mapper.Engine.DetermineExecutions(_variables.Values);
                                     if (_changeDetectionStrategy == ChangeDetectionStrategy.Event)
                                     {
-                                        var needUpdate = PlcDataMapper.UpdateableItems(_executions, false);
+                                        var needUpdate = _mapper.Engine.UpdateableItems(_executions, false);
                                         await _mapper.UpdateMonitoringItemsAsync(needUpdate.Values).ConfigureAwait(false);
                                     }
                                     _modified = false;
@@ -299,21 +295,14 @@ namespace Papper.Extensions.Notification
                     {
                         if (_changeDetectionStrategy == ChangeDetectionStrategy.Polling || _changeEvent == null)
                         {
-                            // determine outdated
-                            var needUpdate = PlcDataMapper.UpdateableItems(_executions, true, DetermineChanges(cycles, interval));
-
-                            // read outdated
-                            await _mapper.ReadFromPlcAsync(needUpdate.Values).ConfigureAwait(false); // Update the read cache;
-
-                            // filter to get only changed items
-                            readRes = PlcDataMapper.CreatePlcReadResults(_executions, needUpdate, _lastRun, (x) => FilterChanged(detect, x));
+                            readRes = await _mapper.Engine.ReadExecutionsAsync(_executions, true, _lastRun, DetermineChanges(cycles, interval), (x) => FilterChanged(detect, x)).ConfigureAwait(false);
                         }
                         else
                         {
                             var packs = await _changeEvent.WaitAsync(_cts.Token).ConfigureAwait(false);
                             if (packs?.Any() == true)
                             {
-                                readRes = PlcDataMapper.CreatePlcReadResults(_executions, packs);
+                                readRes = _mapper.Engine.CreatePlcReadResults(_executions, packs);
                             }
                         }
 
