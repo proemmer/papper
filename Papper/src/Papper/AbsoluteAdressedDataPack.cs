@@ -23,6 +23,11 @@ namespace Papper
                 Data = mem;
                 Timestamp = DateTime.Now;
             }
+            else if (data is byte[] by)
+            {
+                Data = by;
+                Timestamp = DateTime.Now;
+            }
             return this;
         }
 

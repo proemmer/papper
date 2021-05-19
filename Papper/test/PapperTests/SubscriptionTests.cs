@@ -405,7 +405,7 @@ namespace Papper.Tests
 
 
             //waiting for initialize
-            Assert.True(are.WaitOne(5000));
+            Assert.True(are.WaitOne(50000));
             intiState = false;
             var writeResults = await _papper.WriteAsync(PlcWriteReference.FromRoot("DB66", writeData.ToArray()).ToArray()).ConfigureAwait(false);
             foreach (var item in writeResults)
