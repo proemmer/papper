@@ -32,6 +32,7 @@ namespace Papper.Internal
             UpdateInternalState(vars);
             return CreateExecutions(vars);
         }
+        protected abstract bool AddObject(ITreeNode plcObj, IDictionary<string, OperationItem> plcObjects, IEnumerable<string> values);
 
         internal void UpdateInternalState(IEnumerable<string> vars)
         {
@@ -41,7 +42,7 @@ namespace Papper.Internal
                 lock (_bindingLock)
                 {
                     AddObject(PlcObject, Variables, vars);
-                    currentVars = _mapper.Optimizer is ItemBasedReadOperationOptimizer ? Variables.Where(x => vars.Contains(x.Key)).ToList() : Variables.ToList();
+                    currentVars = _mapper.Optimizer is not BlockBasedReadOperationOptimizer ?  Variables.Where(x => vars.Contains(x.Key)).ToList() : Variables.ToList() ;
                 }
 
                 foreach (var rawDataBlock in _mapper.Optimizer.CreateRawReadOperations(PlcObject.Name ?? string.Empty, PlcObject.Selector ?? string.Empty, currentVars, ReadDataBlockSize))
@@ -59,8 +60,6 @@ namespace Papper.Internal
                 }
             }
         }
-
-        protected abstract bool AddObject(ITreeNode plcObj, IDictionary<string, OperationItem> plcObjects, IEnumerable<string> values);
 
         protected IEnumerable<Execution> CreateExecutions(IEnumerable<string> vars)
         {

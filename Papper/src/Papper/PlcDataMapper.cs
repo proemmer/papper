@@ -4,11 +4,9 @@ using Papper.Extensions.Metadata;
 using Papper.Extensions.Notification;
 using Papper.Internal;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -46,13 +44,13 @@ namespace Papper
         public delegate Task ReadBlockInfo(IEnumerable<MetaDataPack> metadatas);
 
 
-        
+
 
         #endregion
 
         #region Fields
-        private readonly HashSet<Subscription> _subscriptions = new();
         private const int _readDataHeaderLength = 18;
+        private readonly HashSet<Subscription> _subscriptions = new();
         private readonly PlcMetaDataTree _tree = new();
         private readonly ReaderWriterLockSlim _mappingsLock = new();
         private UpdateMonitoring? _updateHandler;
@@ -117,21 +115,19 @@ namespace Papper
             Optimizer = OptimizerFactory.CreateOptimizer(optimizer);
 
 
-            if(Optimizer.SymbolicAccess)
+            if (Optimizer.SymbolicAccess)
             {
-                Engine = null;
+                Engine = new AccessEngineSymbolic(readEventHandler, writeEventHandler, GetMapping);
             }
             else
             {
                 Engine = new AccessEngineAbsolute(readEventHandler, writeEventHandler, GetMapping);
+                ReadDataBlockSize = pduSize - _readDataHeaderLength;
+                if (ReadDataBlockSize <= 0)
+                {
+                    ExceptionThrowHelper.ThrowInvalidPduSizeException(_readDataHeaderLength);
+                }
             }
-
-            ReadDataBlockSize = pduSize - _readDataHeaderLength;
-            if (ReadDataBlockSize <= 0)
-            {
-                ExceptionThrowHelper.ThrowInvalidPduSizeException(_readDataHeaderLength);
-            }
-
             PlcMetaDataTreePath.CreateAbsolutePath(PlcObjectResolver.RootNodeName);
         }
 
@@ -306,7 +302,6 @@ namespace Papper
         /// <param name="values">variable names and values to write</param>
         /// <returns>return true if all operations are succeeded</returns>
         public Task<PlcWriteResult[]> WriteAsync(IEnumerable<PlcWriteReference> vars) => Engine.WriteAsync(vars);
-
 
 
         /// <summary>

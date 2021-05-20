@@ -42,7 +42,7 @@ namespace Papper.Internal
 
         public bool ContainsReadOnlyParts { get; internal set; }
         public int MemoryAllocationSize { get; private set; }
-        public Memory<byte> ReadDataCache { get; set; } = Memory<byte>.Empty;
+        public object? ReadDataCache { get; set; }
         public DateTime LastUpdate { get; set; }
 
         private static int CalcRawDataSize(int size)

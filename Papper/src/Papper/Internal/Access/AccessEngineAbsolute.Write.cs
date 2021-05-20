@@ -45,7 +45,7 @@ namespace Papper.Access
             }
         }
 
-        internal Task WriteToPlcAsync(IEnumerable<DataPack> packs) => _writeEventHandler != null ? _writeEventHandler.Invoke(packs) : Task.CompletedTask;
+        
 
         private static PlcWriteResult[] CreatePlcWriteResults(Dictionary<string, object> values, Dictionary<Execution, IEnumerable<DataPack>> prepared)
         {

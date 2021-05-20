@@ -40,7 +40,13 @@ namespace Papper.Internal
             {
                 if (pack is DataPackAbsolute aadp)
                 {
-                    var cache = PlcRawData.ReadDataCache;
+                    Memory<byte> cache = Memory<byte>.Empty;
+
+                    if (PlcRawData.ReadDataCache is Memory<byte> rdc)
+                    {
+                        cache = rdc;
+                    }
+
                     var ts = pack.Timestamp;
                     if (cache.IsEmpty || !cache.Span.SequenceEqual(aadp.Data.Span))
                     {
@@ -61,6 +67,7 @@ namespace Papper.Internal
                             }
                         }
                     }
+                    
                 }
                 else if(pack is DataPackSymbolic sadp)
                 {

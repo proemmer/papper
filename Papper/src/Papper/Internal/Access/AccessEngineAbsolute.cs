@@ -11,19 +11,12 @@ namespace Papper.Access
 {
     internal partial class AccessEngineAbsolute : AccessEngine
     {
-        internal delegate bool GetMapping(string mapping, out IEntry entry, bool allowAdd = true);
 
-        private ReadOperation? _readEventHandler;
-        private WriteOperation? _writeEventHandler;
-        private GetMapping? _getMapping;
 
         public AccessEngineAbsolute(ReadOperation? readEventHandler,
                                     WriteOperation? writeEventHandler, 
-                                    GetMapping? getMapping)
+                                    GetMapping? getMapping) : base(readEventHandler, writeEventHandler, getMapping)
         {
-            _readEventHandler = readEventHandler;
-            _writeEventHandler = writeEventHandler;
-            _getMapping = getMapping;
         }
 
 
@@ -37,14 +30,14 @@ namespace Papper.Access
                              .ToDictionary(x => x.Key, x => x.Value);
         }
 
-        internal override List<Execution> DetermineExecutions<T>(IEnumerable<T> vars)
+        internal override List<Execution> DetermineExecutions<T>(IEnumerable<T> plcReferences)
         {
-            return vars.GroupBy(x => x.Mapping)
-                                .Select((execution) => GetOrAddMapping(execution.Key, out var entry)
-                                                                ? (execution, entry)
+            return plcReferences.GroupBy(plcReference => plcReference.Mapping)
+                                .Select((plcReferenceGroup) => GetOrAddMapping(plcReferenceGroup.Key, out var entry)
+                                                                ? (plcReferenceGroup, entry)
                                                                 : (null, null))
-                                .Where(x => x.execution != null)
-                                .SelectMany(x => x.entry.GetOperations(x.execution.Select(exec => exec.Variable).ToList()))
+                                .Where(x => x.plcReferenceGroup != null)
+                                .SelectMany(x => x.entry.GetOperations(x.plcReferenceGroup.Select(plcReference => plcReference.Variable).ToList()))
                                 .ToList();
         }
 
@@ -73,15 +66,6 @@ namespace Papper.Access
             }
 
             return _getMapping.Invoke(mapping, out entry, isAbsoluteMapping);
-        }
-
-        
-
-        public override void Dispose()
-        {
-            _readEventHandler = null;
-            _writeEventHandler = null;
-            _getMapping = null;
         }
 
     }
