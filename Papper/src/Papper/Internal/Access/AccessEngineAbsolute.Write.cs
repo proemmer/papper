@@ -63,7 +63,6 @@ namespace Papper.Access
                         break;
                     }
                 }
-
                 results[index++] = new PlcWriteResult(value.Key, execResult);
             }
 

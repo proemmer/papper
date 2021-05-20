@@ -71,7 +71,26 @@ namespace Papper.Internal
                 }
                 else if(pack is DataPackSymbolic sadp)
                 {
-                    // TODO:
+                    var ts = pack.Timestamp;
+                    if (PlcRawData.ReadDataCache == null || PlcRawData.ReadDataCache != sadp.Value)
+                    {
+                        if (ts > LastChange || LastChange == DateTime.MaxValue)
+                        {
+                            LastChange = ts; // We detected a change in this data area 
+                        }
+                    }
+
+                    if (ts > PlcRawData.LastUpdate)
+                    {
+                        lock (PlcRawData)
+                        {
+                            if (ts > PlcRawData.LastUpdate)
+                            {
+                                PlcRawData.ReadDataCache = sadp.Value;
+                                PlcRawData.LastUpdate = ts;
+                            }
+                        }
+                    }
                 }
             }
             ExecutionResult = pack.ExecutionResult;
@@ -106,7 +125,7 @@ namespace Papper.Internal
 
 
 
-        public KeyValuePair<Execution, IEnumerable<DataPack>> CreateWriteDataPack(Dictionary<string, object> values, Dictionary<PlcRawData, byte[]> memoryBuffer)
+        public KeyValuePair<Execution, IEnumerable<DataPack>> CreateWriteDataPack(Dictionary<string, object> values, Dictionary<PlcRawData, byte[]>? memoryBuffer)
         {
             var res = Bindings.Where(x => !x.Value.MetaData.IsReadOnly)
                                .Select(x => new KeyValuePair<string, IEnumerable<DataPack>>(x.Key, Create(values[x.Key], x.Value, memoryBuffer, x.Value.Offset, _symbolicAccess)))
@@ -116,7 +135,7 @@ namespace Papper.Internal
         }
 
         // TODO:  Create more data packs if we have a readonly property!!
-        private static IEnumerable<DataPack> Create(object value, PlcObjectBinding binding, Dictionary<PlcRawData, byte[]> memoryBuffer, int dataOffset, bool symbolicAccess)
+        private static IEnumerable<DataPack> Create(object value, PlcObjectBinding binding, Dictionary<PlcRawData, byte[]>? memoryBuffer, int dataOffset, bool symbolicAccess)
         {
             static byte[] GetOrCreateBufferAndApplyValue(PlcObjectBinding plcBinding, Dictionary<PlcRawData, byte[]> dict, object value)
             {
@@ -140,7 +159,7 @@ namespace Papper.Internal
             }
 
             (var begin, var end) = CreateBitMasks(binding);
-            var data = GetOrCreateBufferAndApplyValue(binding, memoryBuffer, value);
+            var data = memoryBuffer != null ? GetOrCreateBufferAndApplyValue(binding, memoryBuffer, value) : null;
 
 
             return binding.RawData.WriteSlots.Select<Slot,DataPack>(slot =>
