@@ -43,7 +43,7 @@ namespace Papper
             }
 
             var binding = entry!.BaseBinding;
-            var buffer = new byte[binding.RawData.MemoryAllocationSize];  // TODO handle a reusable buffer
+            var buffer = new byte[binding.RawData.MemoryAllocationSize]; 
             binding.ConvertToRaw(data, buffer);
             return buffer;
         }

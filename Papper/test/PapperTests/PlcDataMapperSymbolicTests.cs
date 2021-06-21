@@ -57,6 +57,7 @@ namespace Papper.Tests
             _papper.AddMapping(typeof(DB_BST_An_Abwahl_BST1));
             _papper.AddMapping(typeof(DB_BST1_Geraete_1_Konfig));
             _papper.AddMapping(typeof(SampleDataAccessNames));
+            _papper.AddMapping(typeof(DB_TestCTT));
 
 
         }
@@ -406,6 +407,19 @@ namespace Papper.Tests
             var t = new Stopwatch();
             t.Start();
             var result = _papper.ReadAsync(PlcReadReference.FromAddress($"{mapping}")).GetAwaiter().GetResult();
+            t.Stop();
+        }
+
+
+        [Fact]
+        public void TestBitAccess()
+        {
+            var mapping = "DB_TestCTT";
+
+            var t = new Stopwatch();
+            t.Start();
+            var result1 = _papper.ReadAsync(PlcReadReference.FromAddress($"{mapping}.StartTrack")).GetAwaiter().GetResult();
+            var result2 = _papper.ReadAsync(PlcReadReference.FromAddress($"{mapping}.StartTrack"), PlcReadReference.FromAddress($"{mapping}.StartEinlauf"), PlcReadReference.FromAddress($"{mapping}.StartAuslauf")).GetAwaiter().GetResult();
             t.Stop();
         }
 

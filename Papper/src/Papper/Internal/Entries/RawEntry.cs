@@ -6,7 +6,6 @@ namespace Papper.Internal
 {
     internal class RawEntry : Entry
     {
-        // TODO:  Do not provide a null value
         public RawEntry(PlcDataMapper mapper, string from, int validationTimeInMs)
             : base(mapper, new DummyPlcObject(from) { Selector = @from }, validationTimeInMs)
         {

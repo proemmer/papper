@@ -28,5 +28,24 @@ namespace Papper.Tests.Mappings
         [ArrayBounds(1, 10, 0)]
         public int[] IntElements { get; set; }
     }
+
+
+        [Mapping("DB_TestCTT", "DB4", 0)]
+        public class DB_TestCTT
+        {
+            public bool StartTrack { get; set; }
+            public bool StopTrack { get; set; }
+            public bool StartEinlauf { get; set; }
+            public bool StopEinlauf { get; set; }
+            public bool StartBearbeitung { get; set; }
+            public bool StopBearbeitung { get; set; }
+            public bool StartAuslauf { get; set; }
+            public bool StopAuslauf { get; set; }
+
+        }
+
 }
+
+
+
 #pragma warning restore CA1819 // Properties should not return arrays

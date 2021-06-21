@@ -134,7 +134,6 @@ namespace Papper.Internal
             return new KeyValuePair<Execution, IEnumerable<DataPack>>(this, res);
         }
 
-        // TODO:  Create more data packs if we have a readonly property!!
         private static IEnumerable<DataPack> Create(object value, PlcObjectBinding binding, Dictionary<PlcRawData, byte[]>? memoryBuffer, int dataOffset, bool symbolicAccess)
         {
             static byte[] GetOrCreateBufferAndApplyValue(PlcObjectBinding plcBinding, Dictionary<PlcRawData, byte[]> dict, object value)
