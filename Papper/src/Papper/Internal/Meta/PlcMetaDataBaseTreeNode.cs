@@ -1,11 +1,13 @@
 ﻿using Papper.Types;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Papper.Internal
 {
     internal abstract class PlcMetaDataBaseTreeNode : ITreeNode
     {
         private readonly string _name;
+        private string? _symbolicAccessName;
         private ITreePath? _savedPath;
         private ITreeNode? _parent;
         public PlcObject? Data { get; set; }
@@ -13,6 +15,8 @@ namespace Papper.Internal
         protected PlcMetaDataBaseTreeNode(string name) => _name = name;
 
         public string Name => _name;
+
+        public string SymbolicAccessName { get => _symbolicAccessName ?? Name; set => _symbolicAccessName = value; }
 
         public ITreeNode Root => (_parent == null) ? this : _parent.Root;
 
@@ -39,7 +43,7 @@ namespace Papper.Internal
         public abstract void AddChild(ITreePath path, ITreeNode child);
         public abstract ITreeNode RemoveChild(string name);
         public abstract ITreeNode? Get(ITreePath path);
-        public abstract ITreeNode? Get(ITreePath path, ref int offset, bool getRef = false);
+        public abstract ITreeNode? Get(ITreePath path, ref int offset, ref StringBuilder symbolicPath, bool getRef = false);
         public abstract void Accept(VisitNode visit);
         public abstract void ReverseAccept(VisitNode visit);
 

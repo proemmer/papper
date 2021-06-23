@@ -816,6 +816,19 @@ namespace Papper.Tests
 
         }
 
+        [Fact]
+        public void ReadIndexedItem()
+        {
+
+            var exec1 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number[1]", 200) });
+            var exec2 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_IPSC_Konfig.StatusAnzeige_ZP[1].ErrText", 200) });
+            var exec3 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
+
+
+        }
+
+
+
 
 
 

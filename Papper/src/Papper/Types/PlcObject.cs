@@ -10,7 +10,7 @@ namespace Papper.Types
 {
     internal abstract class PlcObject : PlcMetaDataTreeNode, IPlcObject
     {
-        private string? _symbolicAccessName;
+
 
         public string? Selector { get; set; }
         public Type? ElemenType { get; set; }
@@ -22,8 +22,9 @@ namespace Papper.Types
         public virtual bool HasNotAccessibleChilds { get; internal set; }
         public virtual bool IsReadOnly { get; internal set; }
         public virtual bool IsNotAccessible { get; internal set; }
+        public virtual int? ArrayStartIndex { get; internal set; }
 
-        public string? SymbolicAccessName { get => _symbolicAccessName ?? Name; set => _symbolicAccessName = value; }
+        
 
         public virtual int ByteOffset => Offset.Bytes;
         public virtual int BitOffset => Offset.Bits;

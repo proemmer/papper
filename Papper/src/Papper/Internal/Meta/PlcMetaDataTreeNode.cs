@@ -1,6 +1,8 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Text;
 
 namespace Papper.Internal
 {
@@ -102,10 +104,11 @@ namespace Papper.Internal
         public override ITreeNode? Get(ITreePath path)
         {
             var dummy = 0;
-            return Get(path, ref dummy);
+            var sb = new StringBuilder();
+            return Get(path, ref dummy, ref sb);
         }
 
-        public override ITreeNode? Get(ITreePath path, ref int offset, bool getRef = false)
+        public override ITreeNode? Get(ITreePath path, ref int offset, ref StringBuilder symbolicPath, bool getRef = false)
         {
             if (path.IsPathToCurrent)
             {
@@ -115,15 +118,21 @@ namespace Papper.Internal
             if (path.IsAbsolute)
             {
                 offset = 0;
-                return Root.Get(path.StepDown(), ref offset, getRef);
+                return Root.Get(path.StepDown(), ref offset, ref symbolicPath, getRef);
             }
             if (path.IsPathIndexed)
             {
                 var arrayChild = GetChildByName(path.ArrayName);
-                return arrayChild?.Get(path, ref offset, getRef);
+                var result = arrayChild?.Get(path, ref offset, ref symbolicPath, getRef);
+                return result;
             }
             var child = GetChildByName(path.Nodes.First());
-            return child?.Get(path.StepDown(), ref offset, getRef);
+            if (child != null)
+            {
+                symbolicPath.Append(".");
+                symbolicPath.Append(child.SymbolicAccessName);
+            }
+            return child?.Get(path.StepDown(), ref offset, ref symbolicPath, getRef);
         }
 
         public override void AddChild(ITreePath path, ITreeNode node)

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 
 namespace Papper.Types
 {
@@ -394,7 +395,7 @@ namespace Papper.Types
         /// <param name="offset">we have to give the offset to the next element of the array (because of recursive data structures)</param>
         /// <param name="getRef"></param>
         /// <returns></returns>
-        public override ITreeNode? Get(ITreePath path, ref int offset, bool getRef = false)
+        public override ITreeNode? Get(ITreePath path, ref int offset, ref StringBuilder symbolicPath, bool getRef = false)
         {
             if (path.IsPathToCurrent && !path.IsPathIndexed)
             {
@@ -405,9 +406,19 @@ namespace Papper.Types
             if (idx >= From && idx <= To)
             {
                 offset += Offset.Bytes + ((idx - From) * GetElementSizeForOffset());
+
+
+                { 
+                    var nullBasedIndex = From < 0 ? From - idx : From + idx * -1;
+                    var symbolicAccessName = SymbolicAccessName + string.Format(CultureInfo.InvariantCulture, "[{0}]", nullBasedIndex);
+                    symbolicPath.Append(".");
+                    symbolicPath.Append(symbolicAccessName);
+                }
+
+
                 return (_indexCache.TryGetValue(idx, out var ret) ?
                             ret :
-                            GetIndex(idx))?.Get(CreateSubPath(path), ref offset);
+                            GetIndex(idx))?.Get(CreateSubPath(path), ref offset, ref symbolicPath);
             }
             return null;
         }
@@ -490,6 +501,8 @@ namespace Papper.Types
                 if (objResult is PlcObject plcObj)
                 {
                     plcObj.ElemenType = ElemenType;
+                    plcObj.ArrayStartIndex = From;
+                    plcObj.Parent = this;
                     _indexCache.Add(idx, plcObj);
                     return plcObj;
                 }

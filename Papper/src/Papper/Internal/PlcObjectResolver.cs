@@ -86,7 +86,7 @@ namespace Papper.Internal
                     plcObject.Offset.Bytes = int.Parse(parts[0], CultureInfo.InvariantCulture);
                     if (!plcObjects.ContainsKey(value))
                     {
-                        adds.Add(value, new OperationItem(0, plcObject));
+                        adds.Add(value, new OperationItem(0, string.Empty, plcObject));
                     }
                 }
                 else
@@ -230,7 +230,8 @@ namespace Papper.Internal
             foreach (var value in values.Where(x => !plcObjects.ContainsKey(x)))
             {
                 var baseOffset = offset;
-                var item = value == "This" ? plcObj as PlcObject : plcObj.Get(new PlcMetaDataTreePath(value), ref baseOffset) as PlcObject;
+                var symbolicPath = new StringBuilder();
+                var item = value == "This" ? plcObj as PlcObject : plcObj.Get(new PlcMetaDataTreePath(value), ref baseOffset, ref symbolicPath) as PlcObject;
                 if (item == null)
                 {
                     ExceptionThrowHelper.ThrowInvalidVariableException($"{plcObj.Name}.{value}");
@@ -243,7 +244,7 @@ namespace Papper.Internal
                 {
                     try
                     {
-                        plcObjects.Add(key, new OperationItem(baseOffset, item));
+                        plcObjects.Add(key, new OperationItem(baseOffset, symbolicPath.ToString(), item));
                     }
                     catch (Exception)
                     {
@@ -457,7 +458,8 @@ namespace Papper.Internal
 
             var path = PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse());
             var offset = 0;
-            if (!tree.TryGet(path, ref offset, out var obj, true))
+            var sb = new StringBuilder();
+            if (!tree.TryGet(path, ref offset, ref sb, out var obj, true))
             {
                 if (t == null)
                 {
@@ -516,7 +518,8 @@ namespace Papper.Internal
             nodePathStack.Push(name);
             var path = PlcMetaDataTreePath.CreateAbsolutePath(nodePathStack.Reverse());
             var offset = 0;
-            if (!tree.TryGet(path, ref offset, out var obj))
+            var sb = new StringBuilder();
+            if (!tree.TryGet(path, ref offset, ref sb, out var obj))
             {
                 var byteOffset = 0;
                 var bitOffset = 0;

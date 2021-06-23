@@ -7,7 +7,7 @@
     <VersionSuffix></VersionSuffix>
     <AssemblyTitle>papper</AssemblyTitle>
     <Authors>Benjamin Proemmer</Authors>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <AssemblyName>Papper</AssemblyName>
     <PackageId>Papper</PackageId>
     <PackageTags>siemens plc datamapper S7</PackageTags>
