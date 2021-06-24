@@ -14,7 +14,7 @@
         /// </summary>
         string Mapping { get; }
         string Variable { get; }
-
+        string Address { get; }
 
     }
 }

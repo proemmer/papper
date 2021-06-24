@@ -26,7 +26,7 @@ namespace Benchmarks
             _results = new List<DataValueTMP>();
             for (int i = 0; i < 30; i++)
             {
-                _reads.Add(new DataPack
+                _reads.Add(new DataPackAbsolute
                 {
 
                 });
@@ -49,12 +49,11 @@ namespace Benchmarks
                 if (index < NumberOfReds)
                 {
                     var result = _results.ElementAt(index);
-                    item.ApplyData(result.Data);
-                    item.ExecutionResult = result.ReturnCode == ItemResponseRetValue.Success ? ExecutionResult.Ok : ExecutionResult.Error;
+                    item.ApplyResult(result.ReturnCode == ItemResponseRetValue.Success ? ExecutionResult.Ok : ExecutionResult.Error, result.Data);
                 }
                 else
                 {
-                    item.ExecutionResult = ExecutionResult.Error;
+                    item.ApplyResult(ExecutionResult.Error);
                 }
                 return true;
             }).ToList();
@@ -70,12 +69,11 @@ namespace Benchmarks
                 if (index < NumberOfReds)
                 {
                     var result = _results.ElementAt(index);
-                    item.ApplyData(result.Data);
-                    item.ExecutionResult = result.ReturnCode == ItemResponseRetValue.Success ? ExecutionResult.Ok : ExecutionResult.Error;
+                    item.ApplyResult(result.ReturnCode == ItemResponseRetValue.Success ? ExecutionResult.Ok : ExecutionResult.Error, result.Data);
                 }
                 else
                 {
-                    item.ExecutionResult = ExecutionResult.Error;
+                    item.ApplyResult(ExecutionResult.Error);
                 }
                 return true;
             }).ToList();

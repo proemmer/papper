@@ -1,13 +1,12 @@
-﻿using Papper.Attributes;
+﻿using Papper.Access;
+using Papper.Attributes;
 using Papper.Extensions.Metadata;
 using Papper.Extensions.Notification;
 using Papper.Internal;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -44,15 +43,16 @@ namespace Papper
         /// <returns></returns>
         public delegate Task ReadBlockInfo(IEnumerable<MetaDataPack> metadatas);
 
+
+
+
         #endregion
 
         #region Fields
-        private readonly HashSet<Subscription> _subscriptions = new();
         private const int _readDataHeaderLength = 18;
+        private readonly HashSet<Subscription> _subscriptions = new();
         private readonly PlcMetaDataTree _tree = new();
         private readonly ReaderWriterLockSlim _mappingsLock = new();
-        private ReadOperation? _readEventHandler;
-        private WriteOperation? _writeEventHandler;
         private UpdateMonitoring? _updateHandler;
         private ReadBlockInfo? _blockInfoHandler;
         #endregion
@@ -62,6 +62,7 @@ namespace Papper
         public int ReadDataBlockSize { get; private set; }
         public int PduSize { get; private set; }
         internal IReadOperationOptimizer Optimizer { get; }
+        internal AccessEngine Engine { get; }
 
         internal Dictionary<string, IEntry> EntriesByName { get; } = new Dictionary<string, IEntry>();
 
@@ -109,17 +110,24 @@ namespace Papper
                             OptimizerType optimizer = OptimizerType.Block)
         {
             PduSize = pduSize;
-            _readEventHandler = readEventHandler;
-            _writeEventHandler = writeEventHandler;
             _updateHandler = updateHandler;
             _blockInfoHandler = blockInfoHandler;
             Optimizer = OptimizerFactory.CreateOptimizer(optimizer);
-            ReadDataBlockSize = pduSize - _readDataHeaderLength;
-            if (ReadDataBlockSize <= 0)
-            {
-                ExceptionThrowHelper.ThrowInvalidPduSizeException(_readDataHeaderLength);
-            }
 
+
+            if (Optimizer.SymbolicAccess)
+            {
+                Engine = new AccessEngineSymbolic(readEventHandler, writeEventHandler, GetMapping);
+            }
+            else
+            {
+                Engine = new AccessEngineAbsolute(readEventHandler, writeEventHandler, GetMapping);
+                ReadDataBlockSize = pduSize - _readDataHeaderLength;
+                if (ReadDataBlockSize <= 0)
+                {
+                    ExceptionThrowHelper.ThrowInvalidPduSizeException(_readDataHeaderLength);
+                }
+            }
             PlcMetaDataTreePath.CreateAbsolutePath(PlcObjectResolver.RootNodeName);
         }
 
@@ -269,14 +277,14 @@ namespace Papper
         /// </summary>
         /// <param name="vars"></param>
         /// <returns>return a dictionary with all variables and the read value</returns>
-        public Task<PlcReadResult[]> ReadAsync(IEnumerable<PlcReadReference> vars) => InternalReadAsync(vars, false);
+        public Task<PlcReadResult[]> ReadAsync(IEnumerable<PlcReadReference> vars) => Engine.ReadAsync(vars, false);
 
         /// <summary>
         /// Read variables from an given mapping as byte[]
         /// </summary>
         /// <param name="vars"></param>
         /// <returns>return a dictionary with all variables and the read value</returns>
-        public Task<PlcReadResult[]> ReadBytesAsync(IEnumerable<PlcReadReference> vars) => InternalReadAsync(vars, true);
+        public Task<PlcReadResult[]> ReadBytesAsync(IEnumerable<PlcReadReference> vars) => Engine.ReadAsync(vars, doNotConvert: true);
 
 
         /// <summary>
@@ -293,34 +301,7 @@ namespace Papper
         /// <param name="mapping">mapping name specified in the MappingAttribute</param>
         /// <param name="values">variable names and values to write</param>
         /// <returns>return true if all operations are succeeded</returns>
-        public async Task<PlcWriteResult[]> WriteAsync(IEnumerable<PlcWriteReference> vars)
-        {
-            // because we need the byte arrays only for converting, we can use the ArrayPool
-            var memoryBuffer = new Dictionary<PlcRawData, byte[]>();
-            try
-            {
-                var values = vars.ToDictionary(x => x.Address, x => x.Value);
-                // determine executions
-                var executions = DetermineExecutions(vars);
-
-                var prepared = executions.Select(execution => execution.CreateWriteDataPack(values, memoryBuffer))
-                                         .ToDictionary(x => x.Key, x => x.Value);
-
-                await WriteToPlcAsync(prepared.Values.SelectMany(x => x)).ConfigureAwait(false);
-                executions.ForEach(exec =>
-                {
-                    if(exec.ExecutionResult == ExecutionResult.Ok)
-                        exec.Invalidate();
-                });
-
-                return CreatePlcWriteResults(values, prepared);
-            }
-            finally
-            {
-                memoryBuffer.Values.ToList().ForEach(x => ArrayPool<byte>.Shared.Return(x));
-            }
-        }
-
+        public Task<PlcWriteResult[]> WriteAsync(IEnumerable<PlcWriteReference> vars) => Engine.WriteAsync(vars);
 
 
         /// <summary>
@@ -346,164 +327,38 @@ namespace Papper
 
         internal bool RemoveSubscription(Subscription sub) => _subscriptions.Remove(sub);
 
-        internal Task ReadFromPlcAsync(IEnumerable<DataPack> packs) => _readEventHandler != null ? _readEventHandler.Invoke(packs) : Task.CompletedTask;
-
-        internal Task WriteToPlcAsync(IEnumerable<DataPack> packs) => _writeEventHandler != null ? _writeEventHandler.Invoke(packs) : Task.CompletedTask;
-
         internal Task UpdateMonitoringItemsAsync(IEnumerable<DataPack> monitoring, bool add = true) => _updateHandler != null ? _updateHandler.Invoke(monitoring, add) : Task.CompletedTask;
 
         internal Task ReadBlockInfos(IEnumerable<MetaDataPack> infos) => _blockInfoHandler != null ? _blockInfoHandler.Invoke(infos) : Task.CompletedTask;
 
-        internal List<Execution> DetermineExecutions<T>(IEnumerable<T> vars) where T : IPlcReference
-        {
-            return vars.GroupBy(x => x.Mapping)
-                                .Select((execution) => GetOrAddMapping(execution.Key, out var entry)
-                                                                ? (execution, entry)
-                                                                : (null, null))
-                                .Where(x => x.execution != null)
-                                .SelectMany(x => x.entry.GetOperations(x.execution.Select(exec => exec.Variable).ToList()))
-                                .ToList();
-        }
-
-        internal static PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions,
-                                                      Dictionary<Execution, DataPack> needUpdate,
-                                                      DateTime? changedAfter = null,
-                                                      Func<IEnumerable<KeyValuePair<string, PlcObjectBinding>>,
-                                                      IEnumerable<KeyValuePair<string, PlcObjectBinding>>>? filter = null,
-                                                      bool doNotConvert = false)
-        {
-            if (filter == null)
-            {
-                filter = (x) => x;
-            }
-            return executions.Select(exec => needUpdate.TryGetValue(exec, out var pack) ? exec.ApplyDataPack(pack) : exec)
-                             .Where(exec => HasChangesSinceLastRun(exec, changedAfter))
-                             .GroupBy(exec => exec.ExecutionResult) // Group by execution result
-                             .Where(res => res.Key == ExecutionResult.Ok) // filter by OK results
-                             .SelectMany(group => filter(group.SelectMany(g => g.Bindings))
-                                                       .Select(b => new PlcReadResult(b.Key,
-                                                                                      ConvertToResult(b.Value, doNotConvert),
-                                                                                      group.Key)
-                                                       )).ToArray();
-        }
-
-        private static PlcWriteResult[] CreatePlcWriteResults(Dictionary<string, object> values, Dictionary<Execution, IEnumerable<DataPack>> prepared)
-        {
-            var results = new PlcWriteResult[values.Count];
-            var index = 0;
-            foreach (var value in values)
-            {
-                var writePackages = prepared.Where(p => p.Key.Bindings.ContainsKey(value.Key)).SelectMany(x => x.Value);
-                var execResult = writePackages.Any() ? ExecutionResult.Ok : ExecutionResult.Unknown;
-                foreach (var package in writePackages)
-                {
-                    if (package.ExecutionResult != ExecutionResult.Ok)
-                    {
-                        execResult = package.ExecutionResult;
-                        break;
-                    }
-                }
-
-                results[index++] = new PlcWriteResult(value.Key, execResult);
-            }
-
-            return results;
-        }
-
-        private static bool HasChangesSinceLastRun(Execution exec, DateTime? changedAfter)
-            => changedAfter == null || exec.LastChange > changedAfter;
-
-        internal static PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions, IEnumerable<DataPack> packs)
-        {
-            return packs.Select(pack => executions.FirstOrDefault(x => pack.Selector == x.PlcRawData.Selector &&
-                                                                pack.Offset == x.PlcRawData.Offset &&
-                                                                pack.Length == (x.PlcRawData.Size > 0 ? x.PlcRawData.Size : 1))?.ApplyDataPack(pack))
-                        .Where(exec => exec != null)
-                        .GroupBy(exec => exec!.ExecutionResult) // Group by execution result
-                        .Where(res => res.Key == ExecutionResult.Ok) // filter by OK results
-                        .SelectMany(group => group.SelectMany(g => g!.Bindings)
-                                                    .Select(b => new PlcReadResult(b.Key,
-                                                                    b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache.Span),
-                                                                    group.Key)
-                                                    )).ToArray();
-        }
-
-        internal static Dictionary<Execution, DataPack> UpdateableItems(List<Execution> executions, bool onlyOutdated, Func<IEnumerable<string>, DateTime, bool>? forceUpdate = null)
-        {
-            return executions.Where(exec => !onlyOutdated ||
-                                            exec.ValidationTimeMs <= 0 ||
-                                            exec.PlcRawData.LastUpdate.AddMilliseconds(exec.ValidationTimeMs) < DateTime.Now ||
-                                            (forceUpdate != null && forceUpdate(exec.PlcRawData.References.Keys, exec.PlcRawData.LastUpdate)))
-                             .Select(x => x.CreateReadDataPack())
-                             .ToDictionary(x => x.Key, x => x.Value);
-        }
-
-
         internal bool IsValidReference(PlcWatchReference watchs)
-            => GetOrAddMapping(watchs.Mapping, out var entry) &&
+            => Engine.GetOrAddMapping(watchs.Mapping, out var entry) &&
                 (entry is MappingEntry && entry.PlcObject.Get(new PlcMetaDataTreePath(watchs.Variable)) != null) ||
                 (entry is RawEntry);
         #endregion
 
 
-        
-
-        private async Task<PlcReadResult[]> InternalReadAsync(IEnumerable<PlcReadReference> vars, bool doNotConvert)
-        {
-            var variables = vars;
-            // determine executions
-            var executions = DetermineExecutions(variables);
-
-            // determine outdated
-            var needUpdate = UpdateableItems(executions, true);  // true = read some items from cache!!
-
-            // read from plc
-            await ReadFromPlcAsync(needUpdate.Values).ConfigureAwait(false);
-
-            // transform to result
-            return CreatePlcReadResults(executions, needUpdate, null, null, doNotConvert);
-        }
-
-        private static object? ConvertToResult(PlcObjectBinding binding, bool doNotConvert = false)
-        {
-            if (doNotConvert)
-            {
-                return binding.RawData.ReadDataCache.Slice(binding.Offset, binding.Size).ToArray();
-            }
-
-            return binding?.ConvertFromRaw(binding.RawData.ReadDataCache.Span);
-        }
-
-        private bool GetOrAddMapping(string mapping, out IEntry entry)
+        private bool GetMapping(string mapping, out IEntry entry, bool allowAdd = true)
         {
             if (EntriesByName.TryGetValue(mapping, out entry))
             {
                 return true;
             }
 
-            // If the mapping is an absolute mapping we can create an entry
-            switch (mapping)
+            if (allowAdd)
             {
-                case "IB":
-                case "FB":
-                case "QB":
-                case "TM":
-                case "CT":
-                case var s when Regex.IsMatch(s, "^DB\\d+$"):
+                using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
+                {
+                    if (!EntriesByName.TryGetValue(mapping, out entry))
                     {
-                        using (var upgradeableGuard = new UpgradeableGuard(_mappingsLock))
+                        entry = new RawEntry(this, mapping, 0);
+                        using (upgradeableGuard.UpgradeToWriterLock())
                         {
-                            if (!EntriesByName.TryGetValue(mapping, out entry))
-                            {
-                                entry = new RawEntry(this, mapping, 0);
-                                using (upgradeableGuard.UpgradeToWriterLock())
-                                {
-                                    EntriesByName.Add(mapping, entry);
-                                }
-                            }
+                            EntriesByName.Add(mapping, entry);
                         }
-                        return true;
                     }
+                }
+                return true;
             }
 
             return false;
@@ -571,8 +426,7 @@ namespace Papper
                     _mappingsLock.Dispose();
                 }
 
-                _readEventHandler = null;
-                _writeEventHandler = null;
+                Engine?.Dispose();
                 _updateHandler = null;
                 _blockInfoHandler = null;
 

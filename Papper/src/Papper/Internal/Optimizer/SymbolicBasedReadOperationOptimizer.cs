@@ -6,7 +6,7 @@ namespace Papper.Internal
 {
     internal class SymbolicBasedReadOperationOptimizer : IReadOperationOptimizer
     {
-
+        public bool SymbolicAccess => true;
 
         /// <summary>
         /// Create RawReadOperations to use it in the reader. This method tries to optimize the PLC access, 
@@ -16,6 +16,7 @@ namespace Papper.Internal
         {
             var rawBlocks = new List<PlcRawData>();
             PlcRawData? pred = null;
+            var predIsBool = false;
             var offsetCountedAsBoolean = -1;
             var offset = 0;
             foreach (var item in objects.OrderBy(i => i.Value.Offset + i.Value.PlcObject.Offset.Bytes)
@@ -23,11 +24,13 @@ namespace Papper.Internal
                                         .ThenBy(i => i.Key.Length).ToList())
             {
                 var count = true;
+                var currentIsBool = false;
                 var currentOffset = item.Value.Offset + item.Value.PlcObject.Offset.Bytes;
                 var sizeInBytes = item.Value.PlcObject.Size == null || item.Value.PlcObject.Size.Bytes == 0 && count ? 1 : item.Value.PlcObject.Size.Bytes;
 
                 if (item.Value.PlcObject is PlcBool)
                 {
+                    currentIsBool = true;
                     if (currentOffset != offsetCountedAsBoolean)
                     {
                         offsetCountedAsBoolean = currentOffset;
@@ -48,21 +51,22 @@ namespace Papper.Internal
                     Size = sizeInBytes,
                     Selector = selector,
                     ContainsReadOnlyParts = item.Value.PlcObject.IsReadOnly || item.Value.PlcObject.HasReadOnlyChilds,
-                    SymbolicAccessName = $"{name}.{item.Key}"
+                    SymbolicAccessName = $"{name}{item.Value.SymbolicPath}"
                 };
 
 
-                if (pred == null)
+                if (pred == null || predIsBool) // bools can not have childs in symbolic access
                 {
                     rawBlocks.Add(current);
                     pred = current;
+                    predIsBool = currentIsBool;
                     offset = 0;
                 }
                 else
                 {
                     var directOffset = pred.Offset + pred.Size;
                     var newElementSize = pred.Size + current.Size;
-                    if (directOffset > current.Offset)
+                    if (directOffset > current.Offset)  // TODO: we have to check if the subelemenbt can be extrated from the parent 
                     {
                         //is subElement
                         offset = current.Offset - pred.Offset;
@@ -81,6 +85,7 @@ namespace Papper.Internal
                     {
                         rawBlocks.Add(current);
                         pred = current;
+                        predIsBool = currentIsBool;
                         offset = 0;
                     }
                 }

@@ -225,14 +225,10 @@ namespace Papper.Extensions.Notification
                 return null;
             }
             var variables = vars.Select(x => x.Address).ToList();
-            return executions.GroupBy(exec => exec.ExecutionResult) // Group by execution result
-                                                  .SelectMany(group => group.SelectMany(g => g.Bindings)
-                                                                            .Where(b => variables.Contains(b.Key))
-                                                                            .Select(b => new PlcReadResult(b.Key,
-                                                                                                            b.Value?.ConvertFromRaw(b.Value.RawData.ReadDataCache.Span),
-                                                                                                            group.Key)
-                                                                            )).ToArray();
+            return _mapper.Engine.ReadVariablesFromExecutionCache(variables, executions);
         }
+
+
 
         /// <summary>
         /// Starts a detection an returns the changes if any occurred.
@@ -271,10 +267,10 @@ namespace Papper.Extensions.Notification
                                 {
                                     cycles = _variables.Values.ToDictionary(x => x.Address, x => x.WatchCycle);
                                     interval = Interval;
-                                    _executions = _mapper.DetermineExecutions(_variables.Values);
+                                    _executions = _mapper.Engine.DetermineExecutions(_variables.Values);
                                     if (_changeDetectionStrategy == ChangeDetectionStrategy.Event)
                                     {
-                                        var needUpdate = PlcDataMapper.UpdateableItems(_executions, false);
+                                        var needUpdate = _mapper.Engine.UpdateableItems(_executions, false);
                                         await _mapper.UpdateMonitoringItemsAsync(needUpdate.Values).ConfigureAwait(false);
                                     }
                                     _modified = false;
@@ -299,21 +295,14 @@ namespace Papper.Extensions.Notification
                     {
                         if (_changeDetectionStrategy == ChangeDetectionStrategy.Polling || _changeEvent == null)
                         {
-                            // determine outdated
-                            var needUpdate = PlcDataMapper.UpdateableItems(_executions, true, DetermineChanges(cycles, interval));
-
-                            // read outdated
-                            await _mapper.ReadFromPlcAsync(needUpdate.Values).ConfigureAwait(false); // Update the read cache;
-
-                            // filter to get only changed items
-                            readRes = PlcDataMapper.CreatePlcReadResults(_executions, needUpdate, _lastRun, (x) => FilterChanged(detect, x));
+                            readRes = await _mapper.Engine.ReadExecutionsAsync(_executions, true, _lastRun, DetermineChanges(cycles, interval), (x) => FilterChanged(detect, x)).ConfigureAwait(false);
                         }
                         else
                         {
                             var packs = await _changeEvent.WaitAsync(_cts.Token).ConfigureAwait(false);
                             if (packs?.Any() == true)
                             {
-                                readRes = PlcDataMapper.CreatePlcReadResults(_executions, packs);
+                                readRes = _mapper.Engine.CreatePlcReadResults(_executions, packs);
                             }
                         }
 
@@ -464,30 +453,32 @@ namespace Papper.Extensions.Notification
             foreach (var binding in all)
             {
                 var objBinding = binding.Value;
-
-                // only work on valid items
-                if (!objBinding.Data.IsEmpty)
+                if (objBinding.Data is Memory<byte> memData)
                 {
-                    var size = objBinding.Size == 0 ? 1 : objBinding.Size;
-                    if (!_lruCache.TryGetValue(binding.Key, out var saved) ||
-                        (objBinding.Size == 0
-                            ? objBinding.Data.Span[objBinding.Offset].GetBit(objBinding.MetaData.Offset.Bits) != saved.Data.Span[0].GetBit(objBinding.MetaData.Offset.Bits)
-                            : !objBinding.Data.Slice(objBinding.Offset, size).Span.SequenceEqual(saved.Data.Slice(0, size).Span)))
+                    // only work on valid items
+                    if (!memData.IsEmpty)
                     {
-                        result.Add(binding);
-                        var data = objBinding.Data.Slice(objBinding.Offset, size);
-                        if (saved == null)
+                        var size = objBinding.Size == 0 ? 1 : objBinding.Size;
+                        if (!_lruCache.TryGetValue(binding.Key, out var saved) ||
+                            (objBinding.Size == 0
+                                ? memData.Span[objBinding.Offset].GetBit(objBinding.MetaData.Offset.Bits) != saved.Data.Span[0].GetBit(objBinding.MetaData.Offset.Bits)
+                                : !memData.Slice(objBinding.Offset, size).Span.SequenceEqual(saved.Data.Slice(0, size).Span)))
                         {
-                            _lruCache.Create(binding.Key, data, detect, objBinding.ValidationTimeInMs);
+                            result.Add(binding);
+                            var data = memData.Slice(objBinding.Offset, size);
+                            if (saved == null)
+                            {
+                                _lruCache.Create(binding.Key, data, detect, objBinding.ValidationTimeInMs);
+                            }
+                            else
+                            {
+                                LruCache.Update(saved, data, detect);
+                            }
                         }
                         else
                         {
-                            LruCache.Update(saved, data, detect);
+                            LruCache.Update(saved, detect);
                         }
-                    }
-                    else
-                    {
-                        LruCache.Update(saved, detect);
                     }
                 }
             }

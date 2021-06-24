@@ -31,7 +31,8 @@ namespace Papper.Tests
     public sealed class PlcDataMapperSymbolicTests : IDisposable
     {
         private readonly PlcDataMapper _papper = new(960, Papper_OnRead, Papper_OnWrite, OptimizerType.Symbolic);
-        private static readonly MockPlc _mockPlc = new MockPlc();
+        private static readonly Dictionary<string, object> _mockPlc = new();
+
         private readonly ITestOutputHelper _output;
 
         public PlcDataMapperSymbolicTests(ITestOutputHelper output)
@@ -56,6 +57,7 @@ namespace Papper.Tests
             _papper.AddMapping(typeof(DB_BST_An_Abwahl_BST1));
             _papper.AddMapping(typeof(DB_BST1_Geraete_1_Konfig));
             _papper.AddMapping(typeof(SampleDataAccessNames));
+            _papper.AddMapping(typeof(DB_TestCTT));
 
 
         }
@@ -110,7 +112,7 @@ namespace Papper.Tests
         [InlineData(nameof(DB_BST_An_Abwahl_BST1), 1)]
         [InlineData(nameof(DB_BST1_Regal_1_Konfig), 2)]
         [InlineData(nameof(DB_BST1_Geraete_1_Konfig), 1)]
-        [InlineData(nameof(SampleDataAccessNames),13)]
+        [InlineData(nameof(SampleDataAccessNames), 13)]
 
         public void TestReadableBlocks(string mapping, int expectedVariables)
         {
@@ -410,6 +412,19 @@ namespace Papper.Tests
 
 
         [Fact]
+        public void TestBitAccess()
+        {
+            var mapping = "DB_TestCTT";
+
+            var t = new Stopwatch();
+            t.Start();
+            var result1 = _papper.ReadAsync(PlcReadReference.FromAddress($"{mapping}.StartTrack")).GetAwaiter().GetResult();
+            var result2 = _papper.ReadAsync(PlcReadReference.FromAddress($"{mapping}.StartTrack"), PlcReadReference.FromAddress($"{mapping}.StartEinlauf"), PlcReadReference.FromAddress($"{mapping}.StartAuslauf")).GetAwaiter().GetResult();
+            t.Stop();
+        }
+
+
+        [Fact]
         public async Task MixedAccessTest()
         {
             var mapping = "DB_Safety2";
@@ -633,26 +648,6 @@ namespace Papper.Tests
             Test(mapping, accessDict, default(char));
         }
 
-        [Fact]
-        public void ArrayStringAccessTest()
-        {
-            var mapping = "STRING_ARRAY_TEST_MAPPING";
-            var accessDict = new Dictionary<string, object> {
-                    { "TEXT[1]", "TEST1"},
-                    { "TEXT[5]", "TEST5"},
-                };
-
-            Test(mapping, accessDict, "");
-
-            //Byte data check
-            var dbData = _mockPlc.GetPlcEntry("DB30").Data;
-            Assert.True(dbData.Slice(0, 2).Span.SequenceEqual(new byte[] { 35, 5 }));
-            Assert.True(dbData.Slice(2, 5).Span.SequenceEqual("TEST1".ToByteArray(5)));
-
-            Assert.True(dbData.Slice(152, 2).Span.SequenceEqual(new byte[] { 35, 5 }));
-            Assert.True(dbData.Slice(154, 5).Span.SequenceEqual("TEST5".ToByteArray(5)));
-        }
-
 
         [Fact]
         public void TODTest()
@@ -821,6 +816,19 @@ namespace Papper.Tests
 
         }
 
+        [Fact]
+        public void ReadIndexedItem()
+        {
+
+            var exec1 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number[1]", 200) });
+            var exec2 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_IPSC_Konfig.StatusAnzeige_ZP[1].ErrText", 200) });
+            var exec3 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
+
+
+        }
+
+
+
 
 
 
@@ -829,8 +837,8 @@ namespace Papper.Tests
         {
             var write = PlcWriteReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", new char[4] { 'A', 'B', 'C', 'D' });
 
-            var exec = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", 200) });
-            var exec2 = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
+            var exec = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", 200) });
+            var exec2 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
 
             Assert.True(exec[0].Bindings.Values.FirstOrDefault().RawData.Size == 4);
             Assert.True(exec2[0].Bindings.Values.FirstOrDefault().RawData.Size == 7970);
@@ -839,41 +847,9 @@ namespace Papper.Tests
             await _papper.WriteAsync(write).ConfigureAwait(false);
 
 
-            var data2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number") }).ConfigureAwait(false);
-            Assert.True(data2[0].Value is byte[] b2 && b2.Length == 4);
+            var data2 = await _papper.ReadAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number") }).ConfigureAwait(false);
+            Assert.True(data2[0].Value is char[] b2 && b2.Length == 4);
 
-            var data = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA") }).ConfigureAwait(false);
-            Assert.True(data[0].Value is byte[] b && b.Length == 7970);
-
-
-
-            Assert.True(data2[0].Value is byte[] bX1 && data[0].Value is byte[] bx2 && bX1.SequenceEqual(bx2.SubArray(0, 4)));
-        }
-
-
-        [Fact]
-        public async Task ReadBigAndSmallPartsWithGap()
-        {
-            var write = PlcWriteReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", new char[4] { 'A', 'B', 'C', 'D' });
-
-            var exec2 = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
-            var exec = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", 200), PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.EngineData.EngineNo", 200) });
-
-            //Assert.True(exec[0].Bindings.Values.FirstOrDefault().RawData.Size == 4);
-            //Assert.True(exec2[0].Bindings.Values.FirstOrDefault().RawData.Size == 7970);
-
-            await _papper.WriteAsync(write).ConfigureAwait(false);
-
-
-            var data = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA") }).ConfigureAwait(false);
-            Assert.True(data[0].Value is byte[] b && b.Length == 7970);
-
-
-            var data2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number") }).ConfigureAwait(false);
-            Assert.True(data2[0].Value is byte[] b2 && b2.Length == 4);
-
-
-            Assert.True(data2[0].Value is byte[] bX1 && data[0].Value is byte[] bx2 && bX1.SequenceEqual(bx2.SubArray(0, 4)));
         }
 
         #region Helper
@@ -911,10 +887,10 @@ namespace Papper.Tests
 
         private Task UpdateHandler(IEnumerable<DataPack> monitoring, bool add = true)
         {
-            foreach (var item in monitoring)
-            {
-                _mockPlc.UpdateDataChangeItem(item, !add);
-            }
+            //foreach (var item in monitoring)
+            //{
+            //    _mockPlc.UpdateDataChangeItem(item, !add);
+            //}
             return Task.CompletedTask;
         }
 
@@ -930,18 +906,16 @@ namespace Papper.Tests
         private static Task Papper_OnRead(IEnumerable<DataPack> reads)
         {
             var result = reads.ToList();
-            foreach (var item in result)
+            foreach (var item in result.OfType<DataPackSymbolic>())
             {
                 Console.WriteLine($"OnRead: SymbolicName:{item.SymbolicName};");
-                var res = _mockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length);
-                if (!res.IsEmpty)
-                {
-                    item.ApplyData(res);
-                    item.ExecutionResult = ExecutionResult.Ok;
+                if(_mockPlc.TryGetValue(item.SymbolicName, out var val))
+                { 
+                    item.ApplyResult(ExecutionResult.Ok, val);
                 }
                 else
                 {
-                    item.ExecutionResult = ExecutionResult.Error;
+                    item.ApplyResult(ExecutionResult.Error);
                 }
             }
             return Task.CompletedTask;
@@ -950,55 +924,10 @@ namespace Papper.Tests
         private static Task Papper_OnWrite(IEnumerable<DataPack> reads)
         {
             var result = reads.ToList();
-            foreach (var item in result)
+            foreach (var item in result.OfType<DataPackSymbolic>())
             {
-                var entry = _mockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length);
-                if (!item.HasBitMask)
-                {
-                    Console.WriteLine($"OnWrite: selector:{item.SymbolicName};");
-                    item.Data.Slice(0, item.Length).CopyTo(entry.Data.Slice(item.Offset, item.Length));
-                    item.ExecutionResult = ExecutionResult.Ok;
-                }
-                else
-                {
-                    var lastItem = item.Data.Length - 1;
-                    for (var j = 0; j < item.Data.Length; j++)
-                    {
-                        var bItem = item.Data.Span[j];
-                        if (j > 0 && j < lastItem)
-                        {
-                            entry.Data.Span[item.Offset + j] = item.Data.Span[j];
-                            item.ExecutionResult = ExecutionResult.Ok;
-                        }
-                        else
-                        {
-                            var bm = j == 0 ? item.BitMaskBegin : (j == lastItem) ? item.BitMaskEnd : (byte)0;
-                            if (bm == 0xFF)
-                            {
-                                entry.Data.Span[item.Offset + j] = item.Data.Span[j];
-                                item.ExecutionResult = ExecutionResult.Ok;
-                            }
-                            else if (bm > 0)
-                            {
-                                for (var i = 0; i < 8; i++)
-                                {
-                                    var bit = bm.GetBit(i);
-                                    if (bit)
-                                    {
-                                        var b = entry.Data.Span[item.Offset + j];
-                                        entry.Data.Span[item.Offset + j] = b.SetBit(i, bItem.GetBit(i));
-                                        item.ExecutionResult = ExecutionResult.Ok;
-                                        bm = bm.SetBit(i, false);
-                                        if (bm == 0)
-                                        {
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                _mockPlc[item.SymbolicName] = item.Value;
+                item.ApplyResult(ExecutionResult.Ok);
             }
             return Task.CompletedTask;
         }
@@ -1015,7 +944,7 @@ namespace Papper.Tests
                 var index = int.Parse(key.TrimStart('[').TrimEnd(']'), CultureInfo.InvariantCulture);
                 if (parts.Any())
                 {
-                    SetPropertyInExpandoObject(list.ElementAt(index), parts, value); 
+                    SetPropertyInExpandoObject(list.ElementAt(index), parts, value);
                 }
                 else
                 {

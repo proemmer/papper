@@ -1,6 +1,7 @@
 ﻿using Papper.Internal;
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Papper.Types
 {
@@ -44,7 +45,7 @@ namespace Papper.Types
 
         public override ITreeNode? GetChildByName(string name) => _referencedObject.GetChildByName(name);
 
-        public override ITreeNode? Get(ITreePath path, ref int offset, bool getRef = false)
+        public override ITreeNode? Get(ITreePath path, ref int offset, ref StringBuilder symbolicPath, bool getRef = false)
         {
             offset += Offset.Bytes;
             if (path.IsPathToCurrent && getRef)
@@ -52,7 +53,7 @@ namespace Papper.Types
                 return this;
             }
 
-            return _referencedObject.Get(path, ref offset);
+            return _referencedObject.Get(path, ref offset, ref symbolicPath);
         }
 
         public override void Accept(VisitNode visit) => _referencedObject.Accept(visit);

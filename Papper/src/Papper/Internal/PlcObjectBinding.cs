@@ -19,7 +19,7 @@ namespace Papper.Internal
 
         public bool FullType { get; private set; }
 
-        public Memory<byte> Data => RawData.ReadDataCache;
+        public object? Data => RawData.ReadDataCache;
 
         public PlcRawData RawData { get; }
 

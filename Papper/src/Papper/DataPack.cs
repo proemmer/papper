@@ -2,34 +2,16 @@
 
 namespace Papper
 {
-    public class DataPack
-    {
-        public string? Selector { get; set; }
-        public int Offset { get; set; }
-        public int Length { get; set; }
-        public string? SymbolicName { get; set; }
+    public abstract class DataPack
+    {       
+        public DateTime Timestamp { get; protected set; }
+        public ExecutionResult ExecutionResult { get; protected set; }
 
-        public byte BitMask => BitMaskBegin;
-
-        public byte BitMaskBegin { get; set; }
-        public byte BitMaskEnd { get; set; }
-
-        public bool HasBitMask => BitMaskBegin != 0 || BitMaskEnd != 0;
-
-        public Memory<byte> Data { get; internal set; }
-
-        public DateTime Timestamp { get; private set; }
-
-        public ExecutionResult ExecutionResult { get; set; }
-
-
-        public DataPack ApplyData(Memory<byte> data)
+        public virtual DataPack ApplyResult(ExecutionResult result)
         {
-            Data = data;
-            Timestamp = DateTime.Now;
+            ExecutionResult = result;
             return this;
         }
-
-        public override string ToString() => $"{Selector}.{Offset}.{Length}#{BitMaskBegin}#{BitMaskEnd}";
+        public abstract DataPack ApplyResult<T>(ExecutionResult result, T value);
     }
 }

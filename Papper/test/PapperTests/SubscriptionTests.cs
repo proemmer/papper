@@ -405,7 +405,7 @@ namespace Papper.Tests
 
 
             //waiting for initialize
-            Assert.True(are.WaitOne(5000));
+            Assert.True(are.WaitOne(50000));
             intiState = false;
             var writeResults = await _papper.WriteAsync(PlcWriteReference.FromRoot("DB66", writeData.ToArray()).ToArray()).ConfigureAwait(false);
             foreach (var item in writeResults)
@@ -433,15 +433,14 @@ namespace Papper.Tests
             papper.AddMapping(typeof(DB_Safety));
             _mockPlc.OnItemChanged = (items) =>
             {
-                papper.OnDataChanges(items.Select(i => new DataPack
+                papper.OnDataChanges(items.Select(i => new DataPackAbsolute
                 {
                     Selector = i.Selector,
                     Offset = i.Offset,
                     Length = i.Length,
                     BitMaskBegin = i.BitMaskBegin,
-                    BitMaskEnd = i.BitMaskEnd,
-                    ExecutionResult = ExecutionResult.Ok
-                }.ApplyData(i.Data)));
+                    BitMaskEnd = i.BitMaskEnd
+                }.ApplyResult(ExecutionResult.Ok, i.Data)));
             };
             var sleepTime = 10000;
             var mapping = "DB_Safety";
@@ -604,9 +603,9 @@ namespace Papper.Tests
 
 
             await Task.Delay(1000).ConfigureAwait(false);
-            var exec1 = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress(address1, 200) });
+            var exec1 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress(address1, 200) });
             _output.WriteLine($"Exec1: {exec1[0].PlcRawData.Size}");
-            var exec2 = _papper.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress(address2, 200) });
+            var exec2 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress(address2, 200) });
             _output.WriteLine($"Exec2: {exec2[0].PlcRawData.Size}");
 
             for (var i = 0; i < 5; i++)
@@ -636,7 +635,7 @@ namespace Papper.Tests
         private static Task Papper_OnRead(IEnumerable<DataPack> reads)
         {
             var result = reads.ToList();
-            foreach (var item in result)
+            foreach (var item in result.OfType<DataPackAbsolute>())
             {
                 //Console.WriteLine($"OnRead: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
                 var res = _mockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length).Data.Slice(item.Offset, item.Length);
@@ -644,12 +643,11 @@ namespace Papper.Tests
                 {
                     var data = new byte[res.Length];
                     res.CopyTo(data);
-                    item.ApplyData(data);
-                    item.ExecutionResult = ExecutionResult.Ok;
+                    item.ApplyResult(ExecutionResult.Ok, data);
                 }
                 else
                 {
-                    item.ExecutionResult = ExecutionResult.Error;
+                    item.ApplyResult(ExecutionResult.Error);
                 }
             }
             return Task.CompletedTask;
@@ -658,14 +656,14 @@ namespace Papper.Tests
         private static Task Papper_OnWrite(IEnumerable<DataPack> reads)
         {
             var result = reads.ToList();
-            foreach (var item in result)
+            foreach (var item in result.OfType<DataPackAbsolute>())
             {
                 var entry = _mockPlc.GetPlcEntry(item.Selector, item.Offset + item.Length);
                 if (!item.HasBitMask)
                 {
                     //Console.WriteLine($"OnWrite: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
                     item.Data.Slice(0, item.Length).CopyTo(entry.Data.Slice(item.Offset, item.Length));
-                    item.ExecutionResult = ExecutionResult.Ok;
+                    item.ApplyResult(ExecutionResult.Ok);
                 }
                 else
                 {
@@ -676,7 +674,7 @@ namespace Papper.Tests
                         if (j > 0 && j < lastItem)
                         {
                             entry.Data.Span[item.Offset + j] = item.Data.Span[j];
-                            item.ExecutionResult = ExecutionResult.Ok;
+                            item.ApplyResult(ExecutionResult.Ok);
                         }
                         else
                         {
@@ -684,7 +682,7 @@ namespace Papper.Tests
                             if (bm == 0xFF)
                             {
                                 entry.Data.Span[item.Offset + j] = item.Data.Span[j];
-                                item.ExecutionResult = ExecutionResult.Ok;
+                                item.ApplyResult(ExecutionResult.Ok);
                             }
                             else if (bm > 0)
                             {
@@ -695,7 +693,7 @@ namespace Papper.Tests
                                     {
                                         var b = entry.Data.Span[item.Offset + j];
                                         entry.Data.Span[item.Offset + j] = b.SetBit(i, bItem.GetBit(i));
-                                        item.ExecutionResult = ExecutionResult.Ok;
+                                        item.ApplyResult(ExecutionResult.Ok);
                                         bm = bm.SetBit(i, false);
                                         if (bm == 0)
                                         {
