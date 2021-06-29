@@ -325,6 +325,22 @@ namespace Papper.Tests
         public void TestStructuralAccess()
         {
             var mapping = "DB_Safety2";
+            var origin = new UDT_SafeMotionHeader
+            {
+                Generated = DateTime.MinValue,
+                NumberOfActiveSlots = 0,
+                Commands = new UDT_SafeMotionHeader_Commands
+                {
+                    AllSlotsLocked = false,
+                    UpdateAllowed = false
+                },
+                States = new UDT_SafeMotionHeader_States
+                {
+                    ChecksumInvalid = false,
+                    UpdateRequested = false
+                }
+            };
+
             var header = new UDT_SafeMotionHeader
             {
                 Generated = Normalize(DateTime.Now),
@@ -344,6 +360,10 @@ namespace Papper.Tests
             var accessDict = new Dictionary<string, object> {
                     { "SafeMotion.Header", header},
                 };
+            var writeOriginResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, new Dictionary<string, object> {
+                    { "SafeMotion.Header", origin},
+                }.ToArray()).ToArray()).GetAwaiter().GetResult();
+
 
             var result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
             Assert.Equal(accessDict.Count, result.Length);
@@ -358,44 +378,6 @@ namespace Papper.Tests
 
 
             // Assert.True(AreDataEqual(ToExpando(header), result2.Values.FirstOrDefault()));
-        }
-
-
-        [Fact]
-        public void TestStructuralAccessOfRawData()
-        {
-            var mapping = "DB_Safety2";
-            var header = new UDT_SafeMotionHeader
-            {
-                Generated = Normalize(DateTime.Now),
-                NumberOfActiveSlots = 2,
-                Commands = new UDT_SafeMotionHeader_Commands
-                {
-                    AllSlotsLocked = true,
-                    UpdateAllowed = true
-                },
-                States = new UDT_SafeMotionHeader_States
-                {
-                    ChecksumInvalid = true,
-                    UpdateRequested = true
-                }
-            };
-
-            var accessDict = new Dictionary<string, object> {
-                    { "SafeMotion.Header", header},
-                };
-
-            var result = _papper.ReadBytesAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
-            Assert.Equal(accessDict.Count, result.Length);
-            var writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, accessDict.ToArray()).ToArray()).GetAwaiter().GetResult();
-            foreach (var item in writeResults)
-            {
-                Assert.Equal(ExecutionResult.Ok, item.ActionResult);
-            }
-            var result2 = _papper.ReadBytesAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
-            Assert.Equal(accessDict.Count, result2.Length);
-            Assert.False(AreDataEqual(result, result2));
-
         }
 
 
@@ -527,24 +509,6 @@ namespace Papper.Tests
             t.Stop();
         }
 
-
-
-
-
-        [Fact]
-        public void TestStructuralAllWithSerializerAccess()
-        {
-            var mapping = "DB_Safety2";
-
-            var t = new Stopwatch();
-            var ser = new PlcDataMapperSerializer();
-            t.Start();
-            var address = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}")).RawAddress<byte>();
-            var result = _papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult().FirstOrDefault();
-            var x = ser.Deserialize<DB_Safety>((byte[])result.Value);
-            t.Stop();
-        }
-
         [Fact]
         public async Task TestWriteSerializedData()
         {
@@ -559,82 +523,6 @@ namespace Papper.Tests
                                     PlcWriteReference.FromAddress($"DB301.DT2", DateTime.Now),
                                     PlcWriteReference.FromAddress($"DB301.X106.0", true)).ConfigureAwait(false);
         }
-
-
-
-
-
-        [Theory]
-        [InlineData("DB2000.W2", (ushort)3)]
-        [InlineData("DB2001.X0.0", true)]
-        [InlineData("DB2002.X0_1", true)]
-        [InlineData("DB2003.X0.0,8", new bool[] { false, false, true, true, false, false, true, true })]
-        [InlineData("DB2004.X0.1,4", new bool[] { false, false, true, true })]
-        [InlineData("DB2005.X1.1,4", new bool[] { false, false, true, true })]
-        [InlineData("DB2006.X0.0,10", new bool[] { false, false, true, true, false, false, true, true, false, false })]
-        [InlineData("DB2007.X0.0,16", new bool[] { false, false, true, true, false, false, true, true, false, false, true, true, false, false, true, true })]
-        [InlineData("DB2008.X0.4,16", new bool[] { false, false, true, true, false, false, true, true, false, false, true, true, false, false, true, true })]
-        public void PerformReadWriteRaw(string address, object value)
-        {
-            using var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite);
-            var readResults = papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult();
-            var writeResults = papper.WriteAsync(PlcWriteReference.FromAddress(address, value)).GetAwaiter().GetResult();
-            var afterWriteReadResults = papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult();
-
-            Assert.Equal(value, afterWriteReadResults[0].Value);
-        }
-
-
-
-        [Theory]
-        [InlineData("DB_BST1_ChargenRV.This", "Dat.Data.Element[5].MaxCntPiecesInTray", (short)5, "Dat.Data.Element[5].ActCntPieces", (short)2)]
-        [InlineData("DB_BST4_Boxen_1_Konfig.This", "Boxen.vorhanden", true, "Boxen.fertig", true)]
-        [InlineData("DB_BST1_Regal_1_Konfig.This", "Regal.Fach[1].aktiv", true, "Regal.Fach[1].fertig", true)]
-        [InlineData("DB_IPSC_Konfig.This", "ZP[2].UNIV_aktiv", true, "ZP[2].Ausw.UNIV_Ergebnis.IO_Nr", 1)]
-        [InlineData("DB_SpindlePos_BST1.This", "N57_Pos[2].PosX", 2, "ActPosX", 1)]
-        public async Task PerformReadStruct(string address, string propertyWritable, object valueWritable, string propertyReadonly, object valueReadonly)
-        {
-            var readResults = await _papper.ReadAsync(PlcReadReference.FromAddress(address)).ConfigureAwait(false);
-            Assert.NotNull(propertyWritable);
-            Assert.NotNull(propertyReadonly);
-            var res1 = GetPropertyInExpandoObject(readResults[0].Value, propertyWritable!);
-            var res2 = GetPropertyInExpandoObject(readResults[0].Value, propertyReadonly!);
-
-            SetPropertyInExpandoObject(readResults[0].Value, propertyWritable, valueWritable);
-            SetPropertyInExpandoObject(readResults[0].Value, propertyReadonly, valueReadonly);
-
-            var r = await _papper.WriteAsync(PlcWriteReference.FromAddress(address, readResults[0].Value)).ConfigureAwait(false);
-
-
-            readResults = await _papper.ReadAsync(PlcReadReference.FromAddress(address)).ConfigureAwait(false);
-
-
-            var res3 = GetPropertyInExpandoObject(readResults[0].Value, propertyWritable);
-            var res4 = GetPropertyInExpandoObject(readResults[0].Value, propertyReadonly);
-
-            Assert.NotEqual(res1, res3);
-            Assert.Equal(res2, res4);
-        }
-
-
-        [Theory]
-        [InlineData("DB_BST1_ChargenRV.This")]
-        [InlineData("DB_BST4_Boxen_1_Konfig.This")]
-        [InlineData("DB_BST1_Regal_1_Konfig.This")]
-        [InlineData("DB_IPSC_Konfig.This")]
-        [InlineData("DB_SpindlePos_BST1.This")]
-        [InlineData("DB_Setup_AGV_BST1.This")]
-        public async Task TestWritingAlwaysTheSame(string address)
-        {
-            var readResultsBefore = await _papper.ReadAsync(PlcReadReference.FromAddress(address)).ConfigureAwait(false);
-            for (int i = 0; i < 100; i++)
-            {
-                var r = await _papper.WriteAsync(PlcWriteReference.FromAddress(address, readResultsBefore[0].Value)).ConfigureAwait(false);
-                var readResultsAfter = await _papper.ReadAsync(PlcReadReference.FromAddress(address)).ConfigureAwait(false);
-                Assert.True(AreDataEqual(readResultsBefore[0].Value, readResultsAfter[0].Value));
-            }
-        }
-
 
 
         [Fact]
@@ -858,6 +746,7 @@ namespace Papper.Tests
         private void Test<T>(string mapping, Dictionary<string, object> accessDict, T defaultValue)
         {
             //Initial read to ensure all are false
+            _papper.WriteAsync(accessDict.Select(c => PlcWriteReference.FromAddress($"{mapping}.{c.Key}", defaultValue))).GetAwaiter().GetResult();
             var toRead = accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray();
             var result = _papper.ReadAsync(toRead).GetAwaiter().GetResult();
             Assert.Equal(accessDict.Count, result.Length);

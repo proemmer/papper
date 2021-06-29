@@ -481,6 +481,28 @@ namespace Papper.Extensions.Notification
                         }
                     }
                 }
+                else
+                {
+                    if (objBinding.Data is object data)
+                    {
+                        if (!_lruCache.TryGetValue(binding.Key, out var saved) || !data.Equals(saved.DataObject))
+                        {
+                            result.Add(binding);
+                            if (saved == null)
+                            {
+                                _lruCache.Create(binding.Key, data, detect, objBinding.ValidationTimeInMs);
+                            }
+                            else
+                            {
+                                LruCache.Update(saved, data, detect);
+                            }
+                        }
+                        else
+                        {
+                            LruCache.Update(saved, detect);
+                        }
+                    }
+                }
             }
 
             _lruCache.RemoveUnused(detect);

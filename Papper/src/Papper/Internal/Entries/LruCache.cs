@@ -17,9 +17,18 @@ namespace Papper.Internal
             return state;
         }
 
+        public LruState Create(string key, object? data, DateTime detect, int validationTime)
+        {
+            var state = new LruState(data, detect, validationTime);
+            _states.Add(key, state);
+            return state;
+        }
+
         public static void Update(LruState state, DateTime detect) => state?.ApplyUsage(detect);
 
         public static void Update(LruState state, Memory<byte> data, DateTime detect) => state?.ApplyChange(data, detect);
+
+        public static void Update(LruState state, object? data, DateTime detect) => state?.ApplyChange(data, detect);
 
         public void RemoveUnused(DateTime detect)
         {

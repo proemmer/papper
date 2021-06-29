@@ -409,7 +409,7 @@ namespace Papper.Types
 
 
                 { 
-                    var nullBasedIndex = From < 0 ? From - idx : From + idx * -1;
+                    var nullBasedIndex = From == 0 ? idx :  From < 0 ? From - idx : From + idx * -1;
                     var symbolicAccessName = SymbolicAccessName + string.Format(CultureInfo.InvariantCulture, "[{0}]", nullBasedIndex);
                     symbolicPath.Append(".");
                     symbolicPath.Append(symbolicAccessName);

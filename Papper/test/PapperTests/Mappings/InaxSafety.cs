@@ -81,6 +81,9 @@ namespace Papper.Tests.Mappings
     [Mapping("DB_Safety2", "DB16", 0)]
     [Mapping("DB_Safety_NotExisting", "DB999", 0)]
     [Mapping("DB_SafetyDataChange1", "DB994", 0)]
+    [Mapping("DB_SafetyDataChange2", "DB1994", 0)]
+    [Mapping("DB_SafetyDataChange3", "DB1995", 0)]
+    [Mapping("DB_SafetyDataChange4", "DB1996", 0)]
     public class DB_Safety
     {
         public UDT_SafeMotion SafeMotion { get; set; }

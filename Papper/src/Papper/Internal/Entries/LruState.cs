@@ -9,6 +9,8 @@ namespace Papper.Internal
         public DateTime LastUsage { get; private set; }
         public Memory<byte> Data { get; private set; }
 
+        public object? DataObject { get; set; }
+
 
         public LruState(Memory<byte> data, DateTime detected, int validationTime)
         {
@@ -17,11 +19,23 @@ namespace Papper.Internal
             ApplyChange(data, detected);
         }
 
+        public LruState(object? data, DateTime detected, int validationTime)
+        {
+            ValidationTime = validationTime;
+            ApplyChange(data, detected);
+        }
+
         public void ApplyUsage(DateTime detected) => LastUsage = detected;
 
         public void ApplyChange(Memory<byte> data, DateTime detected)
         {
             data.CopyTo(Data);
+            LastUsage = detected;
+        }
+
+        public void ApplyChange(object? data, DateTime detected)
+        {
+            DataObject = data;
             LastUsage = detected;
         }
 
