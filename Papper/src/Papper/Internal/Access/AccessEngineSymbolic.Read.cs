@@ -14,7 +14,7 @@ namespace Papper.Access
                                                                           DateTime? changedAfter = null,
                                                                           Func<IEnumerable<string>, DateTime, bool>? forceUpdate = null,
                                                                           Func<IEnumerable<KeyValuePair<string, PlcObjectBinding>>, IEnumerable<KeyValuePair<string, PlcObjectBinding>>>? filter = null,
-                                                                          bool doNotConvert = false)
+                                                                          bool returnRawDataResult = false)
         {
             // determine outdated
             var needUpdate = UpdateableItems(executions, onlyOutDated, forceUpdate);  // true = read some items from cache!!
@@ -23,16 +23,16 @@ namespace Papper.Access
             await ReadFromPlcAsync(needUpdate.Values).ConfigureAwait(false);
 
             // transform to result
-            return ConvertExecutionsToReadResults(executions, needUpdate, changedAfter, filter, doNotConvert);
+            return ConvertExecutionsToReadResults(executions, needUpdate, changedAfter, filter, returnRawDataResult);
         }
 
         internal override PlcReadResult[] ConvertExecutionsToReadResults(IEnumerable<Execution> executions,
                                                               Dictionary<Execution, DataPack> needUpdate,
                                                               DateTime? changedAfter = null,
                                                               Func<IEnumerable<KeyValuePair<string, PlcObjectBinding>>, IEnumerable<KeyValuePair<string, PlcObjectBinding>>>? filter = null,
-                                                              bool doNotConvert = false)
+                                                              bool returnRawDataResult = false)
             => ConvertExecutionsToReadResults(executions.Select(exec => needUpdate.TryGetValue(exec, out var pack) ? exec.ApplyDataPack(pack) : exec)
-                                                            .Where(exec => HasChangesSinceLastRun(exec, changedAfter)), filter, doNotConvert);
+                                                            .Where(exec => HasChangesSinceLastRun(exec, changedAfter)), filter, returnRawDataResult);
 
 
         internal override PlcReadResult[] ReadVariablesFromExecutionCache(IEnumerable<string> variables, List<Execution> executions)
@@ -47,7 +47,7 @@ namespace Papper.Access
 
         private static PlcReadResult[] ConvertExecutionsToReadResults(IEnumerable<Execution?> executions,
                                                               Func<IEnumerable<KeyValuePair<string, PlcObjectBinding>>, IEnumerable<KeyValuePair<string, PlcObjectBinding>>>? filter = null,
-                                                              bool doNotConvert = false)
+                                                              bool returnRawDataResult = false)
         {
             if (filter == null)
             {
@@ -58,7 +58,7 @@ namespace Papper.Access
                              .Where(res => res.Key == ExecutionResult.Ok) // filter by OK results
                              .SelectMany(group => filter(group.SelectMany(g => g!.Bindings))
                                                        .Select(b => new PlcReadResult(b.Key,
-                                                                                      ConvertToResult(b.Value, doNotConvert),
+                                                                                      ConvertToResult(b.Value, returnRawDataResult),
                                                                                       group.Key)
                                                        )).ToArray();
         }
@@ -66,6 +66,6 @@ namespace Papper.Access
         private static bool HasChangesSinceLastRun(Execution exec, DateTime? changedAfter) => changedAfter == null || exec.LastChange > changedAfter;
 
 
-        private static object? ConvertToResult(PlcObjectBinding binding, bool doNotConvert = false) => binding.RawData.ReadDataCache;
+        private static object? ConvertToResult(PlcObjectBinding binding, bool returnRawDataResult = false) => returnRawDataResult ? throw new NotSupportedException("The symbolic engine does not support returing raw data results!") : binding.RawData.ReadDataCache;
     }
 }

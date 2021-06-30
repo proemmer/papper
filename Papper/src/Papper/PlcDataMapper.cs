@@ -277,14 +277,15 @@ namespace Papper
         /// </summary>
         /// <param name="vars"></param>
         /// <returns>return a dictionary with all variables and the read value</returns>
-        public Task<PlcReadResult[]> ReadAsync(IEnumerable<PlcReadReference> vars) => Engine.ReadAsync(vars, false);
+        public Task<PlcReadResult[]> ReadAsync(IEnumerable<PlcReadReference> vars) => Engine.ReadAsync(vars, returnRawDataResult: false);
 
         /// <summary>
         /// Read variables from an given mapping as byte[]
         /// </summary>
         /// <param name="vars"></param>
         /// <returns>return a dictionary with all variables and the read value</returns>
-        public Task<PlcReadResult[]> ReadBytesAsync(IEnumerable<PlcReadReference> vars) => Engine.ReadAsync(vars, doNotConvert: true);
+        [Obsolete("ReadBytesAsync is deprecated, please use ReadAsync and convert the value to your prefered memory layout.", error: false)]
+        public Task<PlcReadResult[]> ReadBytesAsync(IEnumerable<PlcReadReference> vars) => Engine.ReadAsync(vars, returnRawDataResult: true);
 
 
         /// <summary>

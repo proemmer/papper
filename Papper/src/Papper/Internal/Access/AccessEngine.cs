@@ -33,8 +33,8 @@ namespace Papper.Access
 
         }
 
-        internal Task<PlcReadResult[]> ReadAsync(IEnumerable<PlcReadReference> vars, bool doNotConvert)
-             => ReadExecutionsAsync(DetermineExecutions(vars), doNotConvert: doNotConvert);
+        internal Task<PlcReadResult[]> ReadAsync(IEnumerable<PlcReadReference> vars, bool returnRawDataResult)
+             => ReadExecutionsAsync(DetermineExecutions(vars), returnRawDataResult: returnRawDataResult);
 
 
         internal abstract Task<PlcReadResult[]> ReadExecutionsAsync(List<Execution> executions,
@@ -42,12 +42,12 @@ namespace Papper.Access
                                                                     DateTime? changedAfter = null,
                                                                     Func<IEnumerable<string>, DateTime, bool>? forceUpdate = null,
                                                                     Func<IEnumerable<KeyValuePair<string, PlcObjectBinding>>, IEnumerable<KeyValuePair<string, PlcObjectBinding>>>? filter = null,
-                                                                    bool doNotConvert = false);
+                                                                    bool returnRawDataResult = false);
         internal abstract PlcReadResult[] ConvertExecutionsToReadResults(IEnumerable<Execution> executions,
                                                              Dictionary<Execution, DataPack> needUpdate,
                                                              DateTime? changedAfter = null,
                                                              Func<IEnumerable<KeyValuePair<string, PlcObjectBinding>>, IEnumerable<KeyValuePair<string, PlcObjectBinding>>>? filter = null,
-                                                             bool doNotConvert = false);
+                                                             bool returnRawDataResult = false);
         internal abstract PlcReadResult[] ReadVariablesFromExecutionCache(IEnumerable<string> variables, List<Execution> executions);
 
         internal abstract PlcReadResult[] CreatePlcReadResults(IEnumerable<Execution> executions, IEnumerable<DataPack> packs);
