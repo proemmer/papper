@@ -109,7 +109,9 @@ namespace Papper.Internal
             {
                 return new KeyValuePair<Execution, DataPack>(this, new DataPackSymbolic
                 {
-                    SymbolicName = PlcRawData.SymbolicAccessName
+                    Type = PlcRawData.DataType,
+                    SymbolicName = PlcRawData.SymbolicAccessName,
+                    DataSize = PlcRawData.Size > 0 ? PlcRawData.Size : 1
                 });
             }
             else
@@ -168,6 +170,8 @@ namespace Papper.Internal
                     var res = new DataPackSymbolic
                     {
                         SymbolicName = binding.RawData.SymbolicAccessName,
+                        Type = binding.RawData.DataType,
+                        DataSize = binding.RawData.Size > 0 ? binding.RawData.Size : 1,
                         Value = value
                     };
                     return res;

@@ -55,7 +55,8 @@ namespace Papper.Internal
                     Size = sizeInBytes == 0 && count ? 1 : sizeInBytes,
                     Selector = selector,
                     ContainsReadOnlyParts = item.Value.PlcObject.IsReadOnly || item.Value.PlcObject.HasReadOnlyChilds,
-                    SymbolicAccessName = $"{name}.{item.Key}"
+                    SymbolicAccessName = $"{name}.{item.Key}",
+                    DataType = item.Value.PlcObject.DotNetType
                 };
 
 

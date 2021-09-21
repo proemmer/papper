@@ -40,6 +40,8 @@ namespace Papper.Internal
 
         public string? SymbolicAccessName { get; set; }
 
+        public Type? DataType { get; set; }
+
         public bool ContainsReadOnlyParts { get; internal set; }
         public int MemoryAllocationSize { get; private set; }
         public object? ReadDataCache { get; set; }

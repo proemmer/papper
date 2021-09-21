@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 namespace Benchmarks
 {
     [MemoryDiagnoser]
-    [ClrJob(baseline: true), CoreJob]
     [RankColumn]
     public class Benchmarks
     {

@@ -6,7 +6,9 @@ namespace Papper
     {
         public string? SymbolicName { get; set; }
 
-        public Type? Type { get; protected set; }
+        public Type? Type { get; internal set; }
+        public int DataSize { get; set; }
+
         public object? Value { get; internal set; }
 
         public override DataPack ApplyResult<T>(ExecutionResult result, T value)
