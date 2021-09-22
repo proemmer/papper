@@ -6,8 +6,9 @@ namespace Papper
     {
         public string? SymbolicName { get; set; }
 
+        public string? Selector { get; set; }
+
         public Type? Type { get; internal set; }
-        public int DataSize { get; set; }
 
         public object? Value { get; internal set; }
 

@@ -111,7 +111,7 @@ namespace Papper.Internal
                 {
                     Type = PlcRawData.DataType,
                     SymbolicName = PlcRawData.SymbolicAccessName,
-                    DataSize = PlcRawData.Size > 0 ? PlcRawData.Size : 1
+                    Selector = PlcRawData.Selector
                 });
             }
             else
@@ -171,8 +171,8 @@ namespace Papper.Internal
                     {
                         SymbolicName = binding.RawData.SymbolicAccessName,
                         Type = binding.RawData.DataType,
-                        DataSize = binding.RawData.Size > 0 ? binding.RawData.Size : 1,
-                        Value = value
+                        Value = value,
+                        Selector = binding.RawData.Selector
                     };
                     return res;
                 }

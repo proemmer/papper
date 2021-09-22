@@ -58,8 +58,16 @@ namespace Papper.Tests
             _papper.AddMapping(typeof(DB_BST1_Geraete_1_Konfig));
             _papper.AddMapping(typeof(SampleDataAccessNames));
             _papper.AddMapping(typeof(DB_TestCTT));
+            
+        }
 
 
+        [Fact]
+        public async Task AddMappingTest()
+        {
+            _papper.AddMapping(typeof(FBSample));
+            var vars = _papper.GetVariablesOf("MAIN:fbSample1");
+            var result2 = await _papper.ReadAsync(PlcReadReference.FromAddress("MAIN:fbSample1"));
         }
 
         [Theory]
