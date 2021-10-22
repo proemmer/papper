@@ -161,6 +161,11 @@ namespace Papper.Types
                 return InternalConvert<float>(plcObjectBinding, data);
             }
 
+            if (type == typeof(PlcLReal))
+            {
+                return InternalConvert<double>(plcObjectBinding, data);
+            }
+
             if (type == typeof(PlcArray))
             {
                 return ArrayType.ConvertFromRaw(plcObjectBinding, data);

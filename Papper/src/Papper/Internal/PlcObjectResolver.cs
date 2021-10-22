@@ -165,6 +165,10 @@ namespace Papper.Internal
                 case "REAL":
                     plcObject = new PlcReal(value);
                     break;
+                case "LR":
+                case "LREAL":
+                    plcObject = new PlcLReal(value);
+                    break;
                 case "TIMEBCD":
                     plcObject = new PlcS5Time(value);
                     break;

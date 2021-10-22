@@ -251,5 +251,24 @@ namespace Papper.Tests
             var result1 = (string)type.ConvertFromRaw(binding, data);
             Assert.Equal(value, result1);
         }
+
+        [Fact]
+        public void TestLReal()
+        {
+            double value = 44.33;
+
+            var type = new PlcLReal("TEST");
+            var data = new byte[type.Size.Bytes];
+            var binding = new PlcObjectBinding(new PlcRawData(512), type, 0, 0);
+
+            type.ConvertToRaw(value, binding, data);
+            var result1 = (double)type.ConvertFromRaw(binding, data);
+            Assert.Equal(value, result1);
+
+            value = -44.0;
+            type.ConvertToRaw(value, binding, data);
+            var result2 = (double)type.ConvertFromRaw(binding, data);
+            Assert.Equal(value, result2);
+        }
     }
 }
