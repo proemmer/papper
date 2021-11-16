@@ -78,9 +78,9 @@ namespace Papper.Types
                 var obj = Activator.CreateInstance(_structType);
                 foreach (var child in plcObjectBinding.MetaData.Childs.OfType<PlcObject>().AsParallel())
                 {
-                    var prop = _structType.GetProperty(child.Name);
+                    var prop = _structType.GetProperty(child.OriginName); // need origin name because the type has this name
                     var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes, plcObjectBinding.ValidationTimeInMs, true);
-                    prop.SetValue(obj, child.ConvertFromRaw(binding, data));
+                    prop?.SetValue(obj, child.ConvertFromRaw(binding, data));
                 }
                 return obj;
             }
@@ -94,7 +94,7 @@ namespace Papper.Types
                 foreach (var child in plcObjectBinding.MetaData.Childs.OfType<PlcObject>())
                 {
                     var binding = new PlcObjectBinding(plcObjectBinding.RawData, child, plcObjectBinding.Offset + child.Offset.Bytes, plcObjectBinding.ValidationTimeInMs);
-                    if (properties.TryGetValue(child.Name, out var prop))
+                    if (properties.TryGetValue(child.OriginName, out var prop))
                     {
                         child.ConvertToRaw(prop, binding, data);
                     }

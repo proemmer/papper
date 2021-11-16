@@ -1,6 +1,7 @@
 ﻿using Insite.Customer.Data;
 using Papper.Tests.Mappings;
 using Papper.Tests.Util;
+using PapperTests.Mappings;
 using PMSComponentHost.VTagStorerLoader;
 using System;
 using System.Globalization;
@@ -176,6 +177,18 @@ namespace Papper.Tests
             var data = s.Serialize(TimeTransformationRule.FromTimeZoneInfo(TimeZoneInfo.Local));
             Assert.NotNull(data);
             Assert.Equal(96, data.Length);
+        }
+
+
+        [Fact]
+        public void TestBits()
+        {
+            var s = new PlcDataMapperSerializer();
+            var bytes = new byte[2];
+            var data = s.Deserialize(typeof(SAFE_SEQ_FSDB), bytes) as SAFE_SEQ_FSDB;
+            Assert.NotNull(data);
+            Assert.False(data.ACKREQ_ST001_SD100);
+
         }
 
 

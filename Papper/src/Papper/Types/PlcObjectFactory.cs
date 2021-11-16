@@ -101,7 +101,7 @@ namespace Papper.Types
             var plcType = GetTypeFromAttribute(pi);
             PlcObject? instance;
             PlcObject? leafPlcObject = null;
-            var name = GetName(pi);
+            (var name, var originName) = GetName(pi);
 
             if (pi.PropertyType.IsArray && arrayIndex == null)
             {
@@ -183,6 +183,11 @@ namespace Papper.Types
                 }
             }
 
+
+            if(instance != null && !string.IsNullOrWhiteSpace(originName))
+            {
+                instance.OriginName = originName;
+            }
             UpdateReadOnlyPoperty(pi, instance);
             UpdateSymbolicAccessName(pi, instance);
             return instance;
@@ -279,14 +284,14 @@ namespace Papper.Types
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static string GetName(MemberInfo pi)
+        private static (string name, string? originName) GetName(MemberInfo pi)
         {
             var aliasAttribute = pi.GetCustomAttributes<AliasNameAttribute>().FirstOrDefault();
             if (aliasAttribute != null)
             {
-                return aliasAttribute.Name;
+                return (aliasAttribute.Name, pi.Name);
             }
-            return pi.Name;
+            return (pi.Name, null);
         }
 
 
