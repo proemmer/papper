@@ -79,4 +79,38 @@ namespace PapperTests.Mappings
         public bool Bit8 { get; set; }
     }
 
+
+    [Mapping("SAFE_SEQ_FSDB", "DB10", 0)]
+    public class SAFE_SEQ_FSDB
+    {
+        [AliasName("ST001+OC001 RELEASE")]
+        [SymbolicAccessName("ST001+OC001 RELEASE")]
+        public bool ST001_OC001_RELEASE { get; set; }	//TRUE = Element IO Release Panel OC001 Not-Halt
+        [AliasName("ST001+OZ100-SF03")]
+        [SymbolicAccessName("ST001+OZ100-SF03")]
+        public bool ST001_OZ100_SF03 { get; set; }	//TRUE = Element IO Release Zweihand Not-Halt
+        [AliasName("ST001+RT001 RELEASE")]
+        [SymbolicAccessName("ST001+RT001 RELEASE")]
+        public bool ST001_RT001_RELEASE { get; set; }	//TRUE = Element IO Release Rolltor RT001; Antriebe können fahren
+        public bool OP010 { get; set; }	//TRUE = Element IO
+        [AliasName("OP010-RELEASE")]
+        [SymbolicAccessName("OP010-RELEASE")]
+        public bool OP010_RELEASE { get; set; }	//Zustimmtaster
+        public bool ESTOP_GROUP1 { get; set; }	//Not-Halt Gruppe
+        public bool GATE_GROUP1 { get; set; }	//Schutztür Gruppe
+        public bool RELEASE_ZWEIHAND_START { get; set; }	//TRUE = Element IO Release Achsen X und Motor
+        [AliasName("RELEASE_ST001+SD101")]
+        [SymbolicAccessName("RELEASE_ST001+SD101")]
+        public bool RELEASE_ST001_SD101 { get; set; }	//TRUE = Element IO Release Schutztür SD101 entriegelt
+        [AliasName("ACKREQ_ST001+SD101")]
+        [SymbolicAccessName("ACKREQ_ST001+SD101")]
+        public bool ACKREQ_ST001_SD101 { get; set; }
+        [AliasName("RELEASE_ST001+SD100")]
+        [SymbolicAccessName("RELEASE_ST001+SD100")]
+        public bool RELEASE_ST001_SD100 { get; set; }	//TRUE = Element IO Release Schutztür SD100 entriegelt
+        [AliasName("ACKREQ_ST001+SD100")]
+        [SymbolicAccessName("ACKREQ_ST001+SD100")]
+        public bool ACKREQ_ST001_SD100 { get; set; }
+
+    }
 }
