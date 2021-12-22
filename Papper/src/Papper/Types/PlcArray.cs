@@ -414,7 +414,7 @@ namespace Papper.Types
 
 
                 { 
-                    var nullBasedIndex = From == 0 ? idx :  From < 0 ? From - idx : From + idx * -1;
+                    var nullBasedIndex = From == 0 ? idx :  From > 0 ? idx - From : From + (idx * -1);
                     var symbolicAccessName = SymbolicAccessName + string.Format(CultureInfo.InvariantCulture, "[{0}]", nullBasedIndex);
                     symbolicPath.Append(".");
                     symbolicPath.Append(symbolicAccessName);
@@ -507,6 +507,9 @@ namespace Papper.Types
                 {
                     plcObj.ElemenType = ElemenType;
                     plcObj.ArrayStartIndex = From;
+
+                    var nullBasedIndex = From == 0 ? idx : From > 0 ? idx - From : From + (idx * -1);
+                    plcObj.SymbolicAccessName = string.Format(CultureInfo.InvariantCulture, "[{0}]", nullBasedIndex);
                     plcObj.Parent = this;
                     _indexCache.Add(idx, plcObj);
                     return plcObj;

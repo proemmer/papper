@@ -5,11 +5,10 @@ using Insite.Customer.Data.DB_BST3_ChargenRV;
 using Insite.Customer.Data.DB_IPSC_Konfig;
 using Insite.Customer.Data.DB_Setup_AGV_BST1;
 using Insite.Customer.Data.DB_SpindlePos_BST1;
-using Papper;
+using Insite.Customer.Data.DB_ZK_Storage_BandG;
 using Papper.Extensions.Metadata;
 using Papper.Extensions.Notification;
 using Papper.Tests.Mappings;
-using Papper.Tests.Util;
 using PapperTests.Mappings;
 using System;
 using System.Buffers.Binary;
@@ -58,7 +57,8 @@ namespace Papper.Tests
             _papper.AddMapping(typeof(DB_BST1_Geraete_1_Konfig));
             _papper.AddMapping(typeof(SampleDataAccessNames));
             _papper.AddMapping(typeof(DB_TestCTT));
-            
+            _papper.AddMapping(typeof(DB_ZK_Storage_BandG));
+
         }
 
 
@@ -66,8 +66,8 @@ namespace Papper.Tests
         public async Task AddMappingTest()
         {
             _papper.AddMapping(typeof(FBSample));
-            var vars = _papper.GetVariablesOf("MAIN:fbSample1");
-            var result2 = await _papper.ReadAsync(PlcReadReference.FromAddress("MAIN:fbSample1"));
+            IEnumerable<string> vars = _papper.GetVariablesOf("MAIN:fbSample1");
+            PlcReadResult[] result2 = await _papper.ReadAsync(PlcReadReference.FromAddress("MAIN:fbSample1"));
         }
 
         [Theory]
@@ -80,7 +80,7 @@ namespace Papper.Tests
         [InlineData(nameof(DB_BST1_ChargenRV), 4384)]
         public void TestVariables(string mapping, int expectedVariables)
         {
-            var vars = _papper.GetVariablesOf(mapping);
+            IEnumerable<string> vars = _papper.GetVariablesOf(mapping);
             Assert.Equal(expectedVariables, vars.Count());
         }
 
@@ -89,7 +89,7 @@ namespace Papper.Tests
         [InlineData(nameof(DB_BST1_ChargenRV), 4284)]
         public void TestWriteableVariables(string mapping, int expectedVariables)
         {
-            var vars = _papper.GetWriteableVariablesOf(mapping);
+            IEnumerable<string> vars = _papper.GetWriteableVariablesOf(mapping);
             Assert.Equal(expectedVariables, vars.Count());
         }
 
@@ -107,11 +107,12 @@ namespace Papper.Tests
 
         public void TestWriteableBlocks(string mapping, int expectedVariables)
         {
-            var vars = _papper.GetVariableBlocksOf(mapping, VariableListTypes.Write);
+            IEnumerable<string> vars = _papper.GetVariableBlocksOf(mapping, VariableListTypes.Write);
             Assert.Equal(expectedVariables, vars.Count());
         }
 
         [Theory]
+        [InlineData(nameof(DB_ZK_Storage_BandG), 1206)]
         [InlineData(nameof(DB_Setup_AGV_BST1), 12)]
         [InlineData(nameof(DB_BST3_ChargenRV), 1)]
         [InlineData(nameof(DB_BST1_ChargenRV), 1)]
@@ -124,15 +125,15 @@ namespace Papper.Tests
 
         public void TestReadableBlocks(string mapping, int expectedVariables)
         {
-            var vars = _papper.GetVariableBlocksOf(mapping, VariableListTypes.Read);
+            IEnumerable<string> vars = _papper.GetVariableBlocksOf(mapping, VariableListTypes.Read);
             Assert.Equal(expectedVariables, vars.Count());
         }
 
         [Fact]
         public void BitAccessTest()
         {
-            var mapping = "DB_Safety";
-            var accessDict = new Dictionary<string, object> {
+            string mapping = "DB_Safety";
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
                     { "SafeMotion.Slots[0].Commands.TakeoverPermitted", true },
                     { "SafeMotion.Slots[0].Commands.TakeoverRefused", true},
                     { "SafeMotion.Slots[0].Motion.ManualOperation1", true},
@@ -157,8 +158,8 @@ namespace Papper.Tests
         [Fact]
         public void Int16AccessTest()
         {
-            var mapping = "DB_Safety";
-            var accessDict = new Dictionary<string, object> {
+            string mapping = "DB_Safety";
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
                     { "SafeMotion.Header.NumberOfActiveSlots",(short) 1 },
                     { "SafeMotion.Slots[0].AggregateDBNummer", (short)2},
                     { "SafeMotion.Slots[0].AggregateOffset", (short)3},
@@ -177,8 +178,8 @@ namespace Papper.Tests
         [Fact]
         public void UInt16AccessTest()
         {
-            var mapping = "DB_Safety";
-            var accessDict = new Dictionary<string, object> {
+            string mapping = "DB_Safety";
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
                     { "SafeMotion.Slots[0].UnitChecksum", (ushort)2},
                     { "SafeMotion.Slots[100].UnitChecksum", (ushort)5},
                     { "SafeMotion.Slots[254].UnitChecksum", (ushort)8},
@@ -191,8 +192,8 @@ namespace Papper.Tests
         [Fact]
         public void UInt32AccessTest()
         {
-            var mapping = "DB_Safety";
-            var accessDict = new Dictionary<string, object> {
+            string mapping = "DB_Safety";
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
                     { "SafeMotion.Slots[0].HmiId", (uint)3},
                     { "SafeMotion.Slots[0].AccessRightReqFromHmiId", (uint)4},
                     { "SafeMotion.Slots[100].HmiId",(uint)6},
@@ -207,8 +208,8 @@ namespace Papper.Tests
         [Fact]
         public void DateAccessTest()
         {
-            var mapping = "DB_Safety";
-            var accessDict = new Dictionary<string, object> {
+            string mapping = "DB_Safety";
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
                     { "SafeMotion.Header.Generated", Normalize(DateTime.Now)},
                     { "SafeMotion.Slots[0].UnitTimestamp", Normalize(DateTime.Now)},
                     { "SafeMotion.Slots[100].UnitTimestamp", Normalize(DateTime.Now)},
@@ -222,8 +223,8 @@ namespace Papper.Tests
         [Fact]
         public void SingleAccessTest()
         {
-            var mapping = "PrimitiveValuesMapping";
-            var accessDict = new Dictionary<string, object> {
+            string mapping = "PrimitiveValuesMapping";
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
                     { "Single", (float)2.2},
                 };
 
@@ -233,8 +234,8 @@ namespace Papper.Tests
         [Fact]
         public void ArrayElementsAccessTest()
         {
-            var mapping = "ARRAY_TEST_MAPPING_1";
-            var accessDict = new Dictionary<string, object> {
+            string mapping = "ARRAY_TEST_MAPPING_1";
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
                     { "ByteElements[10]", (byte)0x05},
                     { "ByteElements[5]", (byte)0x06},
                     { "ByteElements[1]", (byte)0x07},
@@ -255,8 +256,8 @@ namespace Papper.Tests
         [Fact]
         public void BigByteArrayAccessTest()
         {
-            var mapping = "ARRAY_TEST_MAPPING_2";
-            var accessDict = new Dictionary<string, object> {
+            string mapping = "ARRAY_TEST_MAPPING_2";
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
                     { "BigByteArray", Enumerable.Repeat<byte>(0x01,50000).ToArray()},
                 };
 
@@ -266,8 +267,8 @@ namespace Papper.Tests
         [Fact]
         public void BigCharArrayAccessTest()
         {
-            var mapping = "ARRAY_TEST_MAPPING_3";
-            var accessDict = new Dictionary<string, object> {
+            string mapping = "ARRAY_TEST_MAPPING_3";
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
                     { "BigCharArray", Enumerable.Repeat<char>('a',50000).ToArray()},
                 };
 
@@ -277,8 +278,8 @@ namespace Papper.Tests
         [Fact]
         public void BigIntArrayAccessTest()
         {
-            var mapping = "ARRAY_TEST_MAPPING_4";
-            var accessDict = new Dictionary<string, object> {
+            string mapping = "ARRAY_TEST_MAPPING_4";
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
                     { "BigIntArray", Enumerable.Repeat(2,5000).ToArray()},
                 };
 
@@ -290,8 +291,8 @@ namespace Papper.Tests
         [Fact]
         public void TestStructuralAccessWithReadonlyttributes()
         {
-            var mapping = "SampleData";
-            var header = new SampleData
+            string mapping = "SampleData";
+            SampleData header = new SampleData
             {
                 UInt16 = 1,
                 Int16 = 2,
@@ -309,18 +310,18 @@ namespace Papper.Tests
                 Bit8 = true
             };
 
-            var accessDict = new Dictionary<string, object> {
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
                     { "This", header},
                 };
 
             //var result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
             //Assert.Equal(accessDict.Count, result.Length);
-            var writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, accessDict.ToArray()).ToArray()).GetAwaiter().GetResult();
-            foreach (var item in writeResults)
+            PlcWriteResult[] writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, accessDict.ToArray()).ToArray()).GetAwaiter().GetResult();
+            foreach (PlcWriteResult item in writeResults)
             {
                 Assert.Equal(ExecutionResult.Ok, item.ActionResult);
             }
-            var result2 = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
+            PlcReadResult[] result2 = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
             Assert.Equal(accessDict.Count, result2.Length);
             //Assert.False(AreDataEqual(result, result2));
 
@@ -332,8 +333,8 @@ namespace Papper.Tests
         [Fact]
         public void TestStructuralAccess()
         {
-            var mapping = "DB_Safety2";
-            var origin = new UDT_SafeMotionHeader
+            string mapping = "DB_Safety2";
+            UDT_SafeMotionHeader origin = new UDT_SafeMotionHeader
             {
                 Generated = DateTime.MinValue,
                 NumberOfActiveSlots = 0,
@@ -349,7 +350,7 @@ namespace Papper.Tests
                 }
             };
 
-            var header = new UDT_SafeMotionHeader
+            UDT_SafeMotionHeader header = new UDT_SafeMotionHeader
             {
                 Generated = Normalize(DateTime.Now),
                 NumberOfActiveSlots = 2,
@@ -365,22 +366,22 @@ namespace Papper.Tests
                 }
             };
 
-            var accessDict = new Dictionary<string, object> {
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
                     { "SafeMotion.Header", header},
                 };
-            var writeOriginResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, new Dictionary<string, object> {
+            PlcWriteResult[] writeOriginResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, new Dictionary<string, object> {
                     { "SafeMotion.Header", origin},
                 }.ToArray()).ToArray()).GetAwaiter().GetResult();
 
 
-            var result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
+            PlcReadResult[] result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
             Assert.Equal(accessDict.Count, result.Length);
-            var writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, accessDict.ToArray()).ToArray()).GetAwaiter().GetResult();
-            foreach (var item in writeResults)
+            PlcWriteResult[] writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, accessDict.ToArray()).ToArray()).GetAwaiter().GetResult();
+            foreach (PlcWriteResult item in writeResults)
             {
                 Assert.Equal(ExecutionResult.Ok, item.ActionResult);
             }
-            var result2 = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
+            PlcReadResult[] result2 = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
             Assert.Equal(accessDict.Count, result2.Length);
             Assert.False(AreDataEqual(result, result2));
 
@@ -392,11 +393,11 @@ namespace Papper.Tests
         [Fact]
         public void TestStructuralAllAccess()
         {
-            var mapping = "DB_Safety2";
+            string mapping = "DB_Safety2";
 
-            var t = new Stopwatch();
+            Stopwatch t = new Stopwatch();
             t.Start();
-            var result = _papper.ReadAsync(PlcReadReference.FromAddress($"{mapping}")).GetAwaiter().GetResult();
+            PlcReadResult[] result = _papper.ReadAsync(PlcReadReference.FromAddress($"{mapping}")).GetAwaiter().GetResult();
             t.Stop();
         }
 
@@ -404,12 +405,12 @@ namespace Papper.Tests
         [Fact]
         public void TestBitAccess()
         {
-            var mapping = "DB_TestCTT";
+            string mapping = "DB_TestCTT";
 
-            var t = new Stopwatch();
+            Stopwatch t = new Stopwatch();
             t.Start();
-            var result1 = _papper.ReadAsync(PlcReadReference.FromAddress($"{mapping}.StartTrack")).GetAwaiter().GetResult();
-            var result2 = _papper.ReadAsync(PlcReadReference.FromAddress($"{mapping}.StartTrack"), PlcReadReference.FromAddress($"{mapping}.StartEinlauf"), PlcReadReference.FromAddress($"{mapping}.StartAuslauf")).GetAwaiter().GetResult();
+            PlcReadResult[] result1 = _papper.ReadAsync(PlcReadReference.FromAddress($"{mapping}.StartTrack")).GetAwaiter().GetResult();
+            PlcReadResult[] result2 = _papper.ReadAsync(PlcReadReference.FromAddress($"{mapping}.StartTrack"), PlcReadReference.FromAddress($"{mapping}.StartEinlauf"), PlcReadReference.FromAddress($"{mapping}.StartAuslauf")).GetAwaiter().GetResult();
             t.Stop();
         }
 
@@ -417,14 +418,14 @@ namespace Papper.Tests
         [Fact]
         public async Task MixedAccessTest()
         {
-            var mapping = "DB_Safety2";
+            string mapping = "DB_Safety2";
 
-            var t = new Stopwatch();
+            Stopwatch t = new Stopwatch();
             t.Start();
-            var result1 = _papper.ReadAsync(PlcReadReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots"),
+            Task<PlcReadResult[]> result1 = _papper.ReadAsync(PlcReadReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots"),
                                            PlcReadReference.FromAddress($"{mapping}.SafeMotion.Header.States.ChecksumInvalid"));
 
-            var result2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress($"{mapping}.SafeMotion") }).ConfigureAwait(false);
+            PlcReadResult[] result2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress($"{mapping}.SafeMotion") }).ConfigureAwait(false);
             await result1.ConfigureAwait(false);
             t.Stop();
         }
@@ -432,14 +433,14 @@ namespace Papper.Tests
         [Fact]
         public async Task MixedAccessWithDataChangeTest()
         {
-            var mapping = "DB_Safety2";
+            string mapping = "DB_Safety2";
 
-            var t = new Stopwatch();
+            Stopwatch t = new Stopwatch();
             t.Start();
             short value = -1;
             await _papper.WriteAsync(PlcWriteReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", (short)0)).ConfigureAwait(false);
 
-            var sub = _papper.SubscribeDataChanges((s, e) =>
+            Subscription sub = _papper.SubscribeDataChanges((s, e) =>
             {
                 if (e.FieldCount > 0)
                 {
@@ -447,7 +448,7 @@ namespace Papper.Tests
                 }
             }, PlcWatchReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", 10),
                                                                   PlcWatchReference.FromAddress($"{mapping}.SafeMotion.Header.States.ChecksumInvalid", 10));
-            var result2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress($"{mapping}.SafeMotion") }).ConfigureAwait(false);
+            PlcReadResult[] result2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress($"{mapping}.SafeMotion") }).ConfigureAwait(false);
 
             await _papper.WriteAsync(PlcWriteReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", (short)1)).ConfigureAwait(false);
 
@@ -462,15 +463,15 @@ namespace Papper.Tests
         [Fact]
         public async Task MixedAccessWithDataChangeTest2()
         {
-            var mapping = "DB_Safety2";
+            string mapping = "DB_Safety2";
 
-            var t = new Stopwatch();
+            Stopwatch t = new Stopwatch();
             t.Start();
             short value = -1;
             await _papper.WriteAsync(PlcWriteReference.FromAddress($"{mapping}.SafeMotion.Header.NumberOfActiveSlots", (short)0)).ConfigureAwait(false);
 
-            var result2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress($"{mapping}.SafeMotion") }).ConfigureAwait(false);
-            var sub = _papper.SubscribeDataChanges((s, e) =>
+            PlcReadResult[] result2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress($"{mapping}.SafeMotion") }).ConfigureAwait(false);
+            Subscription sub = _papper.SubscribeDataChanges((s, e) =>
             {
                 if (e.FieldCount > 0)
                 {
@@ -495,11 +496,11 @@ namespace Papper.Tests
         [Fact]
         public async Task DataChanegOnBitsTest()
         {
-            var t = new Stopwatch();
+            Stopwatch t = new Stopwatch();
             t.Start();
             await _papper.WriteAsync(PlcWriteReference.FromAddress($"DB_IDAT_MSpindleData1.IDATInterface.IDATtoPLC.Toggle", false)).ConfigureAwait(false);
 
-            var sub = _papper.SubscribeDataChanges((s, e) =>
+            Subscription sub = _papper.SubscribeDataChanges((s, e) =>
             {
 
             }, PlcWatchReference.FromAddress($"DB_IDAT_MSpindleData.IDATInterface.PLCtoIDAT.UpdateRequired", 10),
@@ -520,9 +521,9 @@ namespace Papper.Tests
         [Fact]
         public async Task TestWriteSerializedData()
         {
-            var ser = new PlcDataMapperSerializer();
+            PlcDataMapperSerializer ser = new PlcDataMapperSerializer();
 
-            var value = ser.Serialize(TimeTransformationRule.FromTimeZoneInfo(TimeZoneInfo.Local));
+            byte[] value = ser.Serialize(TimeTransformationRule.FromTimeZoneInfo(TimeZoneInfo.Local));
 
 
 
@@ -536,8 +537,8 @@ namespace Papper.Tests
         [Fact]
         public void ArrayIndexAccessTest()
         {
-            var mapping = "ARRAY_TEST_MAPPING_5";
-            var accessDict = new Dictionary<string, object> {
+            string mapping = "ARRAY_TEST_MAPPING_5";
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
                     { "BigCharArray[1]", 'X'},
                 };
 
@@ -548,8 +549,8 @@ namespace Papper.Tests
         [Fact]
         public void TODTest()
         {
-            var mapping = "STRING_ARRAY_TEST_MAPPING_1";
-            var accessDict = new Dictionary<string, object> {
+            string mapping = "STRING_ARRAY_TEST_MAPPING_1";
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
                     { "Time[1]", TimeSpan.FromHours(12)},
                     { "Time[2]", TimeSpan.FromHours(1)},
                     { "Time[3]", TimeSpan.FromSeconds(10)},
@@ -565,14 +566,14 @@ namespace Papper.Tests
         [Fact]
         public void ReadNonExistingValue()
         {
-            var mapping = "STRING_ARRAY_TEST_MAPPING";
-            var accessDict = new Dictionary<string, object> {
+            string mapping = "STRING_ARRAY_TEST_MAPPING";
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
                     { "XXX", "TEST1"}
                 };
 
             Assert.Throws<InvalidVariableException>(() =>
            {
-               var result = _papper.ReadAsync(PlcReadReference.FromRoot(mapping, accessDict.Keys.ToArray()).ToArray()).GetAwaiter().GetResult();
+               PlcReadResult[] result = _papper.ReadAsync(PlcReadReference.FromRoot(mapping, accessDict.Keys.ToArray()).ToArray()).GetAwaiter().GetResult();
                Assert.Empty(result);
            });
         }
@@ -580,19 +581,19 @@ namespace Papper.Tests
         [Fact]
         public void ConvertTest()
         {
-            var data = new Span<byte>(new byte[] { 0x01, 0x02, 0x03, 0x04 });
+            Span<byte> data = new Span<byte>(new byte[] { 0x01, 0x02, 0x03, 0x04 });
 
-            var v2 = BinaryPrimitives.ReadInt32BigEndian(data);
-            var v3 = BinaryPrimitives.ReadInt32LittleEndian(data);
+            int v2 = BinaryPrimitives.ReadInt32BigEndian(data);
+            int v3 = BinaryPrimitives.ReadInt32LittleEndian(data);
 
-            var data1 = new Span<byte>(new byte[4]);
-            var s = 25.4f;
+            Span<byte> data1 = new Span<byte>(new byte[4]);
+            float s = 25.4f;
             BinaryPrimitives.WriteInt32BigEndian(data1, Convert.ToInt32(s));
-            var res = Convert.ToSingle(BinaryPrimitives.ReadInt32BigEndian(data1));
+            float res = Convert.ToSingle(BinaryPrimitives.ReadInt32BigEndian(data1));
 
-            var data4 = new Span<byte>(new byte[4]);
+            Span<byte> data4 = new Span<byte>(new byte[4]);
             Converter.WriteSingleBigEndian(data4, s);
-            var x4 = Converter.ReadSingleBigEndian(data4);
+            float x4 = Converter.ReadSingleBigEndian(data4);
         }
 
 
@@ -602,10 +603,10 @@ namespace Papper.Tests
         public async Task TestInvalidMappings()
         {
 
-            using var papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite, UpdateHandler, ReadMetaData, OptimizerType.Items);
+            using PlcDataMapper papper = new PlcDataMapper(960, Papper_OnRead, Papper_OnWrite, UpdateHandler, ReadMetaData, OptimizerType.Items);
             papper.AddMapping(typeof(DB_Safety));
 
-            using var subscription = papper.CreateSubscription(ChangeDetectionStrategy.Event);
+            using Subscription subscription = papper.CreateSubscription(ChangeDetectionStrategy.Event);
             Assert.True(await subscription.TryAddItemsAsync(PlcWatchReference.FromAddress("DB_Safety.SafeMotion.Slots[0]", 100)).ConfigureAwait(false));
             Assert.False(await subscription.TryAddItemsAsync(PlcWatchReference.FromAddress("Test.XY", 100)).ConfigureAwait(false));
             Assert.False(await subscription.TryAddItemsAsync(PlcWatchReference.FromAddress("DB_Safety.XY", 100)).ConfigureAwait(false));
@@ -618,8 +619,8 @@ namespace Papper.Tests
         [Fact]
         public void TestGetAddressOf()
         {
-            var mapping = "DB_Safety2";
-            var result = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}.SafeMotion.Slots"));
+            string mapping = "DB_Safety2";
+            PlcItemAddress result = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}.SafeMotion.Slots"));
 
 
             Assert.Equal(14, result.Offset.Bytes);
@@ -631,8 +632,8 @@ namespace Papper.Tests
         [Fact]
         public void TestGetAddressOfWString()
         {
-            var mapping = "DB_MotionHMI";
-            var result = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}.HMI.MotionLine[8].Txt.Position[1]"));
+            string mapping = "DB_MotionHMI";
+            PlcItemAddress result = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}.HMI.MotionLine[8].Txt.Position[1]"));
 
 
             Assert.Equal(9442, result.Offset.Bytes);
@@ -643,14 +644,14 @@ namespace Papper.Tests
         [Fact]
         public void TestGetAddressOfType()
         {
-            var mapping = "DB_MotionHMI";
-            var result1 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}.HMI.MotionLine[8].Txt.Position[1]"));
+            string mapping = "DB_MotionHMI";
+            PlcItemAddress result1 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}.HMI.MotionLine[8].Txt.Position[1]"));
 
             mapping = "DB_Safety2";
-            var result2 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{ mapping}.SafeMotion.Slots"));
-            var result3 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{ mapping}.SafeMotion.Slots[2]"));
-            var result4 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{ mapping}.SafeMotion.Slots[2].SlotId"));
-            var result5 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{ mapping}.SafeMotion.Slots[2].SafeSlotVersion"));
+            PlcItemAddress result2 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{ mapping}.SafeMotion.Slots"));
+            PlcItemAddress result3 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{ mapping}.SafeMotion.Slots[2]"));
+            PlcItemAddress result4 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{ mapping}.SafeMotion.Slots[2].SlotId"));
+            PlcItemAddress result5 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{ mapping}.SafeMotion.Slots[2].SafeSlotVersion"));
 
 
 
@@ -660,8 +661,8 @@ namespace Papper.Tests
         [Fact]
         public void TestWriteRawDataToStruct()
         {
-            var mapping = "DB_Safety2";
-            var header = new UDT_SafeMotionHeader
+            string mapping = "DB_Safety2";
+            UDT_SafeMotionHeader header = new UDT_SafeMotionHeader
             {
                 Generated = Normalize(DateTime.Now),
                 NumberOfActiveSlots = 2,
@@ -677,14 +678,14 @@ namespace Papper.Tests
                 }
             };
 
-            var accessDict = new Dictionary<string, object> {
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
                     { "SafeMotion.Header", header},
                 };
 
-            var s = new PlcDataMapperSerializer();
+            PlcDataMapperSerializer s = new PlcDataMapperSerializer();
             accessDict["SafeMotion.Header"] = s.Serialize(header);
 
-            var writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, accessDict.ToArray()).ToArray()).GetAwaiter().GetResult();
+            PlcWriteResult[] writeResults = _papper.WriteAsync(PlcWriteReference.FromRoot(mapping, accessDict.ToArray()).ToArray()).GetAwaiter().GetResult();
         }
 
 
@@ -692,14 +693,14 @@ namespace Papper.Tests
         [Fact]
         public async Task ReadBitsAsyncTest()
         {
-            var x = await _papper.ReadAsync(PlcReadReference.FromAddress("DB_IDAT_MSpindleData.IDATInterface.PLCtoIDAT.WriteEnable")).ConfigureAwait(false);
+            PlcReadResult[] x = await _papper.ReadAsync(PlcReadReference.FromAddress("DB_IDAT_MSpindleData.IDATInterface.PLCtoIDAT.WriteEnable")).ConfigureAwait(false);
         }
 
 
         [Fact]
         public async Task AddAndRemoveMapping()
         {
-            var result1 = _papper.AddMapping(typeof(UdtMotion), new Attributes.MappingAttribute
+            bool result1 = _papper.AddMapping(typeof(UdtMotion), new Attributes.MappingAttribute
             (
                 "DI_VK_BST1.Index.bew",
                 "DB1111",
@@ -716,9 +717,9 @@ namespace Papper.Tests
         public void ReadIndexedItem()
         {
 
-            var exec1 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number[1]", 200) });
-            var exec2 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_IPSC_Konfig.StatusAnzeige_ZP[1].ErrText", 200) });
-            var exec3 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
+            List<Internal.Execution> exec1 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number[1]", 200) });
+            List<Internal.Execution> exec2 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_IPSC_Konfig.StatusAnzeige_ZP[1].ErrText", 200) });
+            List<Internal.Execution> exec3 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
 
 
         }
@@ -731,10 +732,10 @@ namespace Papper.Tests
         [Fact]
         public async Task ReadSmallAndBigPart()
         {
-            var write = PlcWriteReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", new char[4] { 'A', 'B', 'C', 'D' });
+            PlcWriteReference write = PlcWriteReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", new char[4] { 'A', 'B', 'C', 'D' });
 
-            var exec = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", 200) });
-            var exec2 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
+            List<Internal.Execution> exec = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", 200) });
+            List<Internal.Execution> exec2 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
 
             Assert.True(exec[0].Bindings.Values.FirstOrDefault().RawData.Size == 4);
             Assert.True(exec2[0].Bindings.Values.FirstOrDefault().RawData.Size == 7970);
@@ -743,7 +744,7 @@ namespace Papper.Tests
             await _papper.WriteAsync(write).ConfigureAwait(false);
 
 
-            var data2 = await _papper.ReadAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number") }).ConfigureAwait(false);
+            PlcReadResult[] data2 = await _papper.ReadAsync(new List<PlcReadReference> { PlcReadReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number") }).ConfigureAwait(false);
             Assert.True(data2[0].Value is char[] b2 && b2.Length == 4);
 
         }
@@ -755,10 +756,10 @@ namespace Papper.Tests
         {
             //Initial read to ensure all are false
             _papper.WriteAsync(accessDict.Select(c => PlcWriteReference.FromAddress($"{mapping}.{c.Key}", defaultValue))).GetAwaiter().GetResult();
-            var toRead = accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray();
-            var result = _papper.ReadAsync(toRead).GetAwaiter().GetResult();
+            PlcReadReference[] toRead = accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray();
+            PlcReadResult[] result = _papper.ReadAsync(toRead).GetAwaiter().GetResult();
             Assert.Equal(accessDict.Count, result.Length);
-            foreach (var item in result)
+            foreach (PlcReadResult item in result)
             {
                 Assert.Equal(defaultValue, (T)item.Value);
             }
@@ -769,7 +770,7 @@ namespace Papper.Tests
             //Second read to ensure correct written
             result = _papper.ReadAsync(accessDict.Keys.Select(variable => PlcReadReference.FromAddress($"{mapping}.{variable}")).ToArray()).GetAwaiter().GetResult();
             Assert.Equal(accessDict.Count, result.Length);
-            foreach (var item in result)
+            foreach (PlcReadResult item in result)
             {
                 Assert.Equal((T)accessDict[item.Variable], (T)item.Value);
             }
@@ -780,7 +781,10 @@ namespace Papper.Tests
         /// </summary>
         /// <param name="dt"></param>
         /// <returns></returns>
-        private static DateTime Normalize(DateTime dt) => dt.AddTicks((dt.Ticks % 10000) * -1);
+        private static DateTime Normalize(DateTime dt)
+        {
+            return dt.AddTicks((dt.Ticks % 10000) * -1);
+        }
 
         private Task UpdateHandler(IEnumerable<DataPack> monitoring, bool add = true)
         {
@@ -793,7 +797,7 @@ namespace Papper.Tests
 
         private Task ReadMetaData(IEnumerable<MetaDataPack> packs)
         {
-            foreach (var item in packs)
+            foreach (MetaDataPack item in packs)
             {
                 item.ExecutionResult = ExecutionResult.Error;
             }
@@ -802,12 +806,12 @@ namespace Papper.Tests
 
         private static Task Papper_OnRead(IEnumerable<DataPack> reads)
         {
-            var result = reads.ToList();
-            foreach (var item in result.OfType<DataPackSymbolic>())
+            List<DataPack> result = reads.ToList();
+            foreach (DataPackSymbolic item in result.OfType<DataPackSymbolic>())
             {
                 Console.WriteLine($"OnRead: SymbolicName:{item.SymbolicName};");
-                if(_mockPlc.TryGetValue(item.SymbolicName, out var val))
-                { 
+                if (_mockPlc.TryGetValue(item.SymbolicName, out object val))
+                {
                     item.ApplyResult(ExecutionResult.Ok, val);
                 }
                 else
@@ -820,8 +824,8 @@ namespace Papper.Tests
 
         private static Task Papper_OnWrite(IEnumerable<DataPack> reads)
         {
-            var result = reads.ToList();
-            foreach (var item in result.OfType<DataPackSymbolic>())
+            List<DataPack> result = reads.ToList();
+            foreach (DataPackSymbolic item in result.OfType<DataPackSymbolic>())
             {
                 _mockPlc[item.SymbolicName] = item.Value;
                 item.ApplyResult(ExecutionResult.Ok);
@@ -830,15 +834,18 @@ namespace Papper.Tests
         }
 
 
-        private static void SetPropertyInExpandoObject(dynamic parent, string address, object value) => SetPropertyInExpandoObject(parent, address.Replace("[", ".[", StringComparison.InvariantCultureIgnoreCase).Split('.'), value);
+        private static void SetPropertyInExpandoObject(dynamic parent, string address, object value)
+        {
+            SetPropertyInExpandoObject(parent, address.Replace("[", ".[", StringComparison.InvariantCultureIgnoreCase).Split('.'), value);
+        }
 
         private static void SetPropertyInExpandoObject(dynamic parent, IEnumerable<string> parts, object value)
         {
-            var key = parts.First();
+            string key = parts.First();
             parts = parts.Skip(1);
             if (parent is IList<object> list)
             {
-                var index = int.Parse(key.TrimStart('[').TrimEnd(']'), CultureInfo.InvariantCulture);
+                int index = int.Parse(key.TrimStart('[').TrimEnd(']'), CultureInfo.InvariantCulture);
                 if (parts.Any())
                 {
                     SetPropertyInExpandoObject(list.ElementAt(index), parts, value);
@@ -864,15 +871,18 @@ namespace Papper.Tests
             }
         }
 
-        private static object GetPropertyInExpandoObject(dynamic parent, string address) => GetPropertyInExpandoObject(parent, address.Replace("[", ".[", StringComparison.InvariantCultureIgnoreCase).Split('.'));
+        private static object GetPropertyInExpandoObject(dynamic parent, string address)
+        {
+            return GetPropertyInExpandoObject(parent, address.Replace("[", ".[", StringComparison.InvariantCultureIgnoreCase).Split('.'));
+        }
 
         private static object GetPropertyInExpandoObject(dynamic parent, IEnumerable<string> parts)
         {
-            var key = parts.First();
+            string key = parts.First();
             parts = parts.Skip(1);
             if (parent is IList<object> list)
             {
-                var index = int.Parse(key.TrimStart('[').TrimEnd(']'), CultureInfo.InvariantCulture);
+                int index = int.Parse(key.TrimStart('[').TrimEnd(']'), CultureInfo.InvariantCulture);
                 if (parts.Any())
                 {
                     return GetPropertyInExpandoObject(list.ElementAt(index), parts); // TODO
@@ -902,8 +912,8 @@ namespace Papper.Tests
 
         private static ExpandoObject ToExpando<T>(T instance)
         {
-            var obj = new ExpandoObject();
-            foreach (var item in instance.GetType().GetTypeInfo().DeclaredProperties)
+            ExpandoObject obj = new ExpandoObject();
+            foreach (PropertyInfo item in instance.GetType().GetTypeInfo().DeclaredProperties)
             {
                 if (!item.PropertyType.Namespace.StartsWith("System", false, CultureInfo.InvariantCulture))
                 {
@@ -919,7 +929,7 @@ namespace Papper.Tests
 
         private static void AddProperty(dynamic parent, string name, object value)
         {
-            var list = (parent as List<dynamic>);
+            List<dynamic> list = (parent as List<dynamic>);
             if (list != null)
             {
                 list.Add(value);
@@ -935,8 +945,8 @@ namespace Papper.Tests
 
         private static bool AreDataEqual(object obj1, object obj2)
         {
-            var t1 = obj1.GetType();
-            var t2 = obj2.GetType();
+            Type t1 = obj1.GetType();
+            Type t2 = obj2.GetType();
 
             if (t1 == t2) { return t1 != typeof(ExpandoObject) ? ElementEqual(obj1, obj2) : DynamicObjectCompare(obj1, obj2); }
             try { return ElementEqual(obj1, Convert.ChangeType(obj2, t1, CultureInfo.InvariantCulture)); } catch { }
@@ -948,12 +958,12 @@ namespace Papper.Tests
             if (obj1 is IEnumerable list1 &&
                 obj2 is IEnumerable list2)
             {
-                var enumerator1 = list1.GetEnumerator();
-                var enumerator2 = list2.GetEnumerator();
+                IEnumerator enumerator1 = list1.GetEnumerator();
+                IEnumerator enumerator2 = list2.GetEnumerator();
                 while (true)
                 {
-                    var e1 = enumerator1.MoveNext();
-                    var e2 = enumerator2.MoveNext();
+                    bool e1 = enumerator1.MoveNext();
+                    bool e2 = enumerator2.MoveNext();
                     if (e1 && e2)
                     {
                         if (!AreDataEqual(enumerator1.Current, enumerator2.Current))
@@ -975,9 +985,9 @@ namespace Papper.Tests
             if (obj1 is IDictionary<string, object> dictionary1 &&
                 obj2 is IDictionary<string, object> dictionary2)
             {
-                foreach (var o1 in dictionary1)
+                foreach (KeyValuePair<string, object> o1 in dictionary1)
                 {
-                    if (!dictionary2.TryGetValue(o1.Key, out var o2) || !AreDataEqual(o1.Value, o2))
+                    if (!dictionary2.TryGetValue(o1.Key, out object o2) || !AreDataEqual(o1.Value, o2))
                     {
                         return false;
                     }
@@ -986,7 +996,10 @@ namespace Papper.Tests
             return true;
         }
 
-        public void Dispose() => _papper?.Dispose();
+        public void Dispose()
+        {
+            _papper?.Dispose();
+        }
 
         #endregion
     }
