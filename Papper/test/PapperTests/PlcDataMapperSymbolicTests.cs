@@ -125,7 +125,8 @@ namespace Papper.Tests
 
         public void TestReadableBlocks(string mapping, int expectedVariables)
         {
-            IEnumerable<string> vars = _papper.GetVariableBlocksOf(mapping, VariableListTypes.Read);
+            IEnumerable<string> vars = _papper.GetVariableBlocksWithNotAccessableListOf(mapping, VariableListTypes.Read, out var notAcessible);
+            var cc = notAcessible.ToList();
             Assert.Equal(expectedVariables, vars.Count());
         }
 
