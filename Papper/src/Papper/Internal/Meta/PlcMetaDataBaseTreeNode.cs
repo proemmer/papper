@@ -16,7 +16,17 @@ namespace Papper.Internal
 
         public string Name => _name;
 
-        public string SymbolicAccessName { get => _symbolicAccessName ?? Name; set => _symbolicAccessName = value; }
+        public string SymbolicAccessName 
+        { 
+            get => _symbolicAccessName ?? Name; 
+            set
+            {
+                if (value != _name)
+                {
+                    _symbolicAccessName = value;
+                }
+            }
+        }
 
         public ITreeNode Root => (_parent == null) ? this : _parent.Root;
 

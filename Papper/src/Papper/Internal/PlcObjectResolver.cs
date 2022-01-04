@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Papper.Internal
 {
@@ -355,6 +356,9 @@ namespace Papper.Internal
         }
 
 
+
+        private static Regex _regex = new("(\\[.*\\])");
+
         public static IEnumerable<string> GetAccessibleBlocks(ITreeNode obj, ICollection<string> path, VariableListTypes accessMode, out bool hasNotAccessibleVariables, out List<string> notAccessible)
         {
             var list = new List<string>();
@@ -402,7 +406,11 @@ namespace Papper.Internal
                                 foreach (var c in notAccessibleChilds)
                                 {
                                     var internalElementPath = new List<string>(internalPath) { GetAccessName(c) };
-                                    notAccessible.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalElementPath).Path.Substring(1));
+                                    string output = _regex.Replace(PlcMetaDataTreePath.CreateAbsolutePath(internalElementPath).Path.Substring(1), "[]");
+                                    if (!notAccessible.Contains(output))
+                                    {
+                                        notAccessible.Add(output);
+                                    }
                                 }
                             }
 
@@ -422,7 +430,13 @@ namespace Papper.Internal
                                     {
                                         hasNotAccessibleVariables = true;
                                         list.AddRange(childVars);
-                                        notAccessible.AddRange(notAccessibleChild);
+                                        foreach (var item in notAccessibleChild)
+                                        {
+                                            if (!notAccessible.Contains(item))
+                                            {
+                                                notAccessible.Add(item);
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -434,7 +448,11 @@ namespace Papper.Internal
                         }
                         if (hasNotAccessibleVariables)
                         {
-                            notAccessible.Add((PlcMetaDataTreePath.CreateAbsolutePath(path).Path.Substring(1)));
+                            string output = _regex.Replace(PlcMetaDataTreePath.CreateAbsolutePath(path).Path.Substring(1), "[]");
+                            if (!notAccessible.Contains(output))
+                            {
+                                notAccessible.Add(output);
+                            }
                         }
                     }
                     else
@@ -451,7 +469,13 @@ namespace Papper.Internal
                             {
                                 hasNotAccessibleVariables = true;
                                 list.AddRange(childVars);
-                                notAccessible.AddRange(notAccessibleChild);
+                                foreach (var item in notAccessibleChild)
+                                {
+                                    if (!notAccessible.Contains(item))
+                                    {
+                                        notAccessible.Add(item);
+                                    }
+                                }
                             }
                         }
                     }
