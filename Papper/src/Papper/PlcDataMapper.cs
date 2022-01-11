@@ -180,10 +180,27 @@ namespace Papper
             var result = new List<string>();
             if (EntriesByName.TryGetValue(mapping, out var entry))
             {
-                return PlcObjectResolver.GetAccessibleBlocks(entry.PlcObject, result, variableListType, out _);
+                return PlcObjectResolver.GetAccessibleBlocks(entry.PlcObject, result, variableListType, out _, out _);
             }
 
             ExceptionThrowHelper.ThrowMappingNotFoundException(mapping);
+            return Array.Empty<string>();
+        }
+
+        /// <summary>
+        /// Return all writeable variable names of a mapping
+        /// </summary>
+        /// <param name="mapping"></param>
+        /// <returns></returns>
+        public IEnumerable<string> GetVariableBlocksWithNotAccessableListOf(string mapping, VariableListTypes variableListType, out List<string> notAccessible)
+        {
+            var result = new List<string>();
+            if (EntriesByName.TryGetValue(mapping, out var entry))
+            {
+                return PlcObjectResolver.GetAccessibleBlocks(entry.PlcObject, result, variableListType, out _, out notAccessible);
+            }
+            ExceptionThrowHelper.ThrowMappingNotFoundException(mapping);
+            notAccessible = null;
             return Array.Empty<string>();
         }
 

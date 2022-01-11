@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Papper.Internal
 {
@@ -354,9 +355,14 @@ namespace Papper.Internal
             return node.Name;
         }
 
-        public static IEnumerable<string> GetAccessibleBlocks(ITreeNode obj, ICollection<string> path, VariableListTypes accessMode, out bool hasNotAccessibleVariables)
+
+
+        private static Regex _regex = new("\\[.*?\\]", RegexOptions.Compiled);
+
+        public static IEnumerable<string> GetAccessibleBlocks(ITreeNode obj, ICollection<string> path, VariableListTypes accessMode, out bool hasNotAccessibleVariables, out List<string> notAccessible)
         {
             var list = new List<string>();
+            notAccessible = new List<string>();
             hasNotAccessibleVariables = false;
             if (obj != null)
             {
@@ -380,6 +386,7 @@ namespace Papper.Internal
                     if(!currentChilds.Any())
                     {
                         // nothing to add
+                        notAccessible.Add((PlcMetaDataTreePath.CreateAbsolutePath(path).Path.Substring(1)));
                     }
                     else if (obj is PlcArray)
                     {
@@ -387,15 +394,34 @@ namespace Papper.Internal
                         {
                             var hasCurrentChildReadOnlyAttribute = child.Childs.Any(c => IsNotAcessibleElement(c, accessMode));
                             if (hasCurrentChildReadOnlyAttribute)
+                            {
                                 hasNotAccessibleVariables = true;
+                            }
                             var arrayChilds = child.Childs.Where(c => !IsNotAcessibleElement(c, accessMode)).ToList();
+
+                            if (hasCurrentChildReadOnlyAttribute)
+                            {
+                                var internalPath = new List<string>(path.Take(path.Count - 1)) { currentName + GetAccessName(child) };
+                                var notAccessibleChilds = child.Childs.Where(c => IsNotAcessibleElement(c, accessMode)).ToList();
+                                foreach (var c in notAccessibleChilds)
+                                {
+                                    var internalElementPath = new List<string>(internalPath) { GetAccessName(c) };
+                                    var internalAbsPath = PlcMetaDataTreePath.CreateAbsolutePath(internalElementPath).Path.Substring(1);
+                                    string output = _regex.Replace(internalAbsPath, "[]");
+                                    if (!notAccessible.Contains(output))
+                                    {
+                                        notAccessible.Add(output);
+                                    }
+                                }
+                            }
+
                             if (arrayChilds.Any())
                             {
                                 var numberOfChilds = arrayChilds.Count;
                                 var internalPath = new List<string>(path.Take(path.Count - 1)) { currentName + GetAccessName(child) };
                                 foreach (var c in arrayChilds)
                                 {
-                                    var childVars = GetAccessibleBlocks(c, internalPath.ToList(), accessMode, out var hasNotAcessibleChild);
+                                    var childVars = GetAccessibleBlocks(c, internalPath.ToList(), accessMode, out var hasNotAcessibleChild, out var notAccessibleChild);
                                     if (!hasNotAcessibleChild)
                                     {
                                         var internalElementPath = new List<string>(internalPath) { GetAccessName(c) };
@@ -405,6 +431,13 @@ namespace Papper.Internal
                                     {
                                         hasNotAccessibleVariables = true;
                                         list.AddRange(childVars);
+                                        foreach (var item in notAccessibleChild)
+                                        {
+                                            if (!notAccessible.Contains(item))
+                                            {
+                                                notAccessible.Add(item);
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -414,12 +447,20 @@ namespace Papper.Internal
                                 list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalPath.Skip(1)).Path.Substring(1));
                             }
                         }
+                        if (hasNotAccessibleVariables)
+                        {
+                            string output = _regex.Replace(PlcMetaDataTreePath.CreateAbsolutePath(path).Path.Substring(1), "[]");
+                            if (!notAccessible.Contains(output))
+                            {
+                                notAccessible.Add(output);
+                            }
+                        }
                     }
                     else
                     {
                         foreach (var child in currentChilds)
                         {
-                            var childVars = GetAccessibleBlocks(child, path.ToList(), accessMode, out var hasNotAcessibleChild);
+                            var childVars = GetAccessibleBlocks(child, path.ToList(), accessMode, out var hasNotAcessibleChild, out var notAccessibleChild);
                             if (!hasNotAcessibleChild)
                             {
                                 var internalPath = new List<string>(path) { GetAccessName(child) };
@@ -429,6 +470,13 @@ namespace Papper.Internal
                             {
                                 hasNotAccessibleVariables = true;
                                 list.AddRange(childVars);
+                                foreach (var item in notAccessibleChild)
+                                {
+                                    if (!notAccessible.Contains(item))
+                                    {
+                                        notAccessible.Add(item);
+                                    }
+                                }
                             }
                         }
                     }
