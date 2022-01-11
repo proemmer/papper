@@ -357,7 +357,7 @@ namespace Papper.Internal
 
 
 
-        private static Regex _regex = new("(\\[.*\\])");
+        private static Regex _regex = new("\\[.*?\\]", RegexOptions.Compiled);
 
         public static IEnumerable<string> GetAccessibleBlocks(ITreeNode obj, ICollection<string> path, VariableListTypes accessMode, out bool hasNotAccessibleVariables, out List<string> notAccessible)
         {
@@ -406,7 +406,8 @@ namespace Papper.Internal
                                 foreach (var c in notAccessibleChilds)
                                 {
                                     var internalElementPath = new List<string>(internalPath) { GetAccessName(c) };
-                                    string output = _regex.Replace(PlcMetaDataTreePath.CreateAbsolutePath(internalElementPath).Path.Substring(1), "[]");
+                                    var internalAbsPath = PlcMetaDataTreePath.CreateAbsolutePath(internalElementPath).Path.Substring(1);
+                                    string output = _regex.Replace(internalAbsPath, "[]");
                                     if (!notAccessible.Contains(output))
                                     {
                                         notAccessible.Add(output);
