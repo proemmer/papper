@@ -8,6 +8,7 @@ namespace Papper.Internal
     {
         private readonly string _name;
         private string? _symbolicAccessName;
+        protected string? _originName;
         private ITreePath? _savedPath;
         private ITreeNode? _parent;
         public PlcObject? Data { get; set; }
@@ -24,6 +25,18 @@ namespace Papper.Internal
                 if (value != _name)
                 {
                     _symbolicAccessName = value;
+                }
+            }
+        }
+
+        public string OriginName
+        {
+            get => _originName ?? Name;
+            set
+            {
+                if (value != _name)
+                {
+                    _originName = value;
                 }
             }
         }

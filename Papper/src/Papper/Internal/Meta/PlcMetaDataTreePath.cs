@@ -29,10 +29,10 @@ namespace Papper.Internal
 
         public static PlcMetaDataTreePath CreatePath(IEnumerable<string> nodeNames, bool isAbsolute = false)
         {
-            if (nodeNames.Any(node => node.IndexOf(Separator, StringComparison.Ordinal) >= 0))
-            {
-                ExceptionThrowHelper.ThrowInvalidNodePathCollectionException();
-            }
+            //if (nodeNames.Any(node => node.IndexOf(Separator, StringComparison.Ordinal) >= 0))
+            //{
+            //    ExceptionThrowHelper.ThrowInvalidNodePathCollectionException();
+            //}
             return new PlcMetaDataTreePath(nodeNames, isAbsolute);
         }
 
