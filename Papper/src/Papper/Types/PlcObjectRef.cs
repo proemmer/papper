@@ -22,6 +22,8 @@ namespace Papper.Types
         public override bool HasReadOnlyChilds => _referencedObject != null ? _referencedObject.HasReadOnlyChilds : false;
         public override bool HasNotAccessibleChilds => _referencedObject != null ? _referencedObject.HasNotAccessibleChilds : false;
 
+        public override bool HasRootAccessNotAllowedChilds => _referencedObject != null ? _referencedObject.HasRootAccessNotAllowedChilds : false;
+
         public PlcObjectRef(string name, PlcObject reference) :
             base(name) => _referencedObject = reference;
 

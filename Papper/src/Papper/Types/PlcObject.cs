@@ -18,11 +18,12 @@ namespace Papper.Types
 
         public virtual bool HasReadOnlyChilds { get; internal set; }
         public virtual bool HasNotAccessibleChilds { get; internal set; }
+        public virtual bool HasRootAccessNotAllowedChilds { get; internal set; }
         public virtual bool IsReadOnly { get; internal set; }
         public virtual bool IsNotAccessible { get; internal set; }
         public virtual int? ArrayStartIndex { get; internal set; }
+        public virtual bool RootAccessNotAllowed { get; internal set; }
 
-        
 
         public virtual int ByteOffset => Offset.Bytes;
         public virtual int BitOffset => Offset.Bits;

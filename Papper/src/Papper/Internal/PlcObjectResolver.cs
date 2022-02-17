@@ -282,6 +282,16 @@ namespace Papper.Internal
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsRootNotAccessable(ITreeNode node)
+        {
+            if (node is PlcObject plco)
+            {
+                return plco.RootAccessNotAllowed;
+            }
+            return false;
+        }
+
         /// <summary>
         /// Get all leafs from the meta tree, normally this should b only value types.
         /// </summary>
@@ -357,7 +367,7 @@ namespace Papper.Internal
 
 
 
-        private static Regex _regex = new("\\[.*?\\]", RegexOptions.Compiled);
+        private static readonly Regex _regex = new("\\[.*?\\]", RegexOptions.Compiled);
 
         public static IEnumerable<string> GetAccessibleBlocks(ITreeNode obj, ICollection<string> path, VariableListTypes accessMode, out bool hasNotAccessibleVariables, out List<string> notAccessible)
         {
@@ -378,7 +388,7 @@ namespace Papper.Internal
                     path.Add(currentName);
                 }
 
-                hasNotAccessibleVariables = obj.Childs.Any(c => IsNotAccessibleElement(c, accessMode));
+                hasNotAccessibleVariables = IsRootNotAccessable(obj) || obj.Childs.Any(c => IsNotAccessibleElement(c, accessMode));
                 var currentChilds = obj.Childs.Where(c => !IsNotAccessibleElement(c, accessMode)).ToList();
                 if (hasNotAccessibleVariables || currentChilds.Any())
                 {
@@ -609,6 +619,7 @@ namespace Papper.Internal
                         {
                             refObject.IsReadOnly = plcObject.IsReadOnly;
                             refObject.IsNotAccessible = plcObject.IsNotAccessible;
+                            refObject.RootAccessNotAllowed = plcObject.RootAccessNotAllowed;
                             refObject.SymbolicAccessName = plcObject.SymbolicAccessName;
                             refObject.OriginName = plcObject.OriginName;
                         }
@@ -629,6 +640,10 @@ namespace Papper.Internal
                         {
                             parent.HasNotAccessibleChilds = true;
                             parent.HasReadOnlyChilds = true;
+                        }
+                        if(!parent.HasRootAccessNotAllowedChilds && (plcObject.RootAccessNotAllowed || plcObject.HasRootAccessNotAllowedChilds))
+                        {
+                            parent.HasRootAccessNotAllowedChilds = true;
                         }
                         
                     }
