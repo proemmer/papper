@@ -91,6 +91,7 @@ namespace Papper.Types
                         obj.Dimension = 1;
                     }
                 }
+
                 return plcObject;
             }
             return null;
@@ -188,6 +189,7 @@ namespace Papper.Types
             {
                 instance.OriginName = originName;
             }
+            UpdateRootAccessNotAllowed(instance);
             UpdateReadOnlyPoperty(pi, instance);
             UpdateSymbolicAccessName(pi, instance);
             return instance;
@@ -256,6 +258,19 @@ namespace Papper.Types
                 else
                 {
                     plcObject.SymbolicAccessName = pi.Name;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void UpdateRootAccessNotAllowed(PlcObject? plcObject)
+        {
+            if (plcObject != null)
+            {
+                var attr = plcObject.ElemenType?.GetCustomAttributes<PlcTypeAttribute>().FirstOrDefault();
+                if (attr != null)
+                {
+                    plcObject.RootAccessNotAllowed = attr.RootAccessNotAllowed;
                 }
             }
         }

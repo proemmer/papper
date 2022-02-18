@@ -10,9 +10,18 @@ namespace Papper.Attributes
     {
         public PlcTypeAttribute(string name) => Name = name;
 
+        public PlcTypeAttribute(string name, bool rootAccessNotAllowed)
+        {
+            Name = name;
+            RootAccessNotAllowed = rootAccessNotAllowed;
+        }
+
         /// <summary>
         /// Plc name.
         /// </summary>
         public string Name { get; private set; }
+
+
+        public bool RootAccessNotAllowed { get; private set; }
     }
 }

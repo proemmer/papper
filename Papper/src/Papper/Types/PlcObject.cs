@@ -10,8 +10,6 @@ namespace Papper.Types
 {
     internal abstract class PlcObject : PlcMetaDataTreeNode, IPlcObject
     {
-        private string? _originName;
-
         public string? Selector { get; set; }
         public Type? ElemenType { get; set; }
         public bool AllowOddByteOffsetInArray { get; set; }
@@ -20,11 +18,12 @@ namespace Papper.Types
 
         public virtual bool HasReadOnlyChilds { get; internal set; }
         public virtual bool HasNotAccessibleChilds { get; internal set; }
+        public virtual bool HasRootAccessNotAllowedChilds { get; internal set; }
         public virtual bool IsReadOnly { get; internal set; }
         public virtual bool IsNotAccessible { get; internal set; }
         public virtual int? ArrayStartIndex { get; internal set; }
+        public virtual bool RootAccessNotAllowed { get; internal set; }
 
-        
 
         public virtual int ByteOffset => Offset.Bytes;
         public virtual int BitOffset => Offset.Bits;
@@ -32,7 +31,6 @@ namespace Papper.Types
         public virtual int BitSize => Size == null ? 0 : Size.Bits;
 
         public abstract Type DotNetType { get; }
-        public string OriginName { get => _originName ?? Name; set => _originName = value; } 
 
         public IEnumerable<IPlcObject> ChildVars => Childs.OfType<IPlcObject>();
 

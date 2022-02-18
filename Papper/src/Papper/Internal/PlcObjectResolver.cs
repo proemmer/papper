@@ -18,6 +18,7 @@ namespace Papper.Internal
         public const string RootNodeName = "Plc";
         public const string InstancesNodeName = "Instances";
         public const string MetaDataNodeName = "MetaData";
+        private static readonly Regex _regexIndexOfArrayPart = new("[\\[]{1}(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))", RegexOptions.Compiled);
 
         /// <summary>
         /// Syntax:
@@ -268,7 +269,7 @@ namespace Papper.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool IsNotAcessibleElement(ITreeNode node, VariableListTypes accessMode)
+        private static bool IsNotAccessibleElement(ITreeNode node, VariableListTypes accessMode)
         {
             if(node is PlcObject plco)
             {
@@ -277,6 +278,16 @@ namespace Papper.Internal
                     return plco.IsNotAccessible;
                 }
                 return plco.IsReadOnly;
+            }
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsRootNotAccessable(ITreeNode node)
+        {
+            if (node is PlcObject plco)
+            {
+                return plco.RootAccessNotAllowed;
             }
             return false;
         }
@@ -292,12 +303,11 @@ namespace Papper.Internal
             var list = new List<string>();
             if (obj != null)
             {
-                var idx = obj.Name.IndexOf("[", StringComparison.Ordinal);
-
-                if (idx >= 0)
+                var match = _regexIndexOfArrayPart.Match(obj.Name);
+                if (match.Success)
                 {
                     var p = path.Last();
-                    path = new List<string>(path.Take(path.Count - 1)) { p + obj.Name.Substring(idx) };
+                    path = new List<string>(path.Take(path.Count - 1)) { p + obj.Name.Substring(match.Index) };
                 }
                 else
                 {
@@ -305,14 +315,14 @@ namespace Papper.Internal
                 }
 
 
-                var currentChilds = obj.Childs.Where(c => !onlyWriteable || !IsNotAcessibleElement(c, VariableListTypes.Write)).ToList();
+                var currentChilds = obj.Childs.Where(c => !onlyWriteable || !IsNotAccessibleElement(c, VariableListTypes.Write)).ToList();
                 if (currentChilds.Any())
                 {
                     if (obj is PlcArray)
                     {
                         foreach (var child in currentChilds)
                         {
-                            var arrayChilds = child.Childs.Where(c => !onlyWriteable || !IsNotAcessibleElement(c, VariableListTypes.Write)).ToList();
+                            var arrayChilds = child.Childs.Where(c => !onlyWriteable || !IsNotAccessibleElement(c, VariableListTypes.Write)).ToList();
                             if (arrayChilds.Any())
                             {
                                 var nunmberOfChilds = arrayChilds.Count;
@@ -357,7 +367,7 @@ namespace Papper.Internal
 
 
 
-        private static Regex _regex = new("\\[.*?\\]", RegexOptions.Compiled);
+        private static readonly Regex _regex = new("\\[.*?\\]", RegexOptions.Compiled);
 
         public static IEnumerable<string> GetAccessibleBlocks(ITreeNode obj, ICollection<string> path, VariableListTypes accessMode, out bool hasNotAccessibleVariables, out List<string> notAccessible)
         {
@@ -367,116 +377,128 @@ namespace Papper.Internal
             if (obj != null)
             {
                 var currentName = GetAccessName(obj);
-                var idx = currentName.IndexOf("[", StringComparison.Ordinal);
-
-                if (idx >= 0)
+                var match = _regexIndexOfArrayPart.Match(currentName);
+                if (match.Success)
                 {
                     var p = path.Last();
-                    path = new List<string>(path.Take(path.Count - 1)) { p + currentName.Substring(idx) };
+                    path = new List<string>(path.Take(path.Count - 1)) { p + currentName.Substring(match.Index) };
                 }
                 else
                 {
                     path.Add(currentName);
                 }
 
-                hasNotAccessibleVariables = obj.Childs.Any(c => IsNotAcessibleElement(c, accessMode));
-                var currentChilds = obj.Childs.Where(c => !IsNotAcessibleElement(c, accessMode)).ToList();
+                hasNotAccessibleVariables = IsRootNotAccessable(obj) || obj.Childs.Any(c => IsNotAccessibleElement(c, accessMode));
+                var currentChilds = obj.Childs.Where(c => !IsNotAccessibleElement(c, accessMode)).ToList();
                 if (hasNotAccessibleVariables || currentChilds.Any())
                 {
-                    if(!currentChilds.Any())
+                    if (!currentChilds.Any())
                     {
                         // nothing to add
                         notAccessible.Add((PlcMetaDataTreePath.CreateAbsolutePath(path).Path.Substring(1)));
                     }
-                    else if (obj is PlcArray)
+                    else
                     {
-                        foreach (var child in currentChilds)
+                        if (obj is PlcArray)
                         {
-                            var hasCurrentChildReadOnlyAttribute = child.Childs.Any(c => IsNotAcessibleElement(c, accessMode));
-                            if (hasCurrentChildReadOnlyAttribute)
+                            foreach (var child in currentChilds)
                             {
-                                hasNotAccessibleVariables = true;
-                            }
-                            var arrayChilds = child.Childs.Where(c => !IsNotAcessibleElement(c, accessMode)).ToList();
-
-                            if (hasCurrentChildReadOnlyAttribute)
-                            {
-                                var internalPath = new List<string>(path.Take(path.Count - 1)) { currentName + GetAccessName(child) };
-                                var notAccessibleChilds = child.Childs.Where(c => IsNotAcessibleElement(c, accessMode)).ToList();
-                                foreach (var c in notAccessibleChilds)
+                                var hasCurrentChildReadOnlyAttribute = child.Childs.Any(c => IsNotAccessibleElement(c, accessMode));
+                                if (hasCurrentChildReadOnlyAttribute)
                                 {
-                                    var internalElementPath = new List<string>(internalPath) { GetAccessName(c) };
-                                    var internalAbsPath = PlcMetaDataTreePath.CreateAbsolutePath(internalElementPath).Path.Substring(1);
-                                    string output = _regex.Replace(internalAbsPath, "[]");
-                                    if (!notAccessible.Contains(output))
-                                    {
-                                        notAccessible.Add(output);
-                                    }
+                                    hasNotAccessibleVariables = true;
                                 }
-                            }
+                                var arrayChilds = child.Childs.Where(c => !IsNotAccessibleElement(c, accessMode)).ToList();
 
-                            if (arrayChilds.Any())
-                            {
-                                var numberOfChilds = arrayChilds.Count;
-                                var internalPath = new List<string>(path.Take(path.Count - 1)) { currentName + GetAccessName(child) };
-                                foreach (var c in arrayChilds)
+                                if (hasCurrentChildReadOnlyAttribute)
                                 {
-                                    var childVars = GetAccessibleBlocks(c, internalPath.ToList(), accessMode, out var hasNotAcessibleChild, out var notAccessibleChild);
-                                    if (!hasNotAcessibleChild)
+                                    var internalPath = new List<string>(path.Take(path.Count - 1)) { currentName + GetAccessName(child) };
+                                    var notAccessibleChilds = child.Childs.Where(c => IsNotAccessibleElement(c, accessMode)).ToList();
+                                    foreach (var c in notAccessibleChilds)
                                     {
                                         var internalElementPath = new List<string>(internalPath) { GetAccessName(c) };
-                                        list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalElementPath.Skip(1)).Path.Substring(1));
-                                    }
-                                    else
-                                    {
-                                        hasNotAccessibleVariables = true;
-                                        list.AddRange(childVars);
-                                        foreach (var item in notAccessibleChild)
+                                        var internalAbsPath = PlcMetaDataTreePath.CreateAbsolutePath(internalElementPath).Path.Substring(1);
+                                        string output = _regex.Replace(internalAbsPath, "[]");
+                                        if (!notAccessible.Contains(output))
                                         {
-                                            if (!notAccessible.Contains(item))
+                                            notAccessible.Add(output);
+                                        }
+                                    }
+                                }
+
+                                if (arrayChilds.Any())
+                                {
+                                    var numberOfChilds = arrayChilds.Count;
+                                    var internalPath = new List<string>(path.Take(path.Count - 1)) { currentName + GetAccessName(child) };
+                                    foreach (var c in arrayChilds)
+                                    {
+                                        var childVars = GetAccessibleBlocks(c, internalPath.ToList(), accessMode, out var hasNotAcessibleChild, out var notAccessibleChild);
+                                        if (!hasNotAcessibleChild)
+                                        {
+                                            var internalElementPath = new List<string>(internalPath) { GetAccessName(c) };
+                                            list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalElementPath.Skip(1)).Path.Substring(1));
+                                        }
+                                        else
+                                        {
+                                            hasNotAccessibleVariables = true;
+                                            list.AddRange(childVars);
+                                            foreach (var item in notAccessibleChild)
                                             {
-                                                notAccessible.Add(item);
+                                                if (!notAccessible.Contains(item))
+                                                {
+                                                    notAccessible.Add(item);
+                                                }
                                             }
                                         }
                                     }
                                 }
+                                else
+                                {
+                                    var internalPath = new List<string>(path.Take(path.Count - 1)) { GetAccessName(child) };
+                                    list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalPath.Skip(1)).Path.Substring(1));
+                                }
                             }
-                            else
+                            if (hasNotAccessibleVariables)
                             {
-                                var internalPath = new List<string>(path.Take(path.Count - 1)) { GetAccessName(child) };
-                                list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalPath.Skip(1)).Path.Substring(1));
+                                string output = _regex.Replace(PlcMetaDataTreePath.CreateAbsolutePath(path).Path.Substring(1), "[]");
+                                if (!notAccessible.Contains(output))
+                                {
+                                    notAccessible.Add(output);
+                                }
                             }
                         }
-                        if (hasNotAccessibleVariables)
+                        else
                         {
-                            string output = _regex.Replace(PlcMetaDataTreePath.CreateAbsolutePath(path).Path.Substring(1), "[]");
+                            foreach (var child in currentChilds)
+                            {
+                                var childVars = GetAccessibleBlocks(child, path.ToList(), accessMode, out var hasNotAcessibleChild, out var notAccessibleChild);
+                                if (!hasNotAcessibleChild)
+                                {
+                                    var internalPath = new List<string>(path) { GetAccessName(child) };
+                                    list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalPath.Skip(1)).Path.Substring(1));
+                                }
+                                else
+                                {
+                                    hasNotAccessibleVariables = true;
+                                    list.AddRange(childVars);
+                                    foreach (var item in notAccessibleChild)
+                                    {
+                                        if (!notAccessible.Contains(item))
+                                        {
+                                            notAccessible.Add(item);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        foreach (var child in obj.Childs.Where(c => IsNotAccessibleElement(c, accessMode)).ToList())
+                        {
+                            var internalPath = new List<string>(path) { GetAccessName(child) };
+                            string output = _regex.Replace(PlcMetaDataTreePath.CreateAbsolutePath(internalPath).Path.Substring(1), "[]");
                             if (!notAccessible.Contains(output))
                             {
                                 notAccessible.Add(output);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        foreach (var child in currentChilds)
-                        {
-                            var childVars = GetAccessibleBlocks(child, path.ToList(), accessMode, out var hasNotAcessibleChild, out var notAccessibleChild);
-                            if (!hasNotAcessibleChild)
-                            {
-                                var internalPath = new List<string>(path) { GetAccessName(child) };
-                                list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalPath.Skip(1)).Path.Substring(1));
-                            }
-                            else
-                            {
-                                hasNotAccessibleVariables = true;
-                                list.AddRange(childVars);
-                                foreach (var item in notAccessibleChild)
-                                {
-                                    if (!notAccessible.Contains(item))
-                                    {
-                                        notAccessible.Add(item);
-                                    }
-                                }
                             }
                         }
                     }
@@ -597,7 +619,9 @@ namespace Papper.Internal
                         {
                             refObject.IsReadOnly = plcObject.IsReadOnly;
                             refObject.IsNotAccessible = plcObject.IsNotAccessible;
+                            refObject.RootAccessNotAllowed = plcObject.RootAccessNotAllowed;
                             refObject.SymbolicAccessName = plcObject.SymbolicAccessName;
+                            refObject.OriginName = plcObject.OriginName;
                         }
 
                         plcObject = refObject;
@@ -616,6 +640,10 @@ namespace Papper.Internal
                         {
                             parent.HasNotAccessibleChilds = true;
                             parent.HasReadOnlyChilds = true;
+                        }
+                        if(!parent.HasRootAccessNotAllowedChilds && (plcObject.RootAccessNotAllowed || plcObject.HasRootAccessNotAllowedChilds))
+                        {
+                            parent.HasRootAccessNotAllowedChilds = true;
                         }
                         
                     }
