@@ -191,7 +191,12 @@ namespace Papper.Internal
                     plcObject = new PlcTime(value);
                     break;
                 case "TOD":
+                case "TIME_OF_DAY":
                     plcObject = new PlcTimeOfDay(value);
+                    break;
+                case "LTOD":
+                case "LTIME_OF_DAY":
+                    plcObject = new PlcLTimeOfDay(value);
                     break;
                 case "UDI":
                 case "UDINT":
@@ -540,7 +545,7 @@ namespace Papper.Internal
                     ExceptionThrowHelper.ThrowArgumentNullException(nameof(t));
                 }
 
-                var mapping = useMapping ?? t.GetTypeInfo().GetCustomAttributes<MappingAttribute>().FirstOrDefault(m => m.Name == name);
+                var mapping = useMapping ?? t?.GetTypeInfo().GetCustomAttributes<MappingAttribute>().FirstOrDefault(m => m.Name == name);
                 if (mapping?.Name == name)
                 {
                     nodePathStack.Pop();
@@ -568,14 +573,18 @@ namespace Papper.Internal
         }
 
 
-        private static string NormalizeTypeName(string name)
+        private static string NormalizeTypeName(string? name)
         {
-            var result = new StringBuilder();
-            foreach (var c in name.Where(c => c != '.'))
+            if (!string.IsNullOrEmpty(name))
             {
-                result.Append(c);
+                var result = new StringBuilder();
+                foreach (var c in name.Where(c => c != '.'))
+                {
+                    result.Append(c);
+                }
+                return result.ToString();
             }
-            return result.ToString();
+            return string.Empty;
         }
 
         /// <summary>
@@ -610,7 +619,16 @@ namespace Papper.Internal
 
                     if (plcObject is PlcArray plcObjectArray && (plcObjectArray.LeafElementType ?? plcObjectArray.ArrayType) is PlcStruct)
                     {
-                        plcObjectArray.ArrayType = GetMetaData(tree, plcObjectArray.ElemenType!);
+                        PlcArray current = plcObjectArray;
+                        while (current?.ArrayType is PlcArray sub)
+                        {
+                            current = sub;
+                        }
+
+                        if(current != null)
+                        {
+                            current.ArrayType = GetMetaData(tree, plcObjectArray.ElemenType!);
+                        }
                     }
                     else if (plcObject is PlcStruct)
                     {
@@ -687,6 +705,7 @@ namespace Papper.Internal
             {
                 var prevIsBool = pred is PlcBool;
                 var curIsBool = cur is PlcBool;
+                var prevIsString = pred is PlcString;
                 var prevIsByte = pred is PlcByte || pred is PlcChar;
                 var curIsByte = cur is PlcByte || cur is PlcChar;
                 var prevIsArray = pred is PlcArray;
@@ -705,7 +724,9 @@ namespace Papper.Internal
                         !((prevIsByte && curIsByte) ||
                           (prevIsByte && curIsBool) ||
                           (prevIsBool && curIsByte) ||
-                          (prevIsBool && curIsBool)))
+                          (prevIsBool && curIsBool) ||
+                          (prevIsString && curIsBool) ||
+                          (prevIsString && curIsByte)))
                     {
                         byteOffset += 1;
                         bitOffset = 0;

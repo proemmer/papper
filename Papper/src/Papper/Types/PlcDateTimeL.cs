@@ -28,7 +28,8 @@ namespace Papper.Types
                                            source[3],
                                            source[5],
                                            source[6],
-                                           source[7]),
+                                           source[7], 
+                                           DateTimeKind.Unspecified),
                                            nanoseconds);
         }
 

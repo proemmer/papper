@@ -4,7 +4,9 @@ using Papper.Tests.Util;
 using PapperTests.Mappings;
 using PMSComponentHost.VTagStorerLoader;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using Xunit;
@@ -24,6 +26,31 @@ namespace Papper.Tests
             _converter = new ConsoleOutputConverter(testOutputHelper);
             Console.SetOut(_converter);
         }
+
+        [Fact]
+        public void DictTest()
+        {
+            var s = new PlcDataMapperSerializer();
+            var tt = new StringArrayTestMapping
+            {
+                TEST = "Hallo",
+                TEXT = new string[] { "HHHHHH" },
+                Time = new TimeSpan[] { DateTime.Now.TimeOfDay }
+            };
+            var dd = new Dictionary<string, object>
+            {
+                {  "TEST" , tt.TEST },
+                {  "TEXT" , tt.TEXT},
+                {  "Time" , tt.Time }
+            };
+
+            var serialized = s.Serialize(typeof(StringArrayTestMapping), dd);
+            var serialized1 = s.Serialize(tt);
+
+            Assert.True(serialized.SequenceEqual(serialized1));
+
+        }
+
 
 
         [Fact]
@@ -156,6 +183,7 @@ namespace Papper.Tests
 
             Assert.Equal(expected, data);
         }
+
 
 
 

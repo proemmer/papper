@@ -35,6 +35,7 @@ namespace Papper.Types
         {
             { "S5Time", typeof(PlcS5Time) },
             { "TimeOfDay", typeof(PlcTimeOfDay) },
+            { "LTimeOfDay", typeof(PlcLTimeOfDay) },
             { "Bit", typeof(PlcBool) },
             { "Byte", typeof(PlcByte) },
             { "SInt", typeof(PlcSInt) },
@@ -111,20 +112,15 @@ namespace Papper.Types
                 var dimensions = 0;
 
 
-                if (plcType != null || _typeMatch.TryGetValue(elementType, out plcType))
+                if (elementType?.IsArray == true)
                 {
-                    element = Activator.CreateInstance(plcType, name) as PlcObject;
-                    UpdateSize(pi, element);
-                }
-                else if (elementType.IsArray)
-                {
-                    while (elementType.IsArray)
+                    while (elementType?.IsArray == true)
                     {
                         elementType = elementType.GetElementType();
                         dimensions++;
                     }
 
-                    if (_typeMatch.TryGetValue(elementType, out plcType))
+                    if (elementType != null && _typeMatch.TryGetValue(elementType, out plcType))
                     {
                         element = Activator.CreateInstance(plcType, name) as PlcObject;
                         UpdateSize(pi, element);
@@ -140,6 +136,11 @@ namespace Papper.Types
                         element = Activator.CreateInstance(typeof(PlcArray), string.Empty, element, 0, 0) as PlcObject;
                         UpdateSize(pi, element, i);
                     }
+                }
+                else if(plcType != null || (elementType != null && _typeMatch.TryGetValue(elementType, out plcType)))
+                {
+                    element = Activator.CreateInstance(plcType, name) as PlcObject;
+                    UpdateSize(pi, element);
                 }
                 else
                 {

@@ -146,12 +146,12 @@ namespace Papper.Types
                 return InternalConvert<ulong>(plcObjectBinding, data);
             }
 
-            if (type == typeof(PlcDate) || type == typeof(PlcDateTime) || type == typeof(PlcLDateTime))
+            if (type == typeof(PlcDate) || type == typeof(PlcDateTime) || type == typeof(PlcLDateTime) || type == typeof(PlcDateTimeL))
             {
                 return InternalConvert<DateTime>(plcObjectBinding, data);
             }
 
-            if (type == typeof(PlcS5Time) || type == typeof(PlcTime) || type == typeof(PlcTimeOfDay) || type == typeof(PlcLTime))
+            if (type == typeof(PlcS5Time) || type == typeof(PlcTime) || type == typeof(PlcTimeOfDay) || type == typeof(PlcLTime) || type == typeof(PlcLTimeOfDay))
             {
                 return InternalConvert<TimeSpan>(plcObjectBinding, data);
             }
