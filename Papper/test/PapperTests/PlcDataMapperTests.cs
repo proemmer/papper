@@ -3,6 +3,7 @@ using Insite.Customer.Data.DB_BST1_Geraete_1_Konfig;
 using Insite.Customer.Data.DB_BST1_Regal_1_Konfig;
 using Insite.Customer.Data.DB_BST3_ChargenRV;
 using Insite.Customer.Data.DB_IPSC_Konfig;
+using Insite.Customer.Data.DB_Setting_BST1;
 using Insite.Customer.Data.DB_Setup_AGV_BST1;
 using Insite.Customer.Data.DB_SpindlePos_BST1;
 using Papper;
@@ -38,25 +39,26 @@ namespace Papper.Tests
         public PlcDataMapperTests(ITestOutputHelper output)
         {
             _output = output;
-            _papper.AddMapping(typeof(DB_BST3_ChargenRV));
-            _papper.AddMapping(typeof(DB_BST1_ChargenRV));
-            _papper.AddMapping(typeof(DB_Setup_AGV_BST1));
-            _papper.AddMapping(typeof(DB_SpindlePos_BST1));
-            _papper.AddMapping(typeof(DB_IPSC_Konfig));
-            _papper.AddMapping(typeof(DB_BST4_Boxen_1_Konfig));
-            _papper.AddMapping(typeof(DB_BST1_Regal_1_Konfig));
-            _papper.AddMapping(typeof(SampleData));
-            _papper.AddMapping(typeof(SampleDataSubstruct));
-            _papper.AddMapping(typeof(DB_Safety));
-            _papper.AddMapping(typeof(ArrayTestMapping));
-            _papper.AddMapping(typeof(StringArrayTestMapping));
-            _papper.AddMapping(typeof(PrimitiveValuesMapping));
-            _papper.AddMapping(typeof(DB_MotionHMI));
-            _papper.AddMapping(typeof(MSpindleInterface));
-            _papper.AddMapping(typeof(RfData));
-            _papper.AddMapping(typeof(DB_BST_An_Abwahl_BST1));
-            _papper.AddMapping(typeof(DB_BST1_Geraete_1_Konfig));
-            _papper.AddMapping(typeof(SampleDataAccessNames));
+            //_papper.AddMapping(typeof(DB_BST3_ChargenRV));
+            //_papper.AddMapping(typeof(DB_BST1_ChargenRV));
+            //_papper.AddMapping(typeof(DB_Setup_AGV_BST1));
+            //_papper.AddMapping(typeof(DB_SpindlePos_BST1));
+            //_papper.AddMapping(typeof(DB_IPSC_Konfig));
+            //_papper.AddMapping(typeof(DB_BST4_Boxen_1_Konfig));
+            //_papper.AddMapping(typeof(DB_BST1_Regal_1_Konfig));
+            //_papper.AddMapping(typeof(SampleData));
+            //_papper.AddMapping(typeof(SampleDataSubstruct));
+            //_papper.AddMapping(typeof(DB_Safety));
+            //_papper.AddMapping(typeof(ArrayTestMapping));
+            //_papper.AddMapping(typeof(StringArrayTestMapping));
+            //_papper.AddMapping(typeof(PrimitiveValuesMapping));
+            //_papper.AddMapping(typeof(DB_MotionHMI));
+            //_papper.AddMapping(typeof(MSpindleInterface));
+            //_papper.AddMapping(typeof(RfData));
+            //_papper.AddMapping(typeof(DB_BST_An_Abwahl_BST1));
+            //_papper.AddMapping(typeof(DB_BST1_Geraete_1_Konfig));
+            //_papper.AddMapping(typeof(SampleDataAccessNames));
+            _papper.AddMapping(typeof(DB_Setting_BST1));
 
 
         }
@@ -578,6 +580,7 @@ namespace Papper.Tests
         [InlineData("DB_BST1_Regal_1_Konfig.This", "Regal.Fach[1].aktiv", true, "Regal.Fach[1].fertig", true)]
         [InlineData("DB_IPSC_Konfig.This", "ZP[2].UNIV_aktiv", true, "ZP[2].Ausw.UNIV_Ergebnis.IO_Nr", 1)]
         [InlineData("DB_SpindlePos_BST1.This", "N57_Pos[2].PosX", 2, "ActPosX", 1)]
+        
         public async Task PerformReadStruct(string address, string propertyWritable, object valueWritable, string propertyReadonly, object valueReadonly)
         {
             var readResults = await _papper.ReadAsync(PlcReadReference.FromAddress(address)).ConfigureAwait(false);
@@ -602,6 +605,13 @@ namespace Papper.Tests
             Assert.Equal(res2, res4);
         }
 
+        [Theory]
+        [InlineData("DB_Setting_BST1.\"E79.4 von GeräteSS X0 FOM060 links zuweisen\"")]
+        public async Task PerformReadVariable(string address)
+        {
+            var readResults = await _papper.ReadAsync(PlcReadReference.FromAddress(address)).ConfigureAwait(false);
+
+        }
 
         [Theory]
         [InlineData("DB_BST1_ChargenRV.This")]

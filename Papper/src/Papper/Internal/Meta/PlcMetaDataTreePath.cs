@@ -3,13 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Papper.Internal
 {
     internal class PlcMetaDataTreePath : ITreePath
     {
         public const string Separator = ".";
-        private static readonly string[] _splitSeparator = { Separator };
+        private static readonly Regex _regexSplitByDot = new("[.]{1}(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))", RegexOptions.Compiled);
         private readonly List<string> _nodes = new();
         private int[]? _arrayIndizes;
 
@@ -49,7 +50,7 @@ namespace Papper.Internal
 
             if (!string.IsNullOrWhiteSpace(path))
             {
-                _nodes.AddRange(path.Split(_splitSeparator, StringSplitOptions.None));
+                _nodes.AddRange(_regexSplitByDot.Split(path));
             }
         }
 

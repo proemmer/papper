@@ -1,4 +1,5 @@
 ﻿using Insite.Customer.Data;
+using Insite.Customer.Data.DB_Setting_BST1;
 using Papper.Tests.Mappings;
 using Papper.Tests.Util;
 using PapperTests.Mappings;
@@ -104,6 +105,20 @@ namespace Papper.Tests
             var size = s.SerializedByteSize<PLCDataPMS>();
             var deserialized = s.Deserialize<PLCDataPMS>(_data);
 
+
+        }
+
+        [Fact]
+        public void TestSerialisation3()
+        {
+            var s = new PlcDataMapperSerializer();
+            var tt = new DB_Setting_BST1
+            {
+                E79__4 = true
+            };
+            var size = s.SerializedByteSize<DB_Setting_BST1>();
+            var dd= s.Serialize<DB_Setting_BST1>(tt);
+            var deserialized = s.Deserialize<DB_Setting_BST1>(dd);
 
         }
 
