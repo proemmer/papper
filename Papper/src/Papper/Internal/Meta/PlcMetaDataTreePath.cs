@@ -11,6 +11,7 @@ namespace Papper.Internal
     {
         public const string Separator = ".";
         private static readonly Regex _regexSplitByDot = new("[.]{1}(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))", RegexOptions.Compiled);
+        private static readonly Regex _regexSplitByOpenBracket = new("[\\[\\]]{1}(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))", RegexOptions.Compiled);
         private readonly List<string> _nodes = new();
         private int[]? _arrayIndizes;
 
@@ -110,7 +111,7 @@ namespace Papper.Internal
             get
             {
                 var node = _nodes.FirstOrDefault();
-                return node != null ? node.Split(new[] { "[", "]" }, StringSplitOptions.RemoveEmptyEntries)[0] : string.Empty;
+                return node != null ? _regexSplitByOpenBracket.Split(node)[0] : string.Empty;
             }
         }
 
@@ -126,7 +127,7 @@ namespace Papper.Internal
                 var node = _nodes.FirstOrDefault();
                 if (node != null)
                 {
-                    var v = node.Split(new[] { "[", "]" }, StringSplitOptions.RemoveEmptyEntries);
+                    var v = _regexSplitByOpenBracket.Split(node).Where(x => !string.IsNullOrWhiteSpace(x));
                     _arrayIndizes = !node.StartsWith("[", false, CultureInfo.InvariantCulture) ? v.Skip(1).Select(int.Parse).ToArray() : v.Select(int.Parse).ToArray();
                 }
                 else

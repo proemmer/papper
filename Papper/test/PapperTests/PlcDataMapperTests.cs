@@ -39,25 +39,25 @@ namespace Papper.Tests
         public PlcDataMapperTests(ITestOutputHelper output)
         {
             _output = output;
-            //_papper.AddMapping(typeof(DB_BST3_ChargenRV));
-            //_papper.AddMapping(typeof(DB_BST1_ChargenRV));
-            //_papper.AddMapping(typeof(DB_Setup_AGV_BST1));
-            //_papper.AddMapping(typeof(DB_SpindlePos_BST1));
-            //_papper.AddMapping(typeof(DB_IPSC_Konfig));
-            //_papper.AddMapping(typeof(DB_BST4_Boxen_1_Konfig));
-            //_papper.AddMapping(typeof(DB_BST1_Regal_1_Konfig));
-            //_papper.AddMapping(typeof(SampleData));
-            //_papper.AddMapping(typeof(SampleDataSubstruct));
-            //_papper.AddMapping(typeof(DB_Safety));
-            //_papper.AddMapping(typeof(ArrayTestMapping));
-            //_papper.AddMapping(typeof(StringArrayTestMapping));
-            //_papper.AddMapping(typeof(PrimitiveValuesMapping));
-            //_papper.AddMapping(typeof(DB_MotionHMI));
-            //_papper.AddMapping(typeof(MSpindleInterface));
-            //_papper.AddMapping(typeof(RfData));
-            //_papper.AddMapping(typeof(DB_BST_An_Abwahl_BST1));
-            //_papper.AddMapping(typeof(DB_BST1_Geraete_1_Konfig));
-            //_papper.AddMapping(typeof(SampleDataAccessNames));
+            _papper.AddMapping(typeof(DB_BST3_ChargenRV));
+            _papper.AddMapping(typeof(DB_BST1_ChargenRV));
+            _papper.AddMapping(typeof(DB_Setup_AGV_BST1));
+            _papper.AddMapping(typeof(DB_SpindlePos_BST1));
+            _papper.AddMapping(typeof(DB_IPSC_Konfig));
+            _papper.AddMapping(typeof(DB_BST4_Boxen_1_Konfig));
+            _papper.AddMapping(typeof(DB_BST1_Regal_1_Konfig));
+            _papper.AddMapping(typeof(SampleData));
+            _papper.AddMapping(typeof(SampleDataSubstruct));
+            _papper.AddMapping(typeof(DB_Safety));
+            _papper.AddMapping(typeof(ArrayTestMapping));
+            _papper.AddMapping(typeof(StringArrayTestMapping));
+            _papper.AddMapping(typeof(PrimitiveValuesMapping));
+            _papper.AddMapping(typeof(DB_MotionHMI));
+            _papper.AddMapping(typeof(MSpindleInterface));
+            _papper.AddMapping(typeof(RfData));
+            _papper.AddMapping(typeof(DB_BST_An_Abwahl_BST1));
+            _papper.AddMapping(typeof(DB_BST1_Geraete_1_Konfig));
+            _papper.AddMapping(typeof(SampleDataAccessNames));
             _papper.AddMapping(typeof(DB_Setting_BST1));
 
 

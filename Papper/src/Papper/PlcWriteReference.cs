@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Papper
 {
@@ -9,7 +10,7 @@ namespace Papper
     public struct PlcWriteReference : IPlcReference, IEquatable<PlcWriteReference>
     {
         private readonly int _dot;
-
+        private static readonly Regex _regexSplitByDot = new("[.]{1}(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))", RegexOptions.Compiled);
 
         /// mapping part of the address
         /// </summary>
@@ -43,7 +44,15 @@ namespace Papper
         {
             Address = address;
             Value = value ?? ExceptionThrowHelper.ThrowArgumentNullException<object>(nameof(value));
-            _dot = address == null ? -1 : address.IndexOf(".", System.StringComparison.InvariantCulture);
+            if (address == null)
+            {
+                _dot = -1;
+            }
+            else
+            {
+                Match firstMatch = _regexSplitByDot.Match(address);
+                _dot = firstMatch.Success ? firstMatch.Index : -1;
+            }
 
         }
 

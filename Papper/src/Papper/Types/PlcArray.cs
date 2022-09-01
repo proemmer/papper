@@ -5,7 +5,9 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Papper.Types
 {
@@ -17,6 +19,7 @@ namespace Papper.Types
         private readonly Dictionary<Type, object> _typeInstances = new();
         private readonly Dictionary<int, ITreeNode> _indexCache = new();
         private readonly PlcSize _size = new();
+        private static readonly Regex _regexSplitBy = new("[\\]]{1}(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))", RegexOptions.Compiled);
         private PlcObject _arrayType;
         private int _from;
         private int _to;
@@ -447,7 +450,8 @@ namespace Papper.Types
             {
                 var nodes = new List<string>();
                 var first = path.Nodes.First();
-                nodes.Add(first.Substring(first.IndexOf(']') + 1));
+                Match firstMatch = _regexSplitBy.Match(first);
+                nodes.Add(first[(firstMatch.Index + 1)..]);
                 nodes.AddRange(path.Nodes.Skip(1));
                 return new PlcMetaDataTreePath(nodes.Aggregate((a, b) => a + PlcMetaDataTreePath.Separator + b));
             }
