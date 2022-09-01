@@ -20,6 +20,7 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>C:\Projects\Tools\signatures\papper\papper.pfx</AssemblyOriginatorKeyFile>
     <PackageReleaseNotes>
+		* ., [ and ] in variable are now allowed if thea are between ""
 		* added additional type (LTOD)
 		* multiarray fixes
 		* after string offset calculation fix
