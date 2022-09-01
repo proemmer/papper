@@ -111,6 +111,9 @@ namespace Insite.Customer.Data.DB_Setting_BST1
         [AliasName("\"E79.5\"")]
         [SymbolicAccessName("\"E79.5\"")]
         public bool E79__5 { get; set; }
+        [AliasName("\"E79.5[]\"")]
+        [SymbolicAccessName("\"E79.5[]\"")]
+        public bool E99__5 { get; set; }
         public DB_Setting_BST1_gescannte_Sachnummer gescannte_Sachnummer { get; set; }
 
     }

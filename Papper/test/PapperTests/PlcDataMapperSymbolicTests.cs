@@ -3,6 +3,7 @@ using Insite.Customer.Data.DB_BST1_Geraete_1_Konfig;
 using Insite.Customer.Data.DB_BST1_Regal_1_Konfig;
 using Insite.Customer.Data.DB_BST3_ChargenRV;
 using Insite.Customer.Data.DB_IPSC_Konfig;
+using Insite.Customer.Data.DB_Setting_BST1;
 using Insite.Customer.Data.DB_Setup_AGV_BST1;
 using Insite.Customer.Data.DB_SpindlePos_BST1;
 using Insite.Customer.Data.DB_ZK_Storage_BandG;
@@ -58,6 +59,7 @@ namespace Papper.Tests
             _papper.AddMapping(typeof(SampleDataAccessNames));
             _papper.AddMapping(typeof(DB_TestCTT));
             _papper.AddMapping(typeof(DB_ZK_Storage_BandG));
+            _papper.AddMapping(typeof(DB_Setting_BST1));
 
         }
 
@@ -128,6 +130,19 @@ namespace Papper.Tests
             IEnumerable<string> vars = _papper.GetVariableBlocksWithNotAccessableListOf(mapping, VariableListTypes.Read, out var notAcessible);
             var cc = notAcessible.ToList();
             Assert.Equal(expectedVariables, vars.Count());
+        }
+
+
+        [Fact]
+        public void TestSerialisation3()
+        {
+            string mapping = "DB_Setting_BST1";
+            Dictionary<string, object> accessDict = new Dictionary<string, object> {
+                    { "\"E79.4 von GeräteSS X0 FOM060 links zuweisen\"", true },
+                    { "\"E79.5[]\"", true}
+                };
+
+            Test(mapping, accessDict, false);
         }
 
         [Fact]
