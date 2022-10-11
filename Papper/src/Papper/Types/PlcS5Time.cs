@@ -41,9 +41,9 @@ namespace Papper.Types
             return new TimeSpan(number);  // Is this really correct?
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
+        public override void ConvertToRaw(object? value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            var time = (TimeSpan)value;
+            var time = value is TimeSpan ts ? ts : TimeSpan.MinValue;
             byte valueBase;
             int val;
 

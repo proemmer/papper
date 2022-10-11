@@ -618,7 +618,7 @@ namespace Papper.Tests
                     Assert.Equal(ExecutionResult.Ok, item.ActionResult);
                     _output.WriteLine($"WriteAsync: {item.ActionResult}");
                 }
-                await Task.Delay(200).ConfigureAwait(false);
+                await Task.Delay(250).ConfigureAwait(false);
             }
 
             await Task.Delay(1000).ConfigureAwait(false);

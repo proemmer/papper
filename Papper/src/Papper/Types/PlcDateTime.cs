@@ -70,9 +70,9 @@ namespace Papper.Types
             return _epochTime;
         }
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
+        public override void ConvertToRaw(object? value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            var dateTime = (DateTime)value;
+            var dateTime = value is DateTime dt ? dt : _epochTime;
 
             var tmp = dateTime.Year - ((dateTime.Year / 100) * 100);
             data[plcObjectBinding.Offset] = Convert.ToByte((tmp / 10) << 4 | tmp % 10);

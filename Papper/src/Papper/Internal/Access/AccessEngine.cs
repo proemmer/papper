@@ -2,6 +2,7 @@
 using Papper.Internal;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using static Papper.PlcDataMapper;
 
@@ -9,7 +10,7 @@ namespace Papper.Access
 {
     internal abstract class AccessEngine : IDisposable
     {
-        internal delegate bool GetMapping(string mapping, out IEntry entry, bool allowAdd = true);
+        internal delegate bool GetMapping(string mapping, [MaybeNullWhen(false)] out IEntry entry, bool allowAdd = true);
 
 
         protected readonly ReadOperation? _readEventHandler;
@@ -55,7 +56,7 @@ namespace Papper.Access
         internal abstract List<Execution> DetermineExecutions<T>(IEnumerable<T> vars) where T : IPlcReference;
         internal abstract Dictionary<Execution, DataPack> UpdateableItems(List<Execution> executions, bool onlyOutdated, Func<IEnumerable<string>, DateTime, bool>? forceUpdate = null);
 
-        internal abstract bool GetOrAddMapping(string mapping, out IEntry entry);
+        internal abstract bool GetOrAddMapping(string mapping, [MaybeNullWhen(false)] out IEntry entry);
 
 
 

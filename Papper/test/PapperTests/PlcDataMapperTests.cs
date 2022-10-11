@@ -408,6 +408,7 @@ namespace Papper.Tests
             var t = new Stopwatch();
             t.Start();
             var result = _papper.ReadAsync(PlcReadReference.FromAddress($"{mapping}")).GetAwaiter().GetResult();
+            Assert.NotNull(result);
             t.Stop();
         }
 
@@ -423,6 +424,7 @@ namespace Papper.Tests
                                            PlcReadReference.FromAddress($"{mapping}.SafeMotion.Header.States.ChecksumInvalid"));
 
             var result2 = await _papper.ReadBytesAsync(new List<PlcReadReference> { PlcReadReference.FromAddress($"{mapping}.SafeMotion") }).ConfigureAwait(false);
+            Assert.NotNull(result2);
             await result1.ConfigureAwait(false);
             t.Stop();
         }
@@ -530,6 +532,7 @@ namespace Papper.Tests
             var address = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}")).RawAddress<byte>();
             var result = _papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult().FirstOrDefault();
             var x = ser.Deserialize<DB_Safety>((byte[])result.Value);
+            Assert.NotNull(x);
             t.Stop();
         }
 
@@ -657,7 +660,7 @@ namespace Papper.Tests
 
             //Byte data check
             var dbData = MockPlc.Instance.GetPlcEntry("DB30").Data;
-            Assert.True(dbData.Slice(0, 2).Span.SequenceEqual(new byte[] { 35, 5 }));
+            Assert.True(dbData[..2].Span.SequenceEqual(new byte[] { 35, 5 }));
             Assert.True(dbData.Slice(2, 5).Span.SequenceEqual("TEST1".ToByteArray(5)));
 
             Assert.True(dbData.Slice(152, 2).Span.SequenceEqual(new byte[] { 35, 5 }));
@@ -711,8 +714,8 @@ namespace Papper.Tests
             var res = Convert.ToSingle(BinaryPrimitives.ReadInt32BigEndian(data1));
 
             var data4 = new Span<byte>(new byte[4]);
-            Converter.WriteSingleBigEndian(data4, s);
-            var x4 = Converter.ReadSingleBigEndian(data4);
+            BinaryPrimitives.WriteSingleBigEndian(data4, s);
+            var x4 = BinaryPrimitives.ReadSingleBigEndian(data4);
         }
 
 
@@ -1015,7 +1018,7 @@ namespace Papper.Tests
                 if (!item.HasBitMask)
                 {
                     Console.WriteLine($"OnWrite: selector:{item.Selector}; offset:{item.Offset}; length:{item.Length}");
-                    item.Data.Slice(0, item.Length).CopyTo(entry.Data.Slice(item.Offset, item.Length));
+                    item.Data[..item.Length].CopyTo(entry.Data.Slice(item.Offset, item.Length));
                     item.ApplyResult(ExecutionResult.Ok);
                 }
                 else

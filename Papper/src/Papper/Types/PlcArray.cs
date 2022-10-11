@@ -179,7 +179,10 @@ namespace Papper.Types
                 if (!_typeInstances.TryGetValue(plcObjectBinding.MetaData.ElemenType, out var instance))
                 {
                     instance = Activator.CreateInstance(plcObjectBinding.MetaData.ElemenType);
-                    _typeInstances.Add(plcObjectBinding.MetaData.ElemenType, instance);
+                    if (instance != null)
+                    {
+                        _typeInstances.Add(plcObjectBinding.MetaData.ElemenType, instance);
+                    }
                 }
 
                 return InternalConvert(plcObjectBinding, instance ?? null, data, true, plcObjectBinding.MetaData.ElemenType);
@@ -189,7 +192,7 @@ namespace Papper.Types
         }
 
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
+        public override void ConvertToRaw(object? value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
             var list = value as IEnumerable;
             var type = ArrayType.GetType();

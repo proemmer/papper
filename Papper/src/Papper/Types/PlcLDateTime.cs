@@ -15,10 +15,18 @@ namespace Papper.Types
             => Size = _size;
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
-            => data.IsEmpty ? _epochTime : _epochTime.AddTicks(BinaryPrimitives.ReadInt64BigEndian(data.Slice(plcObjectBinding.Offset)) / 100);
+            => data.IsEmpty ? _epochTime : _epochTime.AddTicks(BinaryPrimitives.ReadInt64BigEndian(data[plcObjectBinding.Offset..]) / 100);
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
-            => BinaryPrimitives.TryWriteInt64BigEndian(data.Slice(plcObjectBinding.Offset), (((DateTime)value).Ticks - _epochTime.Ticks) * 100);
-
+        public override void ConvertToRaw(object? value, PlcObjectBinding plcObjectBinding, Span<byte> data)
+        {
+            if (value is DateTime dt)
+            {
+                BinaryPrimitives.TryWriteInt64BigEndian(data[plcObjectBinding.Offset..], (dt.Ticks - _epochTime.Ticks) * 100);
+            }
+            else
+            {
+                BinaryPrimitives.TryWriteInt64BigEndian(data[plcObjectBinding.Offset..], (_epochTime.Ticks) * 100);
+            }
+        }
     }
 }

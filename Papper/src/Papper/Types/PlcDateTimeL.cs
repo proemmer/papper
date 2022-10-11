@@ -20,9 +20,9 @@ namespace Papper.Types
             {
                 return _epochTime;
             }
-            var source = data.Slice(plcObjectBinding.Offset);
+            var source = data[plcObjectBinding.Offset..];
             var year = (int)BinaryPrimitives.ReadUInt16BigEndian(source);
-            var nanoseconds = (int)(BinaryPrimitives.ReadUInt32BigEndian(source.Slice(8)));
+            var nanoseconds = (int)(BinaryPrimitives.ReadUInt32BigEndian(source[8..]));
             return AddNanoseconds(new DateTime(year,
                                            source[2],
                                            source[3],
@@ -34,10 +34,10 @@ namespace Papper.Types
         }
 
 
-        public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
+        public override void ConvertToRaw(object? value, PlcObjectBinding plcObjectBinding, Span<byte> data)
         {
-            var dt = (DateTime)value;
-            var destination = data.Slice(plcObjectBinding.Offset);
+            var dt = value is DateTime d ? d : _epochTime;
+            var destination = data[plcObjectBinding.Offset..];
             BinaryPrimitives.WriteUInt16BigEndian(destination, (ushort)dt.Year);
             destination[2] = (byte)dt.Month;
             destination[3] = (byte)dt.Day;
@@ -45,7 +45,7 @@ namespace Papper.Types
             destination[5] = (byte)dt.Hour;
             destination[6] = (byte)dt.Minute;
             destination[7] = (byte)dt.Second;
-            BinaryPrimitives.WriteUInt32LittleEndian(destination.Slice(8), (uint)((dt.Millisecond * 1000000) + GetNanoseconds(dt)));
+            BinaryPrimitives.WriteUInt32LittleEndian(destination[8..], (uint)((dt.Millisecond * 1000000) + GetNanoseconds(dt)));
         }
 
 

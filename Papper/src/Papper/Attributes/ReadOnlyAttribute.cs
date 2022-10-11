@@ -63,7 +63,7 @@ namespace Papper.Attributes
         /// <internalonly/>
         /// <devdoc>
         /// </devdoc>
-        public override bool Equals(object value)
+        public override bool Equals(object? value)
         {
             if (this == value)
             {
