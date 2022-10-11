@@ -14,10 +14,10 @@ namespace Papper.Types
             => Size = _size;
 
         public override object ConvertFromRaw(PlcObjectBinding plcObjectBinding, Span<byte> data)
-         => data.IsEmpty ? default : Converter.ReadSingleBigEndian(data.Slice(plcObjectBinding.Offset));
+         => data.IsEmpty ? default : Converter.ReadSingleBigEndian(data.Slice(plcObjectBinding.Offset, _size.Bytes));
 
 
         public override void ConvertToRaw(object value, PlcObjectBinding plcObjectBinding, Span<byte> data)
-         => Converter.WriteSingleBigEndian(data.Slice(plcObjectBinding.Offset), Convert.ToSingle(value, CultureInfo.InvariantCulture));
+         => Converter.WriteSingleBigEndian(data.Slice(plcObjectBinding.Offset, _size.Bytes), Convert.ToSingle(value, CultureInfo.InvariantCulture));
     }
 }
