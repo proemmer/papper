@@ -12,6 +12,8 @@ using Xunit.Abstractions;
 
 namespace Papper.Tests
 {
+
+    [Collection("Sequential")]
     public sealed class SymbolicSubscriptionTests : IDisposable
     {
         private static readonly Dictionary<string, object> _mockPlc = new();

@@ -16,7 +16,20 @@ namespace Papper
         /// <param name="data"></param>
         /// <returns></returns>
         public byte[] Serialize<T>(T data)
-            => Serialize(typeof(T), data);
+        {
+            var type = typeof(T);
+            if(type == typeof(object) && data != null)
+            {
+                // try to handle objects
+                type = data?.GetType();
+            }
+            if(type == null || type == typeof(object))
+            {
+                ExceptionThrowHelper.ThrowMappingAttributeNotFoundForPlcTypeNameException(type?.ToString()?? string.Empty);
+                return Array.Empty<byte>();
+            }
+            return Serialize(type, data);
+        }
 
         /// <summary>
         /// Converts a data type to a plc known format.
