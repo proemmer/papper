@@ -203,8 +203,173 @@ DB[Number]: DataBlock Area
 
 
 
+# Attributes
 
-# Release Notes
-* 1.0.6:
-    * migrated to VS2017 and C#7.
-    * Refactoring
+Papper uses a couple of attributes to specify the mapping of the plc data to a dotnet class.
+
+## Mapping
+
+```cs
+[Mapping("DB_Safety", "DB15", 0, 0)]
+```
+```cs
+MappingAttribute(string name, string selector, int offset = 0, int observationRate = 0)
+```
+
+* name: The name of the block, this will used from papper to find the class by this name.
+* selector: This parameter specifies the selector for the access library. (in case of dacs7 this is the absolute db name, in case of opcua, this is the symbolic name)
+* offset: specify an offset in the data block, if you do not define the full block.  
+* observationRate: this can be used by the access lib to modify the change detection for this block.  
+
+
+## MappingOffset
+
+In the case you have some parts in your block you do not like to specify, you can skip this part.
+
+```cs
+class MySymbolic
+{
+    bool I0_0 {get; set;}  // EA access this is I0.0
+
+    [MappingOffset(200)]
+    bool I200_0 {get; set;}  // EA access this is I200.0
+
+    [MappingOffset(200, 3)]
+    bool I400_3 {get; set;}  // EA access this is I400.3
+}
+
+```
+
+
+```cs
+MappingOffsetAttribute(int byteOffset, int bitOffset = -1)
+```
+
+## ArrayBounds
+
+Because the plc has no dynamic array length, you have to specify the dimensions and the length in the attribute.
+And additionally .net start by 0 but the plc can start anywhere.
+
+
+```cs
+[ArrayBounds(1, 10, 0)]
+public bool[] NotFull { get; set; } 
+```
+
+```cs
+ArrayBoundsAttribute(int from, int to, int dimension = 0)
+```
+## StringLength
+
+Define the length of the string.
+
+```cs
+[PlcType("WString")]
+[StringLength(70)]
+public string Caption { get; set; }
+
+[PlcType("WString")]
+[ArrayBounds(0, 15, 0)]
+[StringLength(25)]
+public string[] Position { get; set; }
+```
+
+## PlcType
+
+To use the correct plc type especially in the case of DateTime and Time types, you are able to specify this attribute:
+
+It can be used on a class or and a property. By using it on a property, you target the following:
+
+### Attribute on Property
+
+The mapping of a .net datatype to a plc datatype is normally be done by an internal mapping list, the following table shows the default mappings:
+
+| .net         | Plc TypeName        |
+|--------------|---------------------|
+| bool         | bit, bool           | 
+| byte         | byte                | 
+| sbyte        | sint | 
+| short        | int | 
+| int          | dint | 
+| double       | lreal | 
+| long         | lint | 
+| ushort       | word | 
+| uint         | dword | 
+| ulong        | lword | 
+| DateTime     | dateandtime | 
+| TimeSpan     | time | 
+| string       | string | 
+| float        | real | 
+| char         | char | 
+
+If you need a more complex type mapping, you are able to add the PlcTypeAttribute on your properties, or use the Serializer method with the Type name in case you need to convert a single value.
+
+| Plc TypeName | .net         | size in bytes |
+|--------------|---------------------|----------|
+|S5Time | TimeSpan | 2 |
+|TimeOfDay | TimeSpan | 4 |
+|LTimeOfDay |TimeSpan | 8 |
+|Bit | bool | 0.1 (single bit) |
+|Bool | bool | 0.1 (single bit) |
+|Byte | byte | 1 |
+|SInt | sbyte | 1 |
+|USInt | byte | 1 |
+|Int | short | 2 |
+|DInt | int  | 4 |
+|UDInt | uint | 4 |
+|LInt | long | 8 |
+|ULInt | ulong | 8 |
+|Word | ushort | 2 |
+|DWord | uint | 4 |
+|LWord | ulong | 8 |
+|DateTime | DateTime | 8 |
+|Date  | DateTime | 2 |
+|LDateTime | DateTime | 8 |
+|DateTimeL | DateTime | 12 |
+|LDT | DateTime | 8 |
+|DTL | DateTime | 12 |
+|Time | TimeSpan | 4 |
+|LTime | TimeSpan | 8 |
+|String | string | 2 + strLength |
+|WString | string | 4 + (strLength * 2) |
+|Real | float | 4 |
+|LReal | double | 8 |
+|Float |  float | 4 |
+|Char | char | 1 |
+|WChar | string | 2
+|S7Counter | int | 2 |
+
+
+### Attribute on Class
+
+In some cases, you need to know the plc type of a class (e.g. the udt name).
+In this case you are able to add this attribute to your class, to use the correct name.
+This can be used if you have a special character in your udt name, or also in case of opcua where you need the udtname + the name of a substructure.
+
+
+## ReadOnly
+
+This attribute is self describing I think.
+
+## NotAccessible
+
+This property is not accessible, but we had defined it for the automatic offset calculation.
+
+
+## SymbolicAccessName
+
+You can generate a data structure from code, and if the variables names not match with the access name, you can redefine the names by adding a SymbolicAccessName on the property.
+
+## AliasName
+
+You can generate a data structure from code, and if the variables names not match with the names in your application, you can redefine the names by adding a AliasName on the property.
+
+## MetaTag
+
+Transport additional information which can be used by an application.
+
+```cs
+MetaTagAttribute(string name, object value)
+```
+
+

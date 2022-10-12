@@ -157,6 +157,7 @@ namespace Papper.Tests
         [InlineData("byte", 0x0A, new byte[] { 0x0A })]
         [InlineData("byte", 0x00, new byte[] { 0x00 })]
         [InlineData("char", 'X', new byte[] { 0x58 })]
+        [InlineData(typeof(DateTime), "Mon 16 Jun 8:30 AM 2008", new byte[] { 0x08, 0x06, 0x16, 0x08, 0x30, 0x00, 0x00, 0x01 })]
         [InlineData("dint", 0, new byte[] { 0x00, 0x00, 0x00, 0x00 })]
         [InlineData("dint", 3, new byte[] { 0x00, 0x00, 0x00, 0x03 })]
         [InlineData("int", 6, new byte[] { 0x00, 0x06 })]
