@@ -1,9 +1,7 @@
-﻿using System;
-using Papper.Attributes;
+﻿using Papper.Attributes;
 
-namespace ProMasterGateway.GatewayService.RequestHandling.RawRequests
+namespace Papper.Tests.Mappings
 {
-#pragma warning disable CS8618 // Ein Non-Nullable-Feld muss beim Beenden des Konstruktors einen Wert ungleich NULL enthalten. Erwägen Sie die Deklaration als Nullable.
     public class ValveHousing
     {
         public float Length { get; set; }
@@ -196,19 +194,19 @@ namespace ProMasterGateway.GatewayService.RequestHandling.RawRequests
         public HotAirDryingResults HotAirDryingResults { get; set; } = new();
         [ArrayBounds(1, 3, 0)]
         public VacuumDryingResults[] VacuumDryingResults { get; set; } = { new VacuumDryingResults(), new VacuumDryingResults(), new VacuumDryingResults() };
-        public bool DeburringOK { get; set; } 
+        public bool DeburringOK { get; set; }
         public bool DeburringMaxTemperatureOK { get; set; }
         public bool DeburringHighPressureOK { get; set; }
-        public bool DeburringConductivityOK { get; set; } 
+        public bool DeburringConductivityOK { get; set; }
         public bool WashingTemperatureOK { get; set; }
         public bool WashingPressureOK { get; set; }
-        public bool WashingConductivityOK { get; set; } 
-        public bool WashingDurationOK { get; set; } 
-        public bool HotAirDryingTemperatureOK { get; set; } 
-        public bool HotAirDryingDurationOK { get; set; } 
-        public bool VacuumDrying1DurationOK { get; set; } 
-        public bool VacuumDrying2DurationOK { get; set; } 
-        public bool VacuumDrying3DurationOK { get; set; } 
+        public bool WashingConductivityOK { get; set; }
+        public bool WashingDurationOK { get; set; }
+        public bool HotAirDryingTemperatureOK { get; set; }
+        public bool HotAirDryingDurationOK { get; set; }
+        public bool VacuumDrying1DurationOK { get; set; }
+        public bool VacuumDrying2DurationOK { get; set; }
+        public bool VacuumDrying3DurationOK { get; set; }
         [ArrayBounds(1, 14, 0)]
         public char[] ReleaseDate { get; set; } = new char[14];
         [ArrayBounds(1, 32, 0)]
@@ -218,6 +216,5 @@ namespace ProMasterGateway.GatewayService.RequestHandling.RawRequests
         [ArrayBounds(1, 24, 0)]
         public byte[] Reserved { get; set; } = new byte[24];
     }
-#pragma warning restore CS8618 // Ein Non-Nullable-Feld muss beim Beenden des Konstruktors einen Wert ungleich NULL enthalten. Erwägen Sie die Deklaration als Nullable.
 }
 

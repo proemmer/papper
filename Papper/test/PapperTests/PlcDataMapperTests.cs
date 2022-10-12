@@ -1,19 +1,15 @@
-﻿using Insite.Customer.Data;
-using Insite.Customer.Data.DB_BST1_Geraete_1_Konfig;
-using Insite.Customer.Data.DB_BST1_Regal_1_Konfig;
-using Insite.Customer.Data.DB_BST3_ChargenRV;
-using Insite.Customer.Data.DB_IPSC_Konfig;
-using Insite.Customer.Data.DB_Setting_BST1;
-using Insite.Customer.Data.DB_Setup_AGV_BST1;
-using Insite.Customer.Data.DB_SpindlePos_BST1;
-using Papper;
+﻿using Papper;
 using Papper.Extensions.Metadata;
 using Papper.Extensions.Notification;
 using Papper.Tests.Mappings;
+using Papper.Tests.Mappings.AGV;
+using Papper.Tests.Mappings.BstAbw;
+using Papper.Tests.Mappings.ChargenRV;
+using Papper.Tests.Mappings.ChargenRV2;
+using Papper.Tests.Mappings.DeviceConfig;
+using Papper.Tests.Mappings.Regal;
 using Papper.Tests.Util;
-using PapperTests.Mappings;
 using System;
-using System.Buffers.Binary;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -208,7 +204,7 @@ namespace Papper.Tests
                     { "SafeMotion.Slots[254].UnitTimestamp",Normalize( DateTime.Now)},
                 };
 
-            Test(mapping, accessDict, new DateTime(1990, 1, 1));  //01.01.1900
+            Test(mapping, accessDict, new DateTime(1970, 1, 1));  //01.01.1900
         }
 
 
@@ -531,8 +527,15 @@ namespace Papper.Tests
             t.Start();
             var address = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}")).RawAddress<byte>();
             var result = _papper.ReadAsync(PlcReadReference.FromAddress(address)).GetAwaiter().GetResult().FirstOrDefault();
-            var x = ser.Deserialize<DB_Safety>((byte[])result.Value);
-            Assert.NotNull(x);
+            if (result.Value is byte[] by)
+            {
+                var x = ser.Deserialize<DB_Safety>(by);
+                Assert.NotNull(x);
+            }
+            else
+            {
+                Assert.True(false, "Invalid reslt type!");
+            }
             t.Stop();
         }
 
@@ -595,7 +598,7 @@ namespace Papper.Tests
             SetPropertyInExpandoObject(readResults[0].Value, propertyWritable, valueWritable);
             SetPropertyInExpandoObject(readResults[0].Value, propertyReadonly, valueReadonly);
 
-            var r = await _papper.WriteAsync(PlcWriteReference.FromAddress(address, readResults[0].Value)).ConfigureAwait(false);
+            await _papper.WriteAsync(PlcWriteReference.FromAddress(address, readResults[0].Value)).ConfigureAwait(false);
 
 
             readResults = await _papper.ReadAsync(PlcReadReference.FromAddress(address)).ConfigureAwait(false);
@@ -613,7 +616,8 @@ namespace Papper.Tests
         public async Task PerformReadVariable(string address)
         {
             var readResults = await _papper.ReadAsync(PlcReadReference.FromAddress(address)).ConfigureAwait(false);
-
+            Assert.Single(readResults);
+            Assert.Equal(ExecutionResult.Ok, readResults[0].ActionResult);
         }
 
         [Theory]
@@ -628,7 +632,7 @@ namespace Papper.Tests
             var readResultsBefore = await _papper.ReadAsync(PlcReadReference.FromAddress(address)).ConfigureAwait(false);
             for (int i = 0; i < 100; i++)
             {
-                var r = await _papper.WriteAsync(PlcWriteReference.FromAddress(address, readResultsBefore[0].Value)).ConfigureAwait(false);
+                await _papper.WriteAsync(PlcWriteReference.FromAddress(address, readResultsBefore[0].Value)).ConfigureAwait(false);
                 var readResultsAfter = await _papper.ReadAsync(PlcReadReference.FromAddress(address)).ConfigureAwait(false);
                 Assert.True(AreDataEqual(readResultsBefore[0].Value, readResultsAfter[0].Value));
             }
@@ -701,27 +705,6 @@ namespace Papper.Tests
         }
 
         [Fact]
-        public void ConvertTest()
-        {
-            var data = new Span<byte>(new byte[] { 0x01, 0x02, 0x03, 0x04 });
-
-            var v2 = BinaryPrimitives.ReadInt32BigEndian(data);
-            var v3 = BinaryPrimitives.ReadInt32LittleEndian(data);
-
-            var data1 = new Span<byte>(new byte[4]);
-            var s = 25.4f;
-            BinaryPrimitives.WriteInt32BigEndian(data1, Convert.ToInt32(s));
-            var res = Convert.ToSingle(BinaryPrimitives.ReadInt32BigEndian(data1));
-
-            var data4 = new Span<byte>(new byte[4]);
-            BinaryPrimitives.WriteSingleBigEndian(data4, s);
-            var x4 = BinaryPrimitives.ReadSingleBigEndian(data4);
-        }
-
-
-
-
-        [Fact]
         public async Task TestInvalidMappings()
         {
 
@@ -738,45 +721,18 @@ namespace Papper.Tests
             await Assert.ThrowsAsync<InvalidVariableException>(() => subscription.AddItemsAsync(PlcWatchReference.FromAddress("DB_Safety.XY", 100))).ConfigureAwait(false);
         }
 
-        [Fact]
-        public void TestGetAddressOf()
+
+        [Theory]
+        [InlineData($"DB_MotionHMI.HMI.MotionLine[8].Txt.Position[1]", 9442, 54)]
+        [InlineData($"DB_Safety2.SafeMotion.Slots", 14, 8670)]
+        [InlineData($"DB_Safety2.SafeMotion.Slots[2]", 82, 34)]
+        [InlineData($"DB_Safety2.SafeMotion.Slots[2].SlotId", 84, 1)]
+        [InlineData($"DB_Safety2.SafeMotion.Slots[2].SafeSlotVersion", 82, 2)]
+        public void TestGetAddressOfType(string address, int offset, int length)
         {
-            var mapping = "DB_Safety2";
-            var result = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}.SafeMotion.Slots"));
-
-
-            Assert.Equal(14, result.Offset.Bytes);
-            Assert.Equal(8670, result.Size.Bytes);
-
-        }
-
-
-        [Fact]
-        public void TestGetAddressOfWString()
-        {
-            var mapping = "DB_MotionHMI";
-            var result = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}.HMI.MotionLine[8].Txt.Position[1]"));
-
-
-            Assert.Equal(9442, result.Offset.Bytes);
-            Assert.Equal(54, result.Size.Bytes);
-
-        }
-
-        [Fact]
-        public void TestGetAddressOfType()
-        {
-            var mapping = "DB_MotionHMI";
-            var result1 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{mapping}.HMI.MotionLine[8].Txt.Position[1]"));
-
-            mapping = "DB_Safety2";
-            var result2 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{ mapping}.SafeMotion.Slots"));
-            var result3 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{ mapping}.SafeMotion.Slots[2]"));
-            var result4 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{ mapping}.SafeMotion.Slots[2].SlotId"));
-            var result5 = _papper.GetAddressOf(PlcReadReference.FromAddress($"{ mapping}.SafeMotion.Slots[2].SafeSlotVersion"));
-
-
-
+            var result = _papper.GetAddressOf(PlcReadReference.FromAddress(address));
+            Assert.Equal(offset, result.Offset.Bytes);
+            Assert.Equal(length, result.Size.Bytes);
         }
 
 
@@ -844,8 +800,8 @@ namespace Papper.Tests
             var exec2 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
             var exec = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", 200) });
 
-            Assert.True(exec[0].Bindings.Values.FirstOrDefault().RawData.Size == 4);
-            Assert.True(exec2[0].Bindings.Values.FirstOrDefault().RawData.Size == 7970);
+            Assert.True(exec[0].Bindings.Values.FirstOrDefault()?.RawData.Size == 4);
+            Assert.True(exec2[0].Bindings.Values.FirstOrDefault()?.RawData.Size == 7970);
 
             await _papper.WriteAsync(write).ConfigureAwait(false);
 
@@ -869,8 +825,8 @@ namespace Papper.Tests
             var exec = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA.Course.WPC_Number", 200) });
             var exec2 = _papper.Engine.DetermineExecutions(new List<PlcWatchReference> { PlcWatchReference.FromAddress("DB_DATA_RF_BST1_PST.DATA", 200) });
 
-            Assert.True(exec[0].Bindings.Values.FirstOrDefault().RawData.Size == 4);
-            Assert.True(exec2[0].Bindings.Values.FirstOrDefault().RawData.Size == 7970);
+            Assert.True(exec[0].Bindings.Values.FirstOrDefault()?.RawData.Size == 4);
+            Assert.True(exec2[0].Bindings.Values.FirstOrDefault()?.RawData.Size == 7970);
 
 
             await _papper.WriteAsync(write).ConfigureAwait(false);
@@ -950,7 +906,7 @@ namespace Papper.Tests
             Assert.Equal(accessDict.Count, result.Length);
             foreach (var item in result)
             {
-                Assert.Equal(defaultValue, (T)item.Value);
+                Assert.Equal(defaultValue, (T?)item.Value);
             }
 
             //Write the value
@@ -961,7 +917,7 @@ namespace Papper.Tests
             Assert.Equal(accessDict.Count, result.Length);
             foreach (var item in result)
             {
-                Assert.Equal((T)accessDict[item.Variable], (T)item.Value);
+                Assert.Equal((T?)accessDict[item.Variable], (T?)item.Value);
             }
         }
 
@@ -1102,7 +1058,7 @@ namespace Papper.Tests
 
         private static object GetPropertyInExpandoObject(dynamic parent, string address) => GetPropertyInExpandoObject(parent, address.Replace("[", ".[", StringComparison.InvariantCultureIgnoreCase).Split('.'));
 
-        private static object GetPropertyInExpandoObject(dynamic parent, IEnumerable<string> parts)
+        private static object? GetPropertyInExpandoObject(dynamic parent, IEnumerable<string> parts)
         {
             var key = parts.First();
             parts = parts.Skip(1);
@@ -1139,30 +1095,33 @@ namespace Papper.Tests
         private static ExpandoObject ToExpando<T>(T instance)
         {
             var obj = new ExpandoObject();
-            foreach (var item in instance.GetType().GetTypeInfo().DeclaredProperties)
+            if (instance != null)
             {
-                if (!item.PropertyType.Namespace.StartsWith("System", false, CultureInfo.InvariantCulture))
+                foreach (var item in instance.GetType().GetTypeInfo().DeclaredProperties)
                 {
-                    AddProperty(obj, item.Name, ToExpando(item.GetValue(instance)));
-                }
-                else
-                {
-                    AddProperty(obj, item.Name, item.GetValue(instance));
+                    if (item.PropertyType.Namespace?.StartsWith("System", false, CultureInfo.InvariantCulture) == true)
+                    {
+                        AddProperty(obj, item.Name, item!.GetValue(instance));
+                    }
+                    else
+                    {
+                        AddProperty(obj, item.Name, ToExpando(item.GetValue(instance)));
+                    }
                 }
             }
             return obj;
         }
 
-        private static void AddProperty(dynamic parent, string name, object value)
+        private static void AddProperty(dynamic parent, string name, object? value)
         {
-            var list = (parent as List<dynamic>);
+            var list = (parent as List<dynamic?>);
             if (list != null)
             {
                 list.Add(value);
             }
             else
             {
-                if (parent is IDictionary<string, object> dictionary)
+                if (parent is IDictionary<string, object?> dictionary)
                 {
                     dictionary[name] = value;
                 }

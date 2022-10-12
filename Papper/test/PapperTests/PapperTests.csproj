@@ -9,7 +9,9 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <RootNamespace>Papper.Tests</RootNamespace>
     <SignAssembly>true</SignAssembly>
+	  <Nullable>enable</Nullable>
     <AssemblyOriginatorKeyFile>C:\Projects\Tools\signatures\papper\papper.pfx</AssemblyOriginatorKeyFile>
+	
   </PropertyGroup>
 
   <ItemGroup>

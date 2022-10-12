@@ -1,10 +1,6 @@
-﻿using Insite.Customer.Data;
-using Insite.Customer.Data.DB_Setting_BST1;
-using Papper.Tests.Mappings;
+﻿using Papper.Tests.Mappings;
+using Papper.Tests.Mappings.Insite.Customer.Data.DATA_ARCHIVE_DB;
 using Papper.Tests.Util;
-using PapperTests.Mappings;
-using PMSComponentHost.VTagStorerLoader;
-using ProMasterGateway.GatewayService.RequestHandling.RawRequests;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -93,12 +89,11 @@ namespace Papper.Tests
 
 
 
-
-
         [Theory]
         [InlineData(nameof(PLCDataPMS))]
         [InlineData(nameof(DB_Setting_BST1))]
         [InlineData(nameof(ProductData))]
+        [InlineData(nameof(DATA_ARCHIVE_DB))]
         public void TestSerialisationAndDeserialisationOfComplexTypes(string type)
         {
             PlcDataMapperSerializer s = new();
@@ -110,7 +105,7 @@ namespace Papper.Tests
 
 
 
-            static object BuildOrValidate(string name, object validationObject = null)
+            static object BuildOrValidate(string name, object? validationObject = null)
             {
                 switch (name)
                 {
@@ -199,8 +194,55 @@ namespace Papper.Tests
                             }
                         }
                         break;
+                    case nameof(DATA_ARCHIVE_DB):
+                        {
+                            var xx = new DATA_VERW_ITEM_UDT[20];
+                            xx[17] = new DATA_VERW_ITEM_UDT
+                            {
+                                CREATE = DateTime.ParseExact("Mon 16 Jun 8:30 AM 2008", "ddd dd MMM h:mm tt yyyy", CultureInfo.InvariantCulture),
+                                SlotPos = 33,
+                                SACHNR = "12345",
+                                ST176 = new DATA_VERW_ITEM_UDT_ST176
+                                {
+                                    ZEIT_PROZESS = TimeSpan.Zero,
+                                    ZEIT_PROZESS_MIN = TimeSpan.MinValue,
+                                    ZEIT_PROZESS_MAX = TimeSpan.MaxValue
+                                }
+                            };
+
+                            if (validationObject == null)
+                            {
+
+                                return new DATA_ARCHIVE_DB
+                                {
+                                    DATA = xx,
+                                    PartTransfer = true,
+                                    
+                                };
+                            }
+                            else
+                            {
+                                if (validationObject is DATA_ARCHIVE_DB pms)
+                                {
+                                    Assert.Equal(xx[17].CREATE, pms.DATA[17].CREATE);
+                                    Assert.Equal(xx[17].SlotPos, pms.DATA[17].SlotPos);
+                                    Assert.Equal(xx[17].SACHNR, pms.DATA[17].SACHNR);
+                                    Assert.Equal(xx[17].ST176.ZEIT_PROZESS, pms.DATA[17].ST176.ZEIT_PROZESS);
+                                    Assert.Equal(TimeSpan.FromMilliseconds(Int32.MinValue), pms.DATA[17].ST176.ZEIT_PROZESS_MIN);
+                                    Assert.Equal(TimeSpan.FromMilliseconds(Int32.MaxValue), pms.DATA[17].ST176.ZEIT_PROZESS_MAX);
+                                    break;
+                                }
+                                Assert.True(false, "Given object is not a ProductData");
+                            }
+                        }
+                        break;
                 }
-                return null;
+
+                if (validationObject == null)
+                {
+                    throw new ArgumentException($"Unknown type {name} given!");
+                }
+                return true; // if validate is ok
             }
 
         }
@@ -259,8 +301,9 @@ namespace Papper.Tests
         {
             DefaultJsonObjectSerializer jsonSerializer = new();
             PlcDataMapperSerializer s = new();
-            object data = jsonSerializer.Deserialize(t, jsonBlockData);
-            string jsonOrigin = jsonSerializer.Serialize(t, data);
+            object? data = jsonSerializer.Deserialize(t, jsonBlockData);
+            Assert.NotNull(data);
+            string jsonOrigin = jsonSerializer.Serialize(t, data!);
             byte[] plcData = s.Serialize(t, data);
             object des = s.Deserialize(t, plcData);
             string json = jsonSerializer.Serialize(t, des);
@@ -373,12 +416,14 @@ namespace Papper.Tests
             uint cmpVal = Convert.ToUInt32(tt.Time[0].TotalMilliseconds);
             Assert.Equal(cmpVal, deserialized.Time[0].TotalMilliseconds);
 
-            TimeSpan[] value = accessor.GetValue<StringArrayTestMapping, TimeSpan[]>("Time", serialized);
+            TimeSpan[]? value = accessor.GetValue<StringArrayTestMapping, TimeSpan[]>("Time", serialized);
             TimeSpan value1 = accessor.GetValue<StringArrayTestMapping, TimeSpan>("Time[1]", serialized);
 
+            Assert.NotNull(value);
+            Assert.True(value!.Any());
             Assert.Equal(tt.TEST, deserialized.TEST);
             Assert.Equal(tt.TEXT[0], deserialized.TEXT[0]);
-            Assert.Equal(value[0], deserialized.Time[0]);
+            Assert.Equal(value![0], deserialized.Time[0]);
             Assert.Equal(value1, deserialized.Time[0]);
 
             _ = accessor.SetValue<StringArrayTestMapping, TimeSpan>("Time[1]", DateTime.Now.TimeOfDay.Add(TimeSpan.FromMinutes(1)), serialized);
@@ -387,7 +432,9 @@ namespace Papper.Tests
             value = accessor.GetValue<StringArrayTestMapping, TimeSpan[]>("Time", serialized);
             value1 = accessor.GetValue<StringArrayTestMapping, TimeSpan>("Time[1]", serialized);
 
-            Assert.Equal(value[0], deserialized.Time[0]);
+            Assert.NotNull(value);
+            Assert.True(value!.Any());
+            Assert.Equal(value![0], deserialized.Time[0]);
             Assert.Equal(value1, deserialized.Time[0]);
 
 

@@ -33,12 +33,21 @@ namespace Papper
         public object Value { get; private set; }
 
         /// <summary>
-        /// Create <see cref="PlcReadReference"/> from an address and a value
+        /// Create <see cref="PlcWriteReference"/> from an address and a value
         /// </summary>
         /// <param name="address"> [Mapping].[Variable]</param>
         /// <param name="value">Value to write</param>
         /// <returns>An instance of a <see cref="PlcWriteReference"/></returns>
         public static PlcWriteReference FromAddress(string address, object? value) => new(address, value);
+
+        /// <summary>
+        /// Create <see cref="PlcWriteReference"/> from another reference and a value
+        /// </summary>
+        /// <param name="reference"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static PlcWriteReference FromPlcReference(IPlcReference reference, object? value) => new(reference.Address, value);
+
 
         public PlcWriteReference(string address, object? value)
         {

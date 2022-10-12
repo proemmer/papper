@@ -1,7 +1,7 @@
 ﻿using Papper.Extensions.Metadata;
 using Papper.Extensions.Notification;
 using Papper.Tests.Mappings;
-using PapperTests.Mappings;
+using Papper.Tests.Mappings.ChargenRV2;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -13,7 +13,7 @@ namespace Papper.Tests.Util
 
         public TimeSpanConverter(string format = "c", IFormatProvider? formatProvider = null)
         {
-            _format = format ?? throw new ArgumentNullException("format");
+            _format = format ?? throw new ArgumentNullException(nameof(format));
             _formatProvider = formatProvider ?? CultureInfo.InvariantCulture;
         }
 
@@ -36,12 +36,11 @@ namespace Papper.Tests.Util
                         TimeSpan result = TimeSpan.Zero;
                         while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
                         {
-                            long value;
                             if (reader.TokenType == JsonTokenType.PropertyName)
                             {
-                                text = reader.GetString();
+                                text = reader.GetString() ?? String.Empty;
                             }
-                            else if (text != null && text.Equals("Ticks", StringComparison.InvariantCultureIgnoreCase) && reader.TryGetInt64(out value))
+                            else if (text != null && text.Equals("Ticks", StringComparison.InvariantCultureIgnoreCase) && reader.TryGetInt64(out long value))
                             {
                                 result = new TimeSpan(value);
                             }
@@ -51,7 +50,7 @@ namespace Papper.Tests.Util
                     }
             }
 
-            return default(TimeSpan);
+            return default;
         }
 
         public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options)

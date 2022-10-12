@@ -26,13 +26,13 @@ Papper could be used with any S7 library, because it's a top level component. It
 
 
 To access the data you fist have to declare a class with a mapping attribute like the following one:
-<pre><code>
+```cs
+
 using Papper.Attributes;
 using System;
 
 namespace UnitTestSuit.Mappings
 {
-    #region Safety
     public class UDT_SafeMotionHeader_States
     {
         public bool ChecksumInvalid { get; set; }
@@ -108,15 +108,14 @@ namespace UnitTestSuit.Mappings
 
     }
 
-    #endregion
 
 }
 
-</code></pre>
+```
 
 
-The following code snipet is a small sample for the usage of papper:
-<pre><code>
+The following code snippet is a small sample for the usage of papper:
+```cs
 var _papper = new PlcDataMapper(960);
 
 _papper.OnRead += Papper_OnRead;
@@ -124,18 +123,20 @@ _papper.OnWrite += Papper_OnWrite;
 
 _papper.AddMapping(typeof(DB_Safety));
 
+var reference = PlcReadReference.FromAddress("DB_Safety.SafeMotion.Slots[100].UnitChecksum");
 
-Dictionary<string,object> result = _papper.Read(mapping, "SafeMotion.Slots[100].UnitChecksum");
+PlcReadResult[] result = await _papper.ReadAsync(reference);
+_papper.WriteAsync(PlcWriteReference.FromPlcReference(reference, 100));
 
-result.Value = 100;
 
-_papper.Write(mapping, result);
+result = await _papper.ReadAsync(PlcReadReference.FromAddress("DB_Safety.SafeMotion.Slots[100].SlotId"));
+_papper.WriteAsync(PlcWriteReference.FromAddress(result[0].Address, 200));
 
-</code></pre>
+```
 
 
 The interface to the used S7 library have to handle the following calls
-<pre><code>
+```cs
 private static byte[] Papper_OnRead(string selector, int offset, int length)
 {
     //call s7 library to read data
@@ -145,32 +146,34 @@ private static bool Papper_OnWrite(string selector, int offset, byte[] data, byt
 {
     //call s7 library to write data
 }
-</code></pre>
+```
 
 
 
 
-# Absolut addressing
+# Absolute addressing
 Syntax:
 
 
-[Selector].[TYPE][OFFSET],[CountOfData]
+```[Selector].[TYPE][OFFSET],[CountOfData]```
 
 Bool
-[Selector].[TYPE][OFFSET_Byte].[OFFSET_Bit],[CountOfData]
+
+```[Selector].[TYPE][OFFSET_Byte].[OFFSET_Bit],[CountOfData]```
 
 String
-[Selector].[TYPE][OFFSET_Stringlength][_CountOfData]
+
+```[Selector].[TYPE][OFFSET_Stringlength][_CountOfData]```
 
 
 ## Selector
 
-IB: Input Area
-FB: Flag Area
-QB: Output Area
-TM: Timer Area
-CT: Counter Area
-DB[Number]: DataBlock Area
+* IB: Input Area
+* FB: Flag Area
+* QB: Output Area
+* TM: Timer Area
+* CT: Counter Area
+* DB[Number]: DataBlock Area
 
 ## Type
 
@@ -373,3 +376,59 @@ MetaTagAttribute(string name, object value)
 ```
 
 
+# PlcDataMapperSerializer
+
+Additionally to access library papper also provides a data serializer. With this you are able to read your data as bytes and deserialize it to a .net class. Or you can build your .net class and serialize it to a byte array which can then be downloaded to the plc.
+
+
+## Sample Class
+```cs
+
+
+    public class TimeTransformationRule
+    {
+        public short Bias { get; set; } = 0; // Time bias of standard local time to UTC [min]
+        public short DaylightBias { get; set; } = 0; //Time bias of local daylight saving time to local standard time [min]
+        public byte DaylightStartMonth { get; set; } = 0; //Month of change to daylight saving time
+        public byte DaylightStartWeek { get; set; } = 0;//Week of change to daylight saving time: 1= 1st occurrence of the weekday in the month, ..., 5= last occurrence
+        public byte DaylightStartWeekday { get; set; } = 0; //Weekday of change to daylight saving time: 1= Sunday
+        public byte DaylightStartHour { get; set; } = 0; //	Hour of change to daylight saving time
+        public byte DaylightStartMinute { get; set; } = 0; //	Minute of change to daylight saving time
+        public byte StandardStartMonth { get; set; } = 0; //	Month of change to standard time
+        public byte StandardStartWeek { get; set; } = 0; //	Week of change to standard time: 1= 1st occurrence of the weekday in the month, ..., 5= last occurrence
+        public byte StandardStartWeekday { get; set; } = 0; //	Weekday of change to standard time
+        public byte StandardStartHour { get; set; } = 0; //	Hour of change to standard time
+        public byte StandardStartMinute { get; set; } = 0; //	Minute of change to standard time
+
+        [StringLength(80)]
+        public string TimeZoneName { get; set; } //	Name of the used time zone like in Windows XP: "(GMT+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna"
+    }
+
+```
+
+## Use the Serializer
+
+The following sample shows how you can use the serializer to serialize and deserialize data structures.
+```cs
+var serializer = new PlcDataMapperSerializer();
+var numberOfBytesToRead = serializer.SerializedByteSize<TimeTransformationRule>();
+
+// read the data from the plc  e.g. with: 
+IEnumerable<DataValue> results = await _dacs7.ReadAsync(ReadItem.Create<byte[]>("DB100", 0, (ushort)numberOfBytesToRead));
+
+if(results.FirstOrDefault() is DataValue dv && dv.IsSuccessReturnCode)
+{
+    // deserialize the data from the byte array
+    var rule = serializer.Deserialize<TimeTransformationRule>(result.Data);
+
+    // change the data 
+    rule.DaylightStartWeekday = 2;
+
+    // serialize the class to a byte array
+    var writeBack = serializer.Serialize(rule);
+
+    // write it back
+    _dacs7.WriteAsync(WriteItem.Create("DB100", 0, writeBack));
+}
+
+```

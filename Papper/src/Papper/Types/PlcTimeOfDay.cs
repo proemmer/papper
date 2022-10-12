@@ -8,6 +8,9 @@ namespace Papper.Types
     {
         // Use share size for this data type, we will never change the size
         private static readonly PlcSize _size = new() { Bytes = 4 };
+        private static readonly TimeSpan _minValue = TimeSpan.Zero;
+        private static readonly TimeSpan _maxValue = new(TimeSpan.TicksPerDay - 1);
+
         public override Type DotNetType => typeof(TimeSpan);
 
         public PlcTimeOfDay(string name) : base(name)
@@ -21,13 +24,22 @@ namespace Papper.Types
         {
             if (value is TimeSpan ts)
             {
+                if (ts < _minValue)
+                {
+                    ts = _minValue;
+                }
+                else if (ts > _maxValue)
+                {
+                    ts = _maxValue;
+                }
+
                 BinaryPrimitives.WriteUInt32BigEndian(data[plcObjectBinding.Offset..],
                                                              Convert.ToUInt32(ts.TotalMilliseconds));
             }
             else
             {
                 BinaryPrimitives.WriteUInt32BigEndian(data[plcObjectBinding.Offset..],
-                                                             Convert.ToUInt32(TimeSpan.MinValue.TotalMilliseconds));
+                                                             Convert.ToUInt32(TimeSpan.Zero.TotalMilliseconds));
             }
         
         } 

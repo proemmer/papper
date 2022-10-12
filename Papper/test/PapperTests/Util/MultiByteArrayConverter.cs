@@ -18,11 +18,11 @@ namespace Papper.Tests.Util
 
         public MultiByteArrayConverter(string format = "c", IFormatProvider? formatProvider = null)
         {
-            _format = (format ?? throw new ArgumentNullException("format"));
+            _format = (format ?? throw new ArgumentNullException(nameof(format)));
             _formatProvider = (formatProvider ?? CultureInfo.InvariantCulture);
         }
 
-        public override byte[][] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override byte[][]? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             switch (reader.TokenType)
             {
@@ -43,7 +43,7 @@ namespace Papper.Tests.Util
                             }
                             else if (reader.TokenType == JsonTokenType.Number)
                             {
-                                dim1[dim1.Count - 1].Add(reader.GetByte());
+                                dim1[^1].Add(reader.GetByte());
                             }
                         }
 
@@ -65,7 +65,7 @@ namespace Papper.Tests.Util
                     }
             }
 
-            return default(byte[][]);
+            return default;
         }
 
         public override void Write(Utf8JsonWriter writer, byte[][] value, JsonSerializerOptions options)

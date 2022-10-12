@@ -34,6 +34,14 @@ namespace Papper
         /// <returns></returns>
         public static PlcReadReference FromAddress(string address) => new(address);
 
+        /// <summary>
+        /// Create <see cref="PlcReadReference"/> from another reference and a value
+        /// </summary>
+        /// <param name="reference"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static PlcReadReference FromPlcReference(IPlcReference reference) => new(reference.Address);
+
 
         public PlcReadReference(string address)
         {
