@@ -1,4 +1,5 @@
-﻿using Papper.Extensions.Metadata;
+﻿using Papper.Attributes;
+using Papper.Extensions.Metadata;
 using Papper.Extensions.Notification;
 using Papper.Tests.Mappings;
 using Papper.Tests.Mappings.AGV;
@@ -942,7 +943,7 @@ namespace Papper.Tests
         private static ExpandoObject ToExpando<T>(T instance)
         {
             ExpandoObject obj = new();
-            foreach (PropertyInfo item in instance.GetType().GetTypeInfo().DeclaredProperties)
+            foreach (PropertyInfo item in instance.GetType().GetTypeInfo().DeclaredProperties.Where(x => x.GetCustomAttribute<IgnoreAttribute>()?.IsIgnored is not true))
             {
                 if (!item.PropertyType.Namespace.StartsWith("System", false, CultureInfo.InvariantCulture))
                 {

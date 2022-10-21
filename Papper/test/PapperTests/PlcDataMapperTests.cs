@@ -1,4 +1,5 @@
 ﻿using Papper;
+using Papper.Attributes;
 using Papper.Extensions.Metadata;
 using Papper.Extensions.Notification;
 using Papper.Tests.Mappings;
@@ -1097,7 +1098,7 @@ namespace Papper.Tests
             var obj = new ExpandoObject();
             if (instance != null)
             {
-                foreach (var item in instance.GetType().GetTypeInfo().DeclaredProperties)
+                foreach (var item in instance.GetType().GetTypeInfo().DeclaredProperties.Where(x => x.GetCustomAttribute<IgnoreAttribute>()?.IsIgnored is not true))
                 {
                     if (item.PropertyType.Namespace?.StartsWith("System", false, CultureInfo.InvariantCulture) == true)
                     {

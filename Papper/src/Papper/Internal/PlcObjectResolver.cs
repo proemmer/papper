@@ -613,7 +613,7 @@ namespace Papper.Internal
                 PlcObject? pred = null;
                 DebugOutPut("{0}{{", name);
 
-                foreach (var pi in t.GetTypeInfo().DeclaredProperties)
+                foreach (var pi in t.GetTypeInfo().DeclaredProperties.Where(x => x.GetCustomAttribute<IgnoreAttribute>()?.IsIgnored is not true))
                 {
                     var plcObject = PlcObjectFactory.CreatePlcObject(pi);
 
