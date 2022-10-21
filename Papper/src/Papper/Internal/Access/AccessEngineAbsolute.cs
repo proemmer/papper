@@ -1,6 +1,7 @@
 ﻿using Papper.Internal;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -41,7 +42,7 @@ namespace Papper.Access
                                 .ToList();
         }
 
-        internal override bool GetOrAddMapping(string mapping, out IEntry entry)
+        internal override bool GetOrAddMapping(string mapping, [MaybeNullWhen(false)] out IEntry entry)
         {
             if(_getMapping == null)
             {

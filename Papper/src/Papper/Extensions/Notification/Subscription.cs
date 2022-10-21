@@ -220,7 +220,7 @@ namespace Papper.Extensions.Notification
                 executions = _executions?.ToList();
             }
 
-            if (executions!.IsNullOrEmpty())
+            if (executions == null || executions.IsNullOrEmpty())
             {
                 return null;
             }
@@ -462,7 +462,7 @@ namespace Papper.Extensions.Notification
                         if (!_lruCache.TryGetValue(binding.Key, out var saved) ||
                             (objBinding.Size == 0
                                 ? memData.Span[objBinding.Offset].GetBit(objBinding.MetaData.Offset.Bits) != saved.Data.Span[0].GetBit(objBinding.MetaData.Offset.Bits)
-                                : !memData.Slice(objBinding.Offset, size).Span.SequenceEqual(saved.Data.Slice(0, size).Span)))
+                                : !memData.Slice(objBinding.Offset, size).Span.SequenceEqual(saved.Data[..size].Span)))
                         {
                             result.Add(binding);
                             var data = memData.Slice(objBinding.Offset, size);
@@ -516,7 +516,7 @@ namespace Papper.Extensions.Notification
             var hasItems = vars != null && vars.Any();
             if (hasItems)
             {
-                Interval = vars.Select(x => x.WatchCycle).Min();
+                Interval = vars!.Select(x => x.WatchCycle).Min();
             }
             if (Interval <= 0 || (!hasItems && Interval < _defaultInterval))
             {
