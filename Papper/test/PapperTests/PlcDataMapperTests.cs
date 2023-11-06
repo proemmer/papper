@@ -5,6 +5,7 @@ using Insite.Customer.Data.DB_BST3_ChargenRV;
 using Insite.Customer.Data.DB_IPSC_Konfig;
 using Insite.Customer.Data.DB_Setup_AGV_BST1;
 using Insite.Customer.Data.DB_SpindlePos_BST1;
+using Insite.Customer.Data.DB_ZK_Storage_BandG;
 using Papper;
 using Papper.Extensions.Metadata;
 using Papper.Extensions.Notification;
@@ -57,6 +58,7 @@ namespace Papper.Tests
             _papper.AddMapping(typeof(DB_BST_An_Abwahl_BST1));
             _papper.AddMapping(typeof(DB_BST1_Geraete_1_Konfig));
             _papper.AddMapping(typeof(SampleDataAccessNames));
+            _papper.AddMapping(typeof(DB_ZK_Storage_BandG));
 
 
         }
@@ -112,6 +114,7 @@ namespace Papper.Tests
         [InlineData(nameof(DB_BST1_Regal_1_Konfig), 2)]
         [InlineData(nameof(DB_BST1_Geraete_1_Konfig), 1)]
         [InlineData(nameof(SampleDataAccessNames),13)]
+        [InlineData(nameof(DB_ZK_Storage_BandG),2)]
 
         public void TestReadableBlocks(string mapping, int expectedVariables)
         {

@@ -18,7 +18,7 @@
     <RepositoryType>git</RepositoryType>
     <IncludeSymbols>true</IncludeSymbols>
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>C:\Projects\Tools\signatures\papper\papper.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>D:\Source\signatures\papper\papper.snk</AssemblyOriginatorKeyFile>
     <PackageReleaseNotes>
 		* added additional type (LTOD)
 		* multiarray fixes
