@@ -459,8 +459,9 @@ namespace Papper.Internal
                                 }
                                 else
                                 {
-                                    var internalPath = new List<string>(path.Take(path.Count - 1)) { GetAccessName(child) };
-                                    list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalPath.Skip(1)).Path.Substring(1));
+                                    // No Accessible Childs
+                                    // var internalPath = new List<string>(path.Take(path.Count - 1)) { GetAccessName(child) };
+                                    // list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalPath.Skip(1)).Path.Substring(1));
                                 }
                             }
                             if (hasNotAccessibleVariables)

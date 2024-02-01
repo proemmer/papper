@@ -1,4 +1,6 @@
 ﻿using Insite.Customer.Data;
+using Insite.Customer.Data.___ST000_SCREW_GS_PDB;
+using Insite.Customer.Data.___ST641_ZY001_MA71_PDB;
 using Insite.Customer.Data.DB_BST1_Geraete_1_Konfig;
 using Insite.Customer.Data.DB_BST1_Regal_1_Konfig;
 using Insite.Customer.Data.DB_BST3_ChargenRV;
@@ -39,6 +41,8 @@ namespace Papper.Tests
         public PlcDataMapperTests(ITestOutputHelper output)
         {
             _output = output;
+            _papper.AddMapping(typeof(___ST641_ZY001_MA71_PDB));
+            _papper.AddMapping(typeof(___ST000_SCREW_GS_PDB));
             _papper.AddMapping(typeof(DB_BST3_ChargenRV));
             _papper.AddMapping(typeof(DB_BST1_ChargenRV));
             _papper.AddMapping(typeof(DB_Setup_AGV_BST1));
@@ -59,7 +63,7 @@ namespace Papper.Tests
             _papper.AddMapping(typeof(DB_BST1_Geraete_1_Konfig));
             _papper.AddMapping(typeof(SampleDataAccessNames));
             _papper.AddMapping(typeof(DB_ZK_Storage_BandG));
-
+            
 
         }
 
@@ -71,6 +75,7 @@ namespace Papper.Tests
         [InlineData(nameof(PrimitiveValuesMapping), 6)]
         [InlineData(nameof(DB_MotionHMI), 725)]
         [InlineData(nameof(DB_BST1_ChargenRV), 4384)]
+        [InlineData("++ST000_SCREW_GS_PDB", 4284)]
         public void TestVariables(string mapping, int expectedVariables)
         {
             var vars = _papper.GetVariablesOf(mapping);
@@ -87,7 +92,10 @@ namespace Papper.Tests
         }
 
 
+
         [Theory]
+        [InlineData("++ST641+ZY001-MA71_PDB", 9)]
+        [InlineData("++ST000_SCREW_GS_PDB", 1)]
         [InlineData(nameof(DB_Setup_AGV_BST1), 51)]
         [InlineData(nameof(DB_BST3_ChargenRV), 451)]
         [InlineData(nameof(DB_BST1_ChargenRV), 452)]
@@ -105,6 +113,8 @@ namespace Papper.Tests
         }
 
         [Theory]
+        [InlineData("++ST641+ZY001-MA71_PDB", 9)]
+        [InlineData("++ST000_SCREW_GS_PDB", 1)]
         [InlineData(nameof(DB_Setup_AGV_BST1), 12)]
         [InlineData(nameof(DB_BST3_ChargenRV), 1)]
         [InlineData(nameof(DB_BST1_ChargenRV), 1)]
@@ -114,7 +124,7 @@ namespace Papper.Tests
         [InlineData(nameof(DB_BST1_Regal_1_Konfig), 2)]
         [InlineData(nameof(DB_BST1_Geraete_1_Konfig), 1)]
         [InlineData(nameof(SampleDataAccessNames),13)]
-        [InlineData(nameof(DB_ZK_Storage_BandG),2)]
+        [InlineData(nameof(DB_ZK_Storage_BandG),1206)]
 
         public void TestReadableBlocks(string mapping, int expectedVariables)
         {
