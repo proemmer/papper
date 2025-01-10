@@ -124,7 +124,7 @@ namespace Papper.Tests
         [InlineData(nameof(DB_BST1_Regal_1_Konfig), 2)]
         [InlineData(nameof(DB_BST1_Geraete_1_Konfig), 1)]
         [InlineData(nameof(SampleDataAccessNames), 13)]
-        [InlineData(nameof(DI_PGS_BST1), 2)]
+        [InlineData(nameof(DI_PGS_BST1), 327)]
 
         public void TestReadableBlocks(string mapping, int expectedVariables)
         {

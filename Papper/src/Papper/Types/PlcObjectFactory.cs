@@ -127,7 +127,8 @@ namespace Papper.Types
                     }
                     else
                     {
-                        element = Activator.CreateInstance(typeof(PlcStruct), name, pi.PropertyType) as PlcObject;
+                        element = Activator.CreateInstance(typeof(PlcStruct), name, elementType) as PlcObject;
+                        UpdateSize(pi, element);
                     }
 
                     leafPlcObject = element;

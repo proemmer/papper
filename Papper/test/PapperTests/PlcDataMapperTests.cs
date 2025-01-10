@@ -41,6 +41,7 @@ namespace Papper.Tests
         public PlcDataMapperTests(ITestOutputHelper output)
         {
             _output = output;
+            _papper.AddMapping(typeof(MultiTest_DB));
             _papper.AddMapping(typeof(___ST641_ZY001_MA71_PDB));
             _papper.AddMapping(typeof(___ST000_SCREW_GS_PDB));
             _papper.AddMapping(typeof(DB_BST3_ChargenRV));
@@ -68,6 +69,7 @@ namespace Papper.Tests
         }
 
         [Theory]
+        [InlineData("MultiTest_DB", 8928)]
         [InlineData(nameof(DB_Setup_AGV_BST1), 4244)]
         [InlineData(nameof(DB_Safety), 4596)]
         [InlineData("ARRAY_TEST_MAPPING_1", 105030)]
@@ -75,7 +77,7 @@ namespace Papper.Tests
         [InlineData(nameof(PrimitiveValuesMapping), 6)]
         [InlineData(nameof(DB_MotionHMI), 725)]
         [InlineData(nameof(DB_BST1_ChargenRV), 4384)]
-        [InlineData("++ST000_SCREW_GS_PDB", 4284)]
+        [InlineData("++ST000_SCREW_GS_PDB", 8024)]
         public void TestVariables(string mapping, int expectedVariables)
         {
             var vars = _papper.GetVariablesOf(mapping);
@@ -113,6 +115,7 @@ namespace Papper.Tests
         }
 
         [Theory]
+        [InlineData("MultiTest_DB", 1)]
         [InlineData("++ST641+ZY001-MA71_PDB", 9)]
         [InlineData("++ST000_SCREW_GS_PDB", 1)]
         [InlineData(nameof(DB_Setup_AGV_BST1), 12)]

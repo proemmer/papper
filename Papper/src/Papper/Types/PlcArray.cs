@@ -459,7 +459,7 @@ namespace Papper.Types
 
         public override void Accept(VisitNode visit) => base.Accept(visit);
 
-        private void CalculateSize()
+        public void CalculateSize()
         {
             var isBoolean = _arrayType is PlcBool || _arrayType.Size == null;
             Size.Bits = isBoolean ? ArrayLength * _arrayType.Size!.Bits : 0;
