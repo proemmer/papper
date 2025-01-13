@@ -54,7 +54,7 @@ namespace Papper.Tests
 
 
         [Fact]
-        public void TestSerialisation()
+        public void TestSerialization()
         {
             var s = new PlcDataMapperSerializer();
             var tt = new StringArrayTestMapping
@@ -77,7 +77,7 @@ namespace Papper.Tests
         }
 
         [Fact]
-        public void TestSerialisationOfNonASCII()
+        public void TestSerializationOfNonASCII()
         {
             var s = new PlcDataMapperSerializer();
             var tt = new StringArrayTestMapping
@@ -95,7 +95,7 @@ namespace Papper.Tests
 
 
         [Fact]
-        public void TestSerialisation2()
+        public void TestSerialization2()
         {
             var s = new PlcDataMapperSerializer();
             var tt = new PLCDataPMS
@@ -103,8 +103,19 @@ namespace Papper.Tests
             };
             var size = s.SerializedByteSize<PLCDataPMS>();
             var deserialized = s.Deserialize<PLCDataPMS>(_data);
+        }
 
 
+        [Fact]
+        public void TestSerializationOfMultiArray()
+        {
+            var s = new PlcDataMapperSerializer();
+            var tt = new MultiTest_DB
+            {
+            };
+            var size = s.SerializedByteSize<MultiTest_DB>();
+            var data = s.Serialize(tt);
+            var deserialized = s.Deserialize<MultiTest_DB>(data);
         }
 
         [Theory]
