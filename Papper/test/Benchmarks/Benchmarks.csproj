@@ -6,7 +6,7 @@
 	  <IsPackable>false</IsPackable>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>C:\Projects\Tools\signatures\papper\papper.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>D:\Source\signatures\papper\papper.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>

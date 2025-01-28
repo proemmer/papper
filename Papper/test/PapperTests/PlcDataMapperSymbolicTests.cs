@@ -1,4 +1,14 @@
-﻿using Papper.Attributes;
+
+using Papper.Attributes;
+using Insite.Customer.Data;
+using Insite.Customer.Data.DB_BST1_Geraete_1_Konfig;
+using Insite.Customer.Data.DB_BST1_Regal_1_Konfig;
+using Insite.Customer.Data.DB_BST3_ChargenRV;
+using Insite.Customer.Data.DB_IPSC_Konfig;
+using Insite.Customer.Data.DB_Setup_AGV_BST1;
+using Insite.Customer.Data.DB_SpindlePos_BST1;
+using Insite.Customer.Data.DB_ZK_Storage_BandG;
+using Insite.Customer.Data.DI_PGS_BST1;
 using Papper.Extensions.Metadata;
 using Papper.Extensions.Notification;
 using Papper.Tests.Mappings;
@@ -57,6 +67,7 @@ namespace Papper.Tests
             _papper.AddMapping(typeof(DB_TestCTT));
             _papper.AddMapping(typeof(DB_ZK_Storage_BandG));
             _papper.AddMapping(typeof(DB_Setting_BST1));
+            _papper.AddMapping(typeof(DI_PGS_BST1));
 
         }
 
@@ -121,11 +132,12 @@ namespace Papper.Tests
         [InlineData(nameof(DB_BST1_Regal_1_Konfig), 2)]
         [InlineData(nameof(DB_BST1_Geraete_1_Konfig), 1)]
         [InlineData(nameof(SampleDataAccessNames), 13)]
+        [InlineData(nameof(DI_PGS_BST1), 2)]
 
         public void TestReadableBlocks(string mapping, int expectedVariables)
         {
-            IEnumerable<string> vars = _papper.GetVariableBlocksWithNotAccessableListOf(mapping, VariableListTypes.Read, out var notAcessible);
-            var cc = notAcessible.ToList();
+            IEnumerable<string> vars = _papper.GetVariableBlocksWithNotAccessiblyListOf(mapping, VariableListTypes.Read, out var notAccessible);
+            var cc = notAccessible.ToList();
             Assert.Equal(expectedVariables, vars.Count());
         }
 

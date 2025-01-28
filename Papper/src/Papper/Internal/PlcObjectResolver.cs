@@ -437,8 +437,8 @@ namespace Papper.Internal
                                     var internalPath = new List<string>(path.Take(path.Count - 1)) { currentName + GetAccessName(child) };
                                     foreach (var c in arrayChilds)
                                     {
-                                        var childVars = GetAccessibleBlocks(c, internalPath.ToList(), accessMode, out var hasNotAcessibleChild, out var notAccessibleChild);
-                                        if (!hasNotAcessibleChild)
+                                        var childVars = GetAccessibleBlocks(c, internalPath.ToList(), accessMode, out var hasNotAccessiblyChild, out var notAccessibleChild);
+                                        if (!hasNotAccessiblyChild)
                                         {
                                             var internalElementPath = new List<string>(internalPath) { GetAccessName(c) };
                                             list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalElementPath.Skip(1)).Path.Substring(1));
@@ -459,8 +459,9 @@ namespace Papper.Internal
                                 }
                                 else
                                 {
-                                    var internalPath = new List<string>(path.Take(path.Count - 1)) { GetAccessName(child) };
-                                    list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalPath.Skip(1)).Path.Substring(1));
+                                    // No Accessible Childs
+                                    // var internalPath = new List<string>(path.Take(path.Count - 1)) { GetAccessName(child) };
+                                    // list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalPath.Skip(1)).Path.Substring(1));
                                 }
                             }
                             if (hasNotAccessibleVariables)
@@ -476,8 +477,8 @@ namespace Papper.Internal
                         {
                             foreach (var child in currentChilds)
                             {
-                                var childVars = GetAccessibleBlocks(child, path.ToList(), accessMode, out var hasNotAcessibleChild, out var notAccessibleChild);
-                                if (!hasNotAcessibleChild)
+                                var childVars = GetAccessibleBlocks(child, path.ToList(), accessMode, out var hasNotAccessiblyChild, out var notAccessibleChild);
+                                if (!hasNotAccessiblyChild)
                                 {
                                     var internalPath = new List<string>(path) { GetAccessName(child) };
                                     list.Add(PlcMetaDataTreePath.CreateAbsolutePath(internalPath.Skip(1)).Path.Substring(1));
@@ -706,8 +707,8 @@ namespace Papper.Internal
                 var prevIsBool = pred is PlcBool;
                 var curIsBool = cur is PlcBool;
                 var prevIsString = pred is PlcString;
-                var prevIsByte = pred is PlcByte || pred is PlcChar;
-                var curIsByte = cur is PlcByte || cur is PlcChar;
+                var prevIsByte = pred is PlcByte or PlcChar or PlcSInt or PlcUSInt;
+                var curIsByte = cur is PlcByte or PlcChar or PlcSInt or PlcUSInt;
                 var prevIsArray = pred is PlcArray;
                 var curIsArray = cur is PlcArray;
 

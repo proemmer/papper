@@ -193,7 +193,7 @@ namespace Papper
         /// </summary>
         /// <param name="mapping"></param>
         /// <returns></returns>
-        public IEnumerable<string> GetVariableBlocksWithNotAccessableListOf(string mapping, VariableListTypes variableListType, out List<string>? notAccessible)
+        public IEnumerable<string> GetVariableBlocksWithNotAccessiblyListOf(string mapping, VariableListTypes variableListType, out List<string>? notAccessible)
         {
             var result = new List<string>();
             if (EntriesByName.TryGetValue(mapping, out var entry))
