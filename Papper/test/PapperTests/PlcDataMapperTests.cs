@@ -73,7 +73,7 @@ namespace Papper.Tests
         [InlineData(nameof(PrimitiveValuesMapping), 6)]
         [InlineData(nameof(DB_MotionHMI), 725)]
         [InlineData(nameof(DB_BST1_ChargenRV), 4384)]
-        [InlineData("++ST000_SCREW_GS_PDB", 4284)]
+        [InlineData("++ST000_SCREW_GS_PDB", 8024)]
         public void TestVariables(string mapping, int expectedVariables)
         {
             var vars = _papper.GetVariablesOf(mapping);
