@@ -96,7 +96,7 @@ namespace Papper.Tests
 
 
         [Fact]
-        public void StartSubscriptionWithOutVaraiblesTest()
+        public void StartSubscriptionWithOutVariablesTest()
         {
             using (var sub = _papper.CreateSubscription())
             {

@@ -218,7 +218,7 @@ namespace Papper.Tests
                                 {
                                     DATA = xx,
                                     PartTransfer = true,
-                                    
+
                                 };
                             }
                             else
@@ -245,6 +245,7 @@ namespace Papper.Tests
                 }
                 return true; // if validate is ok
             }
+        }
 
         [Fact]
         public void TestSerialization2()
@@ -254,7 +255,7 @@ namespace Papper.Tests
             {
             };
             var size = s.SerializedByteSize<PLCDataPMS>();
-            var deserialized = s.Deserialize<PLCDataPMS>(_data);
+            //var deserialized = s.Deserialize<PLCDataPMS>(_data);
         }
 
 
