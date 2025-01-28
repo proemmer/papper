@@ -1,16 +1,7 @@
-using Papper;
-using Papper.Attributes;
-using Insite.Customer.Data;
 using Insite.Customer.Data.___ST000_SCREW_GS_PDB;
 using Insite.Customer.Data.___ST641_ZY001_MA71_PDB;
-using Insite.Customer.Data.DB_BST1_Geraete_1_Konfig;
-using Insite.Customer.Data.DB_BST1_Regal_1_Konfig;
-using Insite.Customer.Data.DB_BST3_ChargenRV;
-using Insite.Customer.Data.DB_IPSC_Konfig;
-using Insite.Customer.Data.DB_Setup_AGV_BST1;
-using Insite.Customer.Data.DB_SpindlePos_BST1;
-using Insite.Customer.Data.DB_ZK_Storage_BandG;
 using Papper;
+using Papper.Attributes;
 using Papper.Extensions.Metadata;
 using Papper.Extensions.Notification;
 using Papper.Tests.Mappings;
