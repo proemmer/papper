@@ -36,8 +36,8 @@ steps:
     solution: './papper/Papper.sln'
     publishProject: ''
     artifactNamePrefix: 'papper'
-    framework: 'net6.0'
+    framework: 'net9.0'
     runTests: 'true'
-    dotnetCoreSdk: '6.0.400'
+    dotnetCoreSdk: '9.0.100'
     nugetConfig: './papper/nuget.config'
     nugetChannelName: $(nugetChannelName)
